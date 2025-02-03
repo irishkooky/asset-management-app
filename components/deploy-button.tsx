@@ -15,6 +15,7 @@ export default function DeployButton() {
 						fill="hsl(var(--background)/1)"
 						xmlns="http://www.w3.org/2000/svg"
 					>
+						<title>Deploy to Vercel</title>
 						<path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="inherit" />
 					</svg>
 					<span>Deploy to Vercel</span>

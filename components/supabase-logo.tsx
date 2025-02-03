@@ -8,6 +8,7 @@ export default function SupabaseLogo() {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>
+			<title>Supabase logo</title>
 			<g clipPath="url(#clip0_4671_51136)">
 				<g clipPath="url(#clip1_4671_51136)">
 					<path
