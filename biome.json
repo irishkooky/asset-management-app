@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": [".gitignore", "**/node_modules/**", ".next/**"]
+		"ignore": []
 	},
 	"formatter": {
 		"enabled": true,
