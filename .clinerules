@@ -12,6 +12,10 @@ Technical preferences:
 - Always add loading and error states to data fetching components
 - Implement error handling and error logging
 - Use semantic HTML elements where possible
+- Prefer for...of statement instead of Array.forEach.
+- Disallow else block when the if block breaks early.
+  - If an if block breaks early using a breaking statement (return, break, continue, or throw), then the else block becomes useless. Its contents can be placed outside of the block.
+  - If an if block breaks early using a breaking statement (return, break, continue, or throw), then the else block becomes unnecessary. This is because the content of the else block will never be executed in conjunction with the if block, as the breaking statement ensures the control flow exits the if block immediately. Therefore, the else block is redundant, and its content can be placed outside of the block, reducing the indentation level by one.
 
 General preferences:
 
