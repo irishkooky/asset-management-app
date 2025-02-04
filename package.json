@@ -6,7 +6,8 @@
 		"start": "next start",
 		"lint": "biome lint --write .",
 		"format": "biome format --write .",
-		"check": "biome check --write ."
+		"check": "biome check --write .",
+		"typecheck": "tsc"
 	},
 	"dependencies": {
 		"@radix-ui/react-checkbox": "^1.1.1",
@@ -34,6 +35,9 @@
 		"tailwindcss": "3.4.17",
 		"tailwindcss-animate": "^1.0.7",
 		"typescript": "5.7.2"
+	},
+	"engines": {
+		"node": "20.17.0"
 	},
 	"packageManager": "pnpm@9.13.0+sha512.beb9e2a803db336c10c9af682b58ad7181ca0fbd0d4119f2b33d5f2582e96d6c0d93c85b23869295b765170fbdaa92890c0da6ada457415039769edf3c959efe"
 }
