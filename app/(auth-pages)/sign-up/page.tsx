@@ -1,4 +1,4 @@
-import { signInWithGoogleAction, } from "@/app/actions";
+import { signInWithGoogleAction } from "@/app/actions";
 import { FormMessage, type Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import Link from "next/link";
