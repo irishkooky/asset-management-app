@@ -17,36 +17,6 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
 				</Link>
 			</p>
 			<div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-				<Label htmlFor="email">Email</Label>
-				<Input name="email" placeholder="you@example.com" required />
-				<div className="flex justify-between items-center">
-					<Label htmlFor="password">Password</Label>
-					<Link
-						className="text-xs text-foreground underline"
-						href="/forgot-password"
-					>
-						Forgot Password?
-					</Link>
-				</div>
-				<Input
-					type="password"
-					name="password"
-					placeholder="Your password"
-					required
-				/>
-				<SubmitButton pendingText="Signing In..." formAction={signInAction}>
-					Sign in
-				</SubmitButton>
-				<div className="relative my-4">
-					<div className="absolute inset-0 flex items-center">
-						<span className="w-full border-t" />
-					</div>
-					<div className="relative flex justify-center text-xs uppercase">
-						<span className="bg-background px-2 text-muted-foreground">
-							Or continue with
-						</span>
-					</div>
-				</div>
 				<SubmitButton
 					className="flex items-center justify-center gap-2"
 					variant="outline"
