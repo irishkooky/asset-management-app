@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+const { heroui } = require("@heroui/react");
+
 const config = {
 	darkMode: ["class"],
 	content: [
@@ -7,6 +9,7 @@ const config = {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+		"./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
 	],
 	prefix: "",
 	theme: {
@@ -74,7 +77,7 @@ const config = {
 			},
 		},
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [require("tailwindcss-animate"), heroui()],
 } satisfies Config;
 
 export default config;
