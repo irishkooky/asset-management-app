@@ -12,18 +12,23 @@ Technical preferences:
 - Always add loading and error states to data fetching components
 - Implement error handling and error logging
 - Use semantic HTML elements where possible
-- Prefer for...of statement instead of Array.forEach.
-- Disallow else block when the if block breaks early.
-  - If an if block breaks early using a breaking statement (return, break, continue, or throw), then the else block becomes useless. Its contents can be placed outside of the block.
-  - If an if block breaks early using a breaking statement (return, break, continue, or throw), then the else block becomes unnecessary. This is because the content of the else block will never be executed in conjunction with the if block, as the breaking statement ensures the control flow exits the if block immediately. Therefore, the else block is redundant, and its content can be placed outside of the block, reducing the indentation level by one.
+- Prefer for...of statement instead of Array.forEach
+- Use HeroUI components and follow their design patterns:
+  - Import components from @heroui/react
+  - Follow HeroUI's component composition patterns
+  - Use HeroUI's theme provider for consistent styling
+  - Utilize HeroUI's built-in dark mode support
+  - Maintain HeroUI's accessibility standards
+  - Use HeroUI's predefined color schemes and spacing
+- Disallow else block when the if block breaks early
 
 General preferences:
 
-- Follow the user's requirements carefully & to the letter.
-- Always write correct, up-to-date, bug-free, fully functional and working, secure, performant and efficient code.
-- Focus on readability over being performant.
-- Fully implement all requested functionality.
-- Leave NO todo's, placeholders or missing pieces in the code.
-- Be sure to reference file names.
-- Be concise. Minimize any other prose.
-- If you think there might not be a correct answer, you say so. If you do not know the answer, say so instead of guessing.
+- Follow the user's requirements carefully & to the letter
+- Always write correct, up-to-date, bug-free code
+- Focus on readability over performance
+- Fully implement all requested functionality
+- Leave NO todos or placeholders
+- Reference file names
+- Be concise
+- If unsure, say so instead of guessing
