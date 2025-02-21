@@ -12,14 +12,22 @@ Technical preferences:
 - Always add loading and error states to data fetching components
 - Implement error handling and error logging
 - Use semantic HTML elements where possible
+- HeroUI Implementation Guidelines:
+  - Always wrap your app with HeroUIProvider
+  - Use HeroUI's predefined components when available
+  - Follow HeroUI's component API documentation
+  - Maintain consistent spacing using HeroUI's scale
+  - Implement responsive designs using HeroUI's breakpoints
+  - Use HeroUI's animation system for transitions
+  - Follow HeroUI's form validation patterns
 
 General preferences:
 
-- Follow the user's requirements carefully & to the letter.
-- Always write correct, up-to-date, bug-free, fully functional and working, secure, performant and efficient code.
-- Focus on readability over being performant.
-- Fully implement all requested functionality.
-- Leave NO todo's, placeholders or missing pieces in the code.
-- Be sure to reference file names.
-- Be concise. Minimize any other prose.
-- If you think there might not be a correct answer, you say so. If you do not know the answer, say so instead of guessing.
+- Follow the user's requirements carefully & to the letter
+- Always write correct, up-to-date, bug-free code
+- Focus on readability over performance
+- Fully implement all requested functionality
+- Leave NO todos or placeholders
+- Reference file names
+- Be concise
+- If unsure, say so instead of guessing
