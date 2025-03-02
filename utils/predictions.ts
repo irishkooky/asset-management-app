@@ -1,4 +1,4 @@
-import {} from "@/types/database";
+import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
 import { getMonthlyRecurringTotal } from "@/utils/supabase/recurring-transactions";
