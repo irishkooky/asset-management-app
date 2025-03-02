@@ -11,7 +11,6 @@ import {
 	deleteRecurringTransaction,
 	updateRecurringTransaction,
 } from "@/utils/supabase/recurring-transactions";
-import { redirect } from "next/navigation";
 
 type ActionState = { error?: string; success?: string };
 
@@ -56,7 +55,7 @@ export async function createRecurringTransactionAction(
 			dayOfMonth,
 			description,
 		);
-		redirect("/transactions/recurring");
+		return { success: "定期的な収支が正常に作成されました" };
 	} catch (error) {
 		console.error("Error creating recurring transaction:", error);
 		return { error: "定期的な収支の作成に失敗しました" };
@@ -102,7 +101,7 @@ export async function updateRecurringTransactionAction(
 			day_of_month: dayOfMonth,
 			description: description || null,
 		});
-		redirect("/transactions/recurring");
+		return { success: "定期的な収支が正常に更新されました" };
 	} catch (error) {
 		console.error("Error updating recurring transaction:", error);
 		return { error: "定期的な収支の更新に失敗しました" };
@@ -121,7 +120,7 @@ export async function deleteRecurringTransactionAction(
 
 	try {
 		await deleteRecurringTransaction(transactionId);
-		redirect("/transactions/recurring");
+		return { success: "定期的な収支が正常に削除されました" };
 	} catch (error) {
 		console.error("Error deleting recurring transaction:", error);
 		return { error: "定期的な収支の削除に失敗しました" };
@@ -169,7 +168,7 @@ export async function createOneTimeTransactionAction(
 			transactionDate,
 			description,
 		);
-		redirect("/transactions/one-time");
+		return { success: "臨時収支が正常に作成されました" };
 	} catch (error) {
 		console.error("Error creating one-time transaction:", error);
 		return { error: "臨時収支の作成に失敗しました" };
@@ -215,7 +214,7 @@ export async function updateOneTimeTransactionAction(
 			transaction_date: transactionDate,
 			description: description || null,
 		});
-		redirect("/transactions/one-time");
+		return { success: "臨時収支が正常に更新されました" };
 	} catch (error) {
 		console.error("Error updating one-time transaction:", error);
 		return { error: "臨時収支の更新に失敗しました" };
@@ -234,7 +233,7 @@ export async function deleteOneTimeTransactionAction(
 
 	try {
 		await deleteOneTimeTransaction(transactionId);
-		redirect("/transactions/one-time");
+		return { success: "臨時収支が正常に削除されました" };
 	} catch (error) {
 		console.error("Error deleting one-time transaction:", error);
 		return { error: "臨時収支の削除に失敗しました" };
