@@ -1,10 +1,13 @@
 "use client";
 
+import {
+	deleteAccountAction,
+	updateAccountAction,
+} from "@/app/(protected)/accounts/actions";
 import { Button } from "@/components/ui/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
-import { useFormState } from "react-dom";
-import { deleteAccountAction, updateAccountAction } from "../../../actions";
+import { useActionState } from "react";
 
 interface AccountEditFormProps {
 	account: Account;
@@ -12,11 +15,11 @@ interface AccountEditFormProps {
 
 export function AccountEditForm({ account }: AccountEditFormProps) {
 	const initialState = { error: "", success: "" };
-	const [updateState, updateFormAction] = useFormState(
+	const [updateState, updateFormAction] = useActionState(
 		updateAccountAction,
 		initialState,
 	);
-	const [deleteState, deleteFormAction] = useFormState(
+	const [deleteState, deleteFormAction] = useActionState(
 		deleteAccountAction,
 		initialState,
 	);

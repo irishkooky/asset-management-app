@@ -1,13 +1,13 @@
 "use client";
 
+import { createAccountAction } from "@/app/(protected)/accounts/actions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useFormState } from "react-dom";
-import { createAccountAction } from "../actions";
+import { useActionState } from "react";
 
 export function AccountForm() {
 	const initialState = { error: "", success: "" };
-	const [state, formAction] = useFormState(createAccountAction, initialState);
+	const [state, formAction] = useActionState(createAccountAction, initialState);
 
 	return (
 		<div className="space-y-8">
