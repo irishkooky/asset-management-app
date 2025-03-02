@@ -55,12 +55,21 @@ export async function createAccount(
 ): Promise<Account> {
 	const supabase = await createClient();
 
+	// 現在のユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
+	}
+
 	const { data, error } = await supabase
 		.from("accounts")
 		.insert([
 			{
 				name,
 				current_balance: initialBalance,
+				user_id: user.id, // ユーザーIDを設定
 			},
 		])
 		.select()

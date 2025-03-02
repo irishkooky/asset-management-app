@@ -67,6 +67,14 @@ export async function createRecurringTransaction(
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
 
+	// 現在のユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
+	}
+
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.insert([
@@ -77,6 +85,7 @@ export async function createRecurringTransaction(
 				type,
 				day_of_month: dayOfMonth,
 				description: description || null,
+				user_id: user.id, // ユーザーIDを設定
 			},
 		])
 		.select()

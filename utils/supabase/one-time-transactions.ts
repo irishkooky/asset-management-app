@@ -80,6 +80,14 @@ export async function createOneTimeTransaction(
 ): Promise<OneTimeTransaction> {
 	const supabase = await createClient();
 
+	// 現在のユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
+	}
+
 	const { data, error } = await supabase
 		.from("one_time_transactions")
 		.insert([
@@ -90,6 +98,7 @@ export async function createOneTimeTransaction(
 				type,
 				transaction_date: transactionDate.toISOString().split("T")[0],
 				description: description || null,
+				user_id: user.id, // ユーザーIDを設定
 			},
 		])
 		.select()
