@@ -20,7 +20,7 @@ export default function LoginButton({
 				type="submit"
 				variant={variant}
 				size={size}
-				className={`flex items-center gap-2 ${className}`}
+				className={`w-full flex items-center gap-2 ${className}`}
 			>
 				<svg viewBox="0 0 24 24" className="h-4 w-4" aria-label="Google logo">
 					<title>Google logo</title>
