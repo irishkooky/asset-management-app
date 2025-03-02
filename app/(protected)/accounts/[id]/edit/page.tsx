@@ -1,6 +1,6 @@
+import { AccountEditForm } from "@/app/(protected)/accounts/[id]/edit/account-edit-form";
 import { getAccountById } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
-import { AccountEditForm } from "./account-edit-form";
 
 export default async function EditAccountPage({
 	params,
