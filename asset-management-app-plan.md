@@ -1,219 +1,324 @@
-# 収入・支出予測アプリ開発計画（シンプル版）
+# 資産管理アプリ実装計画
 
-## 1. データベース設計
+## デモモードの実装計画
 
-Supabaseを使用して以下のテーブルを設計します：
+ログインしていないユーザーにもアプリの機能と使用感を体験してもらうためのデモモードを実装します。
 
-### accounts（口座テーブル）
-```sql
-CREATE TABLE accounts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  current_balance DECIMAL(12, 2) NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+### 1. デモデータの作成
 
--- RLSポリシー（Row Level Security）
-ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can only access their own accounts" ON accounts
-  FOR ALL USING (auth.uid() = user_id);
-```
-
-### recurring_transactions（定期的な収支テーブル）
-```sql
-CREATE TABLE recurring_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  account_id UUID REFERENCES accounts(id) ON DELETE CASCADE,
-  amount DECIMAL(12, 2) NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-  name TEXT NOT NULL,
-  description TEXT,
-  day_of_month INTEGER NOT NULL CHECK (day_of_month BETWEEN 1 AND 31),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- RLSポリシー
-ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can only access their own recurring transactions" ON recurring_transactions
-  FOR ALL USING (auth.uid() = user_id);
-```
-
-### one_time_transactions（臨時収支テーブル）
-```sql
-CREATE TABLE one_time_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  account_id UUID REFERENCES accounts(id) ON DELETE CASCADE,
-  amount DECIMAL(12, 2) NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-  name TEXT NOT NULL,
-  description TEXT,
-  transaction_date DATE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- RLSポリシー
-ALTER TABLE one_time_transactions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can only access their own one-time transactions" ON one_time_transactions
-  FOR ALL USING (auth.uid() = user_id);
-```
-
-## 2. アプリケーション構造
-
-### ページ構成
-```
-/app
-  /dashboard - メインダッシュボード（予測表示）
-  /accounts - 口座管理
-    /[id] - 個別口座詳細
-  /transactions
-    /recurring - 定期的な収支管理
-    /one-time - 臨時収支管理
-```
-
-### コンポーネント設計
-
-#### 共通コンポーネント
-- `AccountSelector` - 口座選択コンポーネント
-- `TransactionForm` - 収支入力フォーム
-- `TransactionList` - 収支リスト表示
-- `SavingsPredictionTable` - 貯蓄予測テーブル
-- `AccountBalanceCard` - 口座残高カード
-
-#### ページ固有コンポーネント
-- `DashboardSummary` - ダッシュボード概要
-- `AccountForm` - 口座作成・編集フォーム
-- `RecurringTransactionForm` - 定期的な収支フォーム
-- `OneTimeTransactionForm` - 臨時収支フォーム
-
-## 3. 予測アルゴリズム設計
-
-貯蓄額予測のアルゴリズムは以下のステップで実装します：
-
-1. 現在の口座残高を取得
-2. 定期的な収支を月ごとに計算
-   - 収入の合計 - 支出の合計 = 月間純増減額
-3. 臨時収支を該当月に加算・減算
-4. 1ヶ月後、3ヶ月後、半年後、1年後の残高を計算
-   - 現在残高 + (月間純増減額 × 月数) + 該当月の臨時収支合計
+デモデータを提供するユーティリティ関数を作成します。
 
 ```typescript
-// 予測計算関数の擬似コード
-function calculateFutureSavings(
-  currentBalance: number,
-  recurringTransactions: RecurringTransaction[],
-  oneTimeTransactions: OneTimeTransaction[],
-  months: number
-): number {
-  // 月間の純増減額を計算
-  const monthlyNet = recurringTransactions.reduce((total, transaction) => {
-    return transaction.type === 'income'
-      ? total + transaction.amount
-      : total - transaction.amount;
-  }, 0);
+// utils/demo-data.ts
+export function getDemoTotalBalance() {
+  return 1250000; // 例: ¥1,250,000
+}
 
-  // 予測期間内の臨時収支を計算
+export function getDemoPredictions() {
   const today = new Date();
-  const endDate = new Date(today);
-  endDate.setMonth(today.getMonth() + months);
+  
+  return [
+    {
+      period: "1month",
+      date: new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0],
+      amount: 1300000
+    },
+    {
+      period: "3months",
+      date: new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString().split('T')[0],
+      amount: 1400000
+    },
+    {
+      period: "6months",
+      date: new Date(today.getFullYear(), today.getMonth() + 6, today.getDate()).toISOString().split('T')[0],
+      amount: 1550000
+    },
+    {
+      period: "12months",
+      date: new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()).toISOString().split('T')[0],
+      amount: 1850000
+    }
+  ];
+}
 
-  const oneTimeNet = oneTimeTransactions
-    .filter(t => {
-      const transactionDate = new Date(t.transaction_date);
-      return transactionDate >= today && transactionDate <= endDate;
-    })
-    .reduce((total, transaction) => {
-      return transaction.type === 'income'
-        ? total + transaction.amount
-        : total - transaction.amount;
-    }, 0);
+export function getDemoRecurringTransactions() {
+  return [
+    {
+      id: "demo-1",
+      name: "給料",
+      type: "income",
+      amount: 280000,
+      day_of_month: 25
+    },
+    {
+      id: "demo-2",
+      name: "家賃",
+      type: "expense",
+      amount: 85000,
+      day_of_month: 5
+    },
+    {
+      id: "demo-3",
+      name: "光熱費",
+      type: "expense",
+      amount: 15000,
+      day_of_month: 10
+    }
+  ];
+}
 
-  // 将来の貯蓄額を計算
-  return currentBalance + (monthlyNet * months) + oneTimeNet;
+export function getDemoRecentTransactions() {
+  const today = new Date();
+  
+  return [
+    {
+      id: "demo-recent-1",
+      name: "ボーナス",
+      type: "income",
+      amount: 300000,
+      transaction_date: new Date(today.getFullYear(), today.getMonth(), 15).toISOString().split('T')[0]
+    },
+    {
+      id: "demo-recent-2",
+      name: "旅行費用",
+      type: "expense",
+      amount: 120000,
+      transaction_date: new Date(today.getFullYear(), today.getMonth(), 10).toISOString().split('T')[0]
+    },
+    {
+      id: "demo-recent-3",
+      name: "電化製品購入",
+      type: "expense",
+      amount: 45000,
+      transaction_date: new Date(today.getFullYear(), today.getMonth(), 5).toISOString().split('T')[0]
+    }
+  ];
 }
 ```
 
-## 4. UI/UX設計（シンプル版）
+### 2. トップページの修正
 
-モバイルファーストのアプローチで、以下のシンプルなUI/UX設計を行います：
+トップページ（`app/page.tsx`）を修正して、ログイン状態に応じてデータを切り替えます。
 
-### ダッシュボード
-- 上部に現在の総残高を表示
-- 予測期間（1ヶ月後、3ヶ月後、半年後、1年後）の貯蓄額をシンプルなテーブルで表示
-- 最近の収支をリスト表示
+```typescript
+// app/page.tsx
+import { createClient } from "@/utils/supabase/server";
+import { getAllPredictions } from "@/utils/predictions";
+import { getTotalBalance } from "@/utils/supabase/accounts";
+import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
+import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
+import { 
+  getDemoTotalBalance, 
+  getDemoPredictions, 
+  getDemoRecurringTransactions, 
+  getDemoRecentTransactions 
+} from "@/utils/demo-data";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-### 口座管理
-- 口座一覧をシンプルなリスト形式で表示
-- 各口座の現在残高と予測残高を表示
-- 口座の追加・編集・削除機能
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // データ取得（ログイン状態に応じて実データまたはデモデータを取得）
+  const totalBalance = user ? await getTotalBalance() : getDemoTotalBalance();
+  const predictions = user ? await getAllPredictions() : getDemoPredictions();
+  const recurringTransactions = user ? await getUserRecurringTransactions() : getDemoRecurringTransactions();
+  
+  // 最近の臨時収支
+  let recentTransactions;
+  if (user) {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    recentTransactions = await getUserOneTimeTransactions(
+      undefined,
+      oneMonthAgo,
+      new Date(),
+    );
+  } else {
+    recentTransactions = getDemoRecentTransactions();
+  }
 
-### 収支管理
-- タブで定期的な収支と臨時収支を切り替え
-- 収支リストをシンプルなテーブル形式で表示
-- 基本的な並べ替え機能
-- 収支の追加・編集・削除機能
+  return (
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">ダッシュボード</h1>
+      
+      {/* デモモード通知 */}
+      {!user && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-medium text-blue-800 dark:text-blue-300">デモモード</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-400">
+                これはデモデータです。実際のデータを管理するにはログインしてください。
+              </p>
+            </div>
+            <Button asChild size="sm" className="whitespace-nowrap">
+              <Link href="/sign-in">ログインする</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
-## 5. 実装計画
+      {/* 現在の総残高 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-medium mb-2">現在の総残高</h2>
+        <p className="text-3xl font-bold">¥{totalBalance.toLocaleString()}</p>
+      </div>
 
-### フェーズ1: 基本機能実装
-1. データベーステーブルの作成
-2. 口座管理機能の実装
-3. 定期的な収支管理機能の実装
-4. 臨時収支管理機能の実装
-5. 基本的な予測計算機能の実装
+      {/* 貯蓄予測 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-medium mb-4">貯蓄予測</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2">期間</th>
+                <th className="text-left py-2">予測日</th>
+                <th className="text-right py-2">予測残高</th>
+              </tr>
+            </thead>
+            <tbody>
+              {predictions.map((prediction) => {
+                const periodLabels = {
+                  "1month": "1ヶ月後",
+                  "3months": "3ヶ月後",
+                  "6months": "6ヶ月後",
+                  "12months": "1年後",
+                };
+                const periodLabel =
+                  periodLabels[prediction.period as keyof typeof periodLabels];
 
-### フェーズ2: UI/UX改善
-1. シンプルなダッシュボードの実装
-2. モバイル対応の改善
-3. 基本的な並べ替え機能の実装
+                return (
+                  <tr key={prediction.period} className="border-b">
+                    <td className="py-2">{periodLabel}</td>
+                    <td className="py-2">{prediction.date}</td>
+                    <td className="text-right py-2">
+                      ¥{prediction.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-### フェーズ3: 追加機能（オプション）
-1. カテゴリ別の収支分析（シンプルな形式）
-2. 基本的なデータのエクスポート機能
+      {/* 定期的な収支 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-medium mb-4">定期的な収支</h2>
+        {recurringTransactions.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">名前</th>
+                  <th className="text-left py-2">種別</th>
+                  <th className="text-left py-2">日付</th>
+                  <th className="text-right py-2">金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recurringTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b">
+                    <td className="py-2">{transaction.name}</td>
+                    <td className="py-2">
+                      <span
+                        className={
+                          transaction.type === "income"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {transaction.type === "income" ? "収入" : "支出"}
+                      </span>
+                    </td>
+                    <td className="py-2">毎月{transaction.day_of_month}日</td>
+                    <td className="text-right py-2">
+                      ¥{transaction.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500">定期的な収支はまだ登録されていません</p>
+        )}
+      </div>
 
-## 6. 技術的な考慮事項
+      {/* 最近の臨時収支 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-medium mb-4">最近の臨時収支</h2>
+        {recentTransactions.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">名前</th>
+                  <th className="text-left py-2">種別</th>
+                  <th className="text-left py-2">日付</th>
+                  <th className="text-right py-2">金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b">
+                    <td className="py-2">{transaction.name}</td>
+                    <td className="py-2">
+                      <span
+                        className={
+                          transaction.type === "income"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {transaction.type === "income" ? "収入" : "支出"}
+                      </span>
+                    </td>
+                    <td className="py-2">{transaction.transaction_date}</td>
+                    <td className="text-right py-2">
+                      ¥{transaction.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500">最近の臨時収支はありません</p>
+        )}
+      </div>
+    </div>
+  );
+}
+```
 
-### パフォーマンス最適化
-- サーバーコンポーネントとクライアントコンポーネントの適切な使い分け
-- 必要最小限のクライアントサイド処理
+### 3. デモデータの視覚的な区別
 
-### セキュリティ
-- Supabase RLSを活用したデータアクセス制御
-- 入力値のバリデーション
+デモデータであることをより明確にするために、以下の視覚的な区別を追加することも検討できます：
 
-### テスト戦略
-- 基本的なユニットテスト
-- 主要機能のE2Eテスト
+- デモモード時のバナー表示（上記コードに実装済み）
+- デモデータのセクションに薄い背景色やボーダーを追加
+- デモデータの行に「デモ」バッジを表示
 
-## 7. 開発スケジュール
+### 4. 実装手順
 
-### 週1: 基盤構築
-- データベース設計と作成
-- 認証機能の確認と調整
-- 基本的なページレイアウトの作成
+1. `utils/demo-data.ts` ファイルを作成し、デモデータ関数を実装
+2. `app/page.tsx` を修正して、ログイン状態に応じたデータ取得とUI表示を実装
+3. デモモードであることを示す通知バナーを追加
+4. 必要に応じて、デモデータの視覚的な区別を実装
 
-### 週2: 口座・収支管理機能
-- 口座管理機能の実装
-- 定期的な収支管理機能の実装
-- 臨時収支管理機能の実装
+### 5. 考慮すべき追加事項
 
-### 週3: 予測機能と基本UI
-- 予測アルゴリズムの実装
-- シンプルなダッシュボードの実装
-- 基本的なリスト表示の実装
+- **デモデータの現実性**: 実際のユースケースを反映した現実的なデモデータを用意する
+- **パフォーマンス**: デモデータは静的に定義し、不要なデータベースクエリを避ける
+- **セキュリティ**: デモモードでは機密性の高い操作（データ削除など）を制限する
+- **コンバージョン**: デモモードからログインへの誘導を効果的に行う
 
-### 週4: 最終調整
-- モバイル対応の改善
-- バグ修正と最終調整
+## 次のステップ
 
-## 8. 必要なライブラリ
-
-- `@heroui/react` - UIコンポーネント（既に導入済み）
-- `date-fns` - 日付操作
-- `zod` - データバリデーション
-- `react-hook-form` - フォーム管理
+1. デモデータユーティリティの実装
+2. トップページの修正
+3. デモモードUIの改善
+4. テストとフィードバック収集
