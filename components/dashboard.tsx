@@ -1,3 +1,4 @@
+import { ClientNavMenu } from "@/components/client-nav-menu";
 import LoginButton from "@/components/login-button";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -63,7 +64,7 @@ export default function Dashboard({
 				</div>
 			)}
 
-			<h1 className="text-2xl font-bold">ダッシュボード</h1>
+			<ClientNavMenu />
 
 			{/* 現在の総残高 */}
 			<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
