@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 export const signOutAction = async () => {
 	const supabase = await createClient();
 	await supabase.auth.signOut();
-	return redirect("/sign-in");
+	return redirect("/");
 };
 
 export const signInWithGoogleAction = async () => {
@@ -23,12 +23,12 @@ export const signInWithGoogleAction = async () => {
 	});
 
 	if (error) {
-		return encodedRedirect("error", "/sign-in", error.message);
+		return encodedRedirect("error", "/", error.message);
 	}
 
 	if (data.url) {
 		return redirect(data.url);
 	}
 
-	return encodedRedirect("error", "/sign-in", "Something went wrong");
+	return encodedRedirect("error", "/", "Something went wrong");
 };
