@@ -34,15 +34,6 @@ export default async function AuthButton() {
 						>
 							<Link href="/sign-in">ログイン</Link>
 						</Button>
-						<Button
-							asChild
-							size="sm"
-							variant={"default"}
-							disabled
-							className="opacity-75 cursor-none pointer-events-none"
-						>
-							<Link href="/sign-up">新規登録</Link>
-						</Button>
 					</div>
 				</div>
 			</>
@@ -63,9 +54,6 @@ export default async function AuthButton() {
 		<div className="flex gap-2">
 			<Button asChild size="sm" variant={"outline"}>
 				<Link href="/sign-in">ログイン</Link>
-			</Button>
-			<Button asChild size="sm" variant={"default"}>
-				<Link href="/sign-up">新規登録</Link>
 			</Button>
 		</div>
 	);
