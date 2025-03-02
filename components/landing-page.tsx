@@ -6,25 +6,21 @@ export default function LandingPage() {
 	return (
 		<div className="space-y-16 py-8">
 			{/* ヒーローセクション */}
-			<section className="flex flex-col md:flex-row items-center justify-between gap-8">
-				<div className="space-y-6 max-w-xl">
+			<section className="py-12">
+				<div className="max-w-3xl mx-auto text-center space-y-8">
 					<h1 className="text-4xl md:text-5xl font-bold tracking-tight">
 						あなたの資産を<span className="text-primary">スマートに管理</span>
 					</h1>
 					<p className="text-xl text-muted-foreground">
 						シンプルで使いやすい資産管理アプリで、収支の把握から将来の貯蓄予測まで一元管理。
 					</p>
-					<div className="flex flex-col sm:flex-row gap-4">
-						<LoginButton size="lg">今すぐ始める</LoginButton>
+					<div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+						<LoginButton size="lg" variant="default">
+							今すぐ始める
+						</LoginButton>
 						<Button variant="outline" size="lg" asChild>
 							<Link href="/demo">デモを見る</Link>
 						</Button>
-					</div>
-				</div>
-				<div className="relative w-full max-w-md aspect-[4/3] rounded-lg overflow-hidden shadow-xl bg-gray-100 dark:bg-gray-800">
-					{/* 注: 実際の実装では適切な画像を用意する必要があります */}
-					<div className="absolute inset-0 flex items-center justify-center text-gray-400">
-						<p>ダッシュボードのプレビュー画像</p>
 					</div>
 				</div>
 			</section>
@@ -81,7 +77,9 @@ export default function LandingPage() {
 					シンプルで使いやすいツールで、あなたの資産管理をサポートします。
 				</p>
 				<div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
-					<LoginButton size="lg">無料で始める</LoginButton>
+					<LoginButton size="lg" variant="default">
+						無料で始める
+					</LoginButton>
 					<Button variant="outline" size="lg" asChild>
 						<Link href="/demo">デモを試す</Link>
 					</Button>
