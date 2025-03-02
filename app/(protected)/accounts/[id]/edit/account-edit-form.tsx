@@ -7,13 +7,16 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
+import { useEffect } from "react";
 
 interface AccountEditFormProps {
 	account: Account;
 }
 
 export function AccountEditForm({ account }: AccountEditFormProps) {
+	const router = useRouter();
 	const initialState = { error: "", success: "" };
 	const [updateState, updateFormAction] = useActionState(
 		updateAccountAction,
@@ -23,6 +26,17 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 		deleteAccountAction,
 		initialState,
 	);
+
+	// 成功時にリダイレクト
+	useEffect(() => {
+		if (updateState.success || deleteState.success) {
+			// 少し遅延させてメッセージを表示する時間を確保
+			const timer = setTimeout(() => {
+				router.push("/accounts");
+			}, 1000);
+			return () => clearTimeout(timer);
+		}
+	}, [updateState.success, deleteState.success, router]);
 
 	return (
 		<div className="space-y-8">
@@ -37,6 +51,12 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 				{updateState.error && (
 					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
 						{updateState.error}
+					</div>
+				)}
+
+				{updateState.success && (
+					<div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+						{updateState.success}
 					</div>
 				)}
 
@@ -83,6 +103,12 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 				{deleteState.error && (
 					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
 						{deleteState.error}
+					</div>
+				)}
+
+				{deleteState.success && (
+					<div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+						{deleteState.success}
 					</div>
 				)}
 

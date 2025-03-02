@@ -5,7 +5,6 @@ import {
 	deleteAccount,
 	updateAccount,
 } from "@/utils/supabase/accounts";
-import { redirect } from "next/navigation";
 
 type ActionState = { error?: string; success?: string };
 
@@ -23,7 +22,7 @@ export async function createAccountAction(
 
 	try {
 		await createAccount(name, initialBalance);
-		redirect("/accounts");
+		return { success: "口座が正常に作成されました" };
 	} catch (error) {
 		console.error("Error creating account:", error);
 		return { error: "口座の作成に失敗しました" };
@@ -54,7 +53,7 @@ export async function updateAccountAction(
 
 	try {
 		await updateAccount(accountId, { name, current_balance: currentBalance });
-		redirect("/accounts");
+		return { success: "口座が正常に更新されました" };
 	} catch (error) {
 		console.error("Error updating account:", error);
 		return { error: "口座の更新に失敗しました" };
@@ -73,7 +72,7 @@ export async function deleteAccountAction(
 
 	try {
 		await deleteAccount(accountId);
-		redirect("/accounts");
+		return { success: "口座が正常に削除されました" };
 	} catch (error) {
 		console.error("Error deleting account:", error);
 		return { error: "口座の削除に失敗しました" };
