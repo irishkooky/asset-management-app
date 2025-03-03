@@ -6,33 +6,34 @@ import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transac
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function AccountDetailPage({
-	params,
-}: {
-	params: { id: string };
-}) {
-	// 口座データ取得
-	const account = await getAccountById(params.id);
-	if (!account) {
+export default async function AccountDetailPage(
+    props: {
+        params: Promise<{ id: string }>;
+    }
+) {
+    const params = await props.params;
+    // 口座データ取得
+    const account = await getAccountById(params.id);
+    if (!account) {
 		notFound();
 	}
 
-	// 予測データ取得
-	const predictions = await getAccountPredictions(account.id);
+    // 予測データ取得
+    const predictions = await getAccountPredictions(account.id);
 
-	// 定期的な収支データ取得
-	const recurringTransactions = await getUserRecurringTransactions(account.id);
+    // 定期的な収支データ取得
+    const recurringTransactions = await getUserRecurringTransactions(account.id);
 
-	// 最近の臨時収支を取得（過去1ヶ月）
-	const oneMonthAgo = new Date();
-	oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-	const recentTransactions = await getUserOneTimeTransactions(
+    // 最近の臨時収支を取得（過去1ヶ月）
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const recentTransactions = await getUserOneTimeTransactions(
 		account.id,
 		oneMonthAgo,
 		new Date(),
 	);
 
-	return (
+    return (
 		<div className="space-y-8">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-bold">{account.name}</h1>
