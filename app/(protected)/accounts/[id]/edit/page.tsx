@@ -2,14 +2,11 @@ import { AccountEditForm } from "@/app/(protected)/accounts/[id]/edit/account-ed
 import { getAccountById } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
 
-type Props = {
-	params: {
-		id: string;
-	};
-	searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export default async function EditAccountPage({ params }: Props) {
+export default async function EditAccountPage({
+	params,
+}: {
+	params: { id: string };
+}) {
 	// 口座データ取得
 	const account = await getAccountById(params.id);
 	if (!account) {
