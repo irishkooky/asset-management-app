@@ -38,22 +38,6 @@ export const updateSession = async (request: NextRequest) => {
 			},
 		});
 
-		// This will refresh session if expired - required for Server Components
-		// https://supabase.com/docs/guides/auth/server-side/nextjs
-		const user = await supabase.auth.getUser();
-
-		// 保護されたルートの設定
-		const { pathname } = request.nextUrl;
-		const protectedRoutes = ["/dashboard"];
-
-		// ユーザーがログインしていない場合、保護されたルートへのアクセスをトップページにリダイレクト
-		if (
-			protectedRoutes.some((route) => pathname.startsWith(route)) &&
-			!user.data.user
-		) {
-			return NextResponse.redirect(new URL("/", request.url));
-		}
-
 		return response;
 	} catch (e) {
 		// If you are here, a Supabase client could not be created!
