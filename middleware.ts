@@ -13,28 +13,24 @@ export async function middleware(request: NextRequest) {
 		throw new Error("Missing Supabase environment variables");
 	}
 
-	const supabase = createServerClient(
-		supabaseUrl,
-		supabaseKey,
-		{
-			cookies: {
-				getAll() {
-					return request.cookies.getAll();
-				},
-				setAll(cookiesToSet) {
-					for (const { name, value } of cookiesToSet) {
-						request.cookies.set(name, value);
-					}
-					supabaseResponse = NextResponse.next({
-						request,
-					});
-					for (const { name, value, options } of cookiesToSet) {
-						supabaseResponse.cookies.set(name, value, options);
-					}
-				},
+	const supabase = createServerClient(supabaseUrl, supabaseKey, {
+		cookies: {
+			getAll() {
+				return request.cookies.getAll();
+			},
+			setAll(cookiesToSet) {
+				for (const { name, value } of cookiesToSet) {
+					request.cookies.set(name, value);
+				}
+				supabaseResponse = NextResponse.next({
+					request,
+				});
+				for (const { name, value, options } of cookiesToSet) {
+					supabaseResponse.cookies.set(name, value, options);
+				}
 			},
 		},
-	);
+	});
 
 	// Do not run code between createServerClient and
 	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
@@ -45,8 +41,8 @@ export async function middleware(request: NextRequest) {
 	} = await supabase.auth.getUser();
 
 	// パブリックパス（認証なしでアクセス可能なパス）のチェック
-	const isPublicPath = 
-		request.nextUrl.pathname === "/" || 
+	const isPublicPath =
+		request.nextUrl.pathname === "/" ||
 		request.nextUrl.pathname.startsWith("/auth/");
 
 	// ユーザーが認証されていない場合、パブリックパス以外へのアクセスをランディングページにリダイレクト
