@@ -1,9 +1,11 @@
 {
 	"javascript.suggestionActions.enabled": false,
 	"typescript.preferences.importModuleSpecifier": "non-relative",
+	"editor.formatOnSave": true,
 	"editor.codeActionsOnSave": {
 		"quickfix.biome": "explicit",
-		"source.organizeImports.biome": "explicit"
+		"source.organizeImports.biome": "explicit",
+		"source.fixAll.biome": "explicit"
 	},
 	"editor.defaultFormatter": "biomejs.biome",
 	"[javascript]": {
@@ -15,10 +17,6 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"githubPullRequests.ignoredPullRequestBranches": [
-		"develop"
-	],
-	"cSpell.words": [
-		"supabase"
-	]
+	"githubPullRequests.ignoredPullRequestBranches": ["develop"],
+	"cSpell.words": ["supabase"]
 }
