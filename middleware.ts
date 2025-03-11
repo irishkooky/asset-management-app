@@ -44,14 +44,14 @@ export async function middleware(request: NextRequest) {
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	if (
-		!user &&
-		!request.nextUrl.pathname.startsWith("/login") &&
-		!request.nextUrl.pathname.startsWith("/auth")
-	) {
-		// no user, redirect to login page
+	// パブリックパス（認証なしでアクセス可能なパス）のチェック
+	const isPublicPath = request.nextUrl.pathname === "/";
+
+	// ユーザーが認証されていない場合、パブリックパス以外へのアクセスをランディングページにリダイレクト
+	if (!user && !isPublicPath) {
+		// 未認証ユーザーが保護されたパスにアクセスしようとした場合、ランディングページへリダイレクト
 		const url = request.nextUrl.clone();
-		url.pathname = "/login";
+		url.pathname = "/";
 		return NextResponse.redirect(url);
 	}
 
