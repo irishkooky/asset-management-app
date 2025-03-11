@@ -15,5 +15,10 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"githubPullRequests.ignoredPullRequestBranches": ["develop"]
+	"githubPullRequests.ignoredPullRequestBranches": [
+		"develop"
+	],
+	"cSpell.words": [
+		"supabase"
+	]
 }
