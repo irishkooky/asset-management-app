@@ -6,6 +6,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 
 Technical preferences:
 
+- Use pnpm as the package manager for all dependency management
 - Always use kebab-case for component names (e.g. my-component.tsx)
 - Favour using React Server Components and Next.js SSR features where possible
 - Minimize the usage of client components ('use client') to small, isolated components
@@ -35,3 +36,4 @@ General preferences:
 
 Commit message
 - Write all messages in English
+
