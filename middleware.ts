@@ -45,7 +45,9 @@ export async function middleware(request: NextRequest) {
 	} = await supabase.auth.getUser();
 
 	// パブリックパス（認証なしでアクセス可能なパス）のチェック
-	const isPublicPath = request.nextUrl.pathname === "/";
+	const isPublicPath = 
+		request.nextUrl.pathname === "/" || 
+		request.nextUrl.pathname.startsWith("/auth/");
 
 	// ユーザーが認証されていない場合、パブリックパス以外へのアクセスをランディングページにリダイレクト
 	if (!user && !isPublicPath) {
