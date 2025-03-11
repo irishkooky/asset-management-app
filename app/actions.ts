@@ -13,7 +13,10 @@ export const signOutAction = async () => {
 
 export const signInWithGoogleAction = async () => {
 	const supabase = await createClient();
-	const origin = (await headers()).get("origin");
+	const headersList = await headers();
+	const host = headersList.get("host") || "";
+	const protocol = host.includes("localhost") ? "http" : "https";
+	const origin = `${protocol}://${host}`;
 
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "google",
