@@ -18,6 +18,22 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 - Always add loading and error states to data fetching components
 - Implement error handling and error logging
 - Use semantic HTML elements where possible
+- Use named exports for components instead of default exports:
+  ```typescript
+  // ✅ Good
+  export function MyComponent() {}
+  import { MyComponent } from './my-component'
+  
+  // ❌ Bad
+  export default function MyComponent() {}
+  import MyComponent from './my-component'
+  ```
+  Benefits:
+  - Improve code consistency
+  - Enable better tree-shaking
+  - Make imports more explicit
+  - Facilitate easier refactoring
+  - Ensure component names match their file names
 - HeroUI Implementation Guidelines:
   - Always wrap your app with HeroUIProvider
   - Use HeroUI's predefined components when available
