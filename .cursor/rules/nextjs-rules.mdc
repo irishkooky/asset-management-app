@@ -18,6 +18,40 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 - Always add loading and error states to data fetching components
 - Implement error handling and error logging
 - Use semantic HTML elements where possible
+- Component Splitting Strategy:
+  - Keep components in their parent file until one of these conditions is met:
+    1. The component needs to be a client component ('use client')
+    2. The component needs to be reused across multiple pages/components
+  - Benefits:
+    - Reduces unnecessary file fragmentation
+    - Keeps related code together
+    - Makes the codebase easier to navigate
+    - Simplifies the development process
+    ```typescript
+    // ✅ Good: Keep small server components in the same file
+    export function ParentComponent() {
+      return (
+        <div>
+          <Header />
+          <MainContent />
+          <Footer />
+        </div>
+      );
+    }
+    
+    function Header() { return <header>...</header>; }
+    function MainContent() { return <main>...</main>; }
+    function Footer() { return <footer>...</footer>; }
+    
+    // ✅ Good: Split when component needs to be client-side
+    // dashboard-button.tsx
+    'use client'
+    export function DashboardButton() { ... }
+    
+    // ✅ Good: Split when component is reused
+    // shared-layout.tsx
+    export function SharedLayout() { ... }
+    ```
 - Use named exports for components instead of default exports:
   ```typescript
   // ✅ Good
