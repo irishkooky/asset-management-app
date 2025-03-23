@@ -5,7 +5,6 @@ import { getTotalBalance } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import { createClient } from "@/utils/supabase/server";
-
 export const metadata = {
 	title: "資産管理アプリ - シンプルで使いやすい家計簿・資産管理ツール",
 	description:
