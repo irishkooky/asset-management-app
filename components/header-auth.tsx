@@ -1,5 +1,6 @@
 import { signInWithGoogleAction, signOutAction } from "@/app/actions";
 import { createClient } from "@/utils/supabase/server";
+import { DashboardLink } from "./dashboard-link";
 import { Button } from "./ui/button";
 
 export default async function AuthButton() {
@@ -11,6 +12,7 @@ export default async function AuthButton() {
 
 	return user ? (
 		<div className="flex items-center gap-4">
+			<DashboardLink />
 			<form action={signOutAction}>
 				<Button type="submit" variant={"outline"} size="sm">
 					ログアウト
