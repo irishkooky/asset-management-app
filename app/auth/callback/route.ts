@@ -15,6 +15,15 @@ export async function GET(request: Request) {
 
 	const next = requestUrl.searchParams.get("next")?.toString();
 
+	// Validate that the next parameter is a safe relative path
+	const isValidRedirectPath = (path: string | undefined): boolean => {
+		if (!path) return false;
+		// Ensure the path starts with / and doesn't contain protocol or domain
+		return (
+			path.startsWith("/") && !path.includes("://") && !path.startsWith("//")
+		);
+	};
+
 	if (code) {
 		const supabase = await createClient();
 		const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -27,7 +36,8 @@ export async function GET(request: Request) {
 		}
 	}
 
-	if (next) {
+	// Only redirect to next if it's a valid relative path
+	if (next && isValidRedirectPath(next)) {
 		return NextResponse.redirect(`${origin}${next}`);
 	}
 
