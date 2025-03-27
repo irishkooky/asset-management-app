@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 	const protocol = host.includes("localhost") ? "http" : "https";
 	const origin = `${protocol}://${host}`;
 
-	const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+	const next = requestUrl.searchParams.get("next")?.toString();
 
 	if (code) {
 		const supabase = await createClient();
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
 		}
 	}
 
-	if (redirectTo) {
-		return NextResponse.redirect(`${origin}${redirectTo}`);
+	if (next) {
+		return NextResponse.redirect(`${origin}${next}`);
 	}
 
 	// URL to redirect to after sign up process completes
