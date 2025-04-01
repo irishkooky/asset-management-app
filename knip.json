@@ -1,0 +1,16 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"app/**/*.ts",
+		"app/**/*.tsx",
+		"pages/**/*.ts",
+		"pages/**/*.tsx",
+		"components/**/*.ts",
+		"components/**/*.tsx",
+		"middleware.ts",
+		"next.config.ts"
+	],
+	"project": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+	"ignore": ["**/*.d.ts", "node_modules", ".next", ".vercel"],
+	"ignoreExportsUsedInFile": true
+}
