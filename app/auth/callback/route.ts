@@ -2,26 +2,34 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-	// The `/auth/callback` route is required for the server-side auth flow implemented
-	// by the SSR package. It exchanges an auth code for the user's session.
-	// https://supabase.com/docs/guides/auth/server-side/nextjs
-	const requestUrl = new URL(request.url);
-	const code = requestUrl.searchParams.get("code");
+	const { searchParams, origin } = new URL(request.url);
+	const code = searchParams.get("code");
 
-	// Get host and construct origin
-	const host = requestUrl.host;
-	const protocol = host.includes("localhost") ? "http" : "https";
-	const origin = `${protocol}://${host}`;
-
-	const next = requestUrl.searchParams.get("next")?.toString();
+	// if "next" is in param, use it as the redirect URL
+	const next = searchParams.get("next") ?? "/";
 
 	// Validate that the next parameter is a safe relative path
-	const isValidRedirectPath = (path: string | undefined): boolean => {
-		if (!path) return false;
+	const isValidRedirectPath = (path: string): boolean => {
 		// Ensure the path starts with / and doesn't contain protocol or domain
 		return (
 			path.startsWith("/") && !path.includes("://") && !path.startsWith("//")
 		);
+	};
+
+	// Helper function to get the appropriate redirect URL based on environment
+	const getRedirectUrl = (path: string): string => {
+		const forwardedHost = request.headers.get("x-forwarded-host");
+		const isLocalEnv = process.env.NODE_ENV === "development";
+
+		if (isLocalEnv) {
+			return `${origin}${path}`;
+		}
+
+		if (forwardedHost) {
+			return `https://${forwardedHost}${path}`;
+		}
+
+		return `${origin}${path}`;
 	};
 
 	if (code) {
@@ -34,13 +42,12 @@ export async function GET(request: Request) {
 				`${origin}?error=${encodeURIComponent(error.message)}`,
 			);
 		}
+
+		// Redirect to next path if valid, otherwise to root
+		const redirectPath = next && isValidRedirectPath(next) ? next : "/";
+		return NextResponse.redirect(getRedirectUrl(redirectPath));
 	}
 
-	// Only redirect to next if it's a valid relative path
-	if (next && isValidRedirectPath(next)) {
-		return NextResponse.redirect(`${origin}${next}`);
-	}
-
-	// URL to redirect to after sign up process completes
-	return NextResponse.redirect(`${origin}`);
+	// Return the user to an error page if no code was provided
+	return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }
