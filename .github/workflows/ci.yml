@@ -39,3 +39,5 @@ jobs:
         run: pnpm install
       - name: Type check
         run: pnpm run typecheck
+      - name: Run knip
+        run: pnpm knip:ci

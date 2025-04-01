@@ -1,4 +1,4 @@
-import { ClientNavMenu } from "@/components/client-nav-menu";
+import { NavMenu } from "@/components/nav-menu";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -19,7 +19,7 @@ export default async function ProtectedLayout({
 
 	return (
 		<div className="w-full max-w-5xl mx-auto p-4">
-			<ClientNavMenu />
+			<NavMenu />
 			{children}
 		</div>
 	);
