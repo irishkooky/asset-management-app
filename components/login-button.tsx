@@ -8,7 +8,7 @@ interface LoginButtonProps {
 	children?: React.ReactNode;
 }
 
-export default function LoginButton({
+export function LoginButton({
 	variant = "default",
 	size = "default",
 	className = "",
