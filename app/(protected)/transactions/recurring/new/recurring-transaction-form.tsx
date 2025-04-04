@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect, useState } from "react";
-import { createRecurringTransactionAction } from "../../actions";
+import { createRecurringTransactionAction } from "./actions";
 
 interface RecurringTransactionFormProps {
 	accounts?: Account[];
