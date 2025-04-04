@@ -1,6 +1,6 @@
-import { signInWithGoogleAction, signOutAction } from "@/app/actions";
 import { createClient } from "@/utils/supabase/server";
-import { Button } from "./button";
+import { Button } from "../../shared-components/button";
+import { signInWithGoogleAction, signOutAction } from "../actions";
 import { DashboardLink } from "./dashboard-link";
 
 export default async function AuthButton() {

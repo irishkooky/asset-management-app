@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/button";
+import { Button } from "../../../../../../shared-components/button";
 import type { Account, RecurringTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

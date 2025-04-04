@@ -1,4 +1,4 @@
-import LoginButton from "@/components/login-button";
+import LoginButton from "./login-button";
 import Link from "next/link";
 import { Button } from "./button";
 

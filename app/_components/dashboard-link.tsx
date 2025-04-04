@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "./button";
+import { Button } from "../../shared-components/button";
 
 export function DashboardLink() {
 	const pathname = usePathname();

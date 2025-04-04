@@ -1,4 +1,4 @@
-import Dashboard from "@/components/dashboard";
+import Dashboard from "../../../shared-components/dashboard";
 import { getAllPredictions } from "@/utils/predictions";
 import { getTotalBalance } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
