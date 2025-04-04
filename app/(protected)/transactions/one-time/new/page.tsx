@@ -1,6 +1,6 @@
-import { OneTimeTransactionForm } from "@/app/(protected)/transactions/one-time/new/one-time-transaction-form";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
+import { OneTimeTransactionForm } from "./one-time-transaction-form";
 
 export default async function NewOneTimeTransactionPage(props: {
 	searchParams?: Promise<{ accountId?: string }>;

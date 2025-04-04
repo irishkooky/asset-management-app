@@ -1,15 +1,15 @@
 "use client";
 
-import {
-	deleteRecurringTransactionAction,
-	updateRecurringTransactionAction,
-} from "@/app/(protected)/transactions/actions";
 import { Button } from "@/components/button";
 import type { Account, RecurringTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect } from "react";
+import {
+	deleteRecurringTransactionAction,
+	updateRecurringTransactionAction,
+} from "../../../actions";
 
 interface RecurringTransactionEditFormProps {
 	transaction: RecurringTransaction;

@@ -1,15 +1,12 @@
 "use client";
 
-import {
-	deleteAccountAction,
-	updateAccountAction,
-} from "@/app/(protected)/accounts/actions";
 import { Button } from "@/components/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect } from "react";
+import { deleteAccountAction, updateAccountAction } from "../../actions";
 
 interface AccountEditFormProps {
 	account: Account;

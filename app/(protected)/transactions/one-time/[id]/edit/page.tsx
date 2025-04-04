@@ -1,7 +1,7 @@
-import { OneTimeTransactionEditForm } from "@/app/(protected)/transactions/one-time/[id]/edit/one-time-transaction-edit-form";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionById } from "@/utils/supabase/one-time-transactions";
 import { notFound } from "next/navigation";
+import { OneTimeTransactionEditForm } from "./one-time-transaction-edit-form";
 
 export default async function EditOneTimeTransactionPage(props: {
 	params: Promise<{ id: string }>;

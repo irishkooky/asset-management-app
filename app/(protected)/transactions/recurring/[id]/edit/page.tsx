@@ -1,7 +1,7 @@
-import { RecurringTransactionEditForm } from "@/app/(protected)/transactions/recurring/[id]/edit/recurring-transaction-edit-form";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getRecurringTransactionById } from "@/utils/supabase/recurring-transactions";
 import { notFound } from "next/navigation";
+import { RecurringTransactionEditForm } from "./recurring-transaction-edit-form";
 
 export default async function EditRecurringTransactionPage(props: {
 	params: Promise<{ id: string }>;
