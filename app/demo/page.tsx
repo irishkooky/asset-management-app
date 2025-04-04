@@ -1,10 +1,10 @@
-import Dashboard from "../../shared-components/dashboard";
 import {
 	getDemoPredictions,
 	getDemoRecentTransactions,
 	getDemoRecurringTransactions,
 	getDemoTotalBalance,
 } from "@/utils/demo-data";
+import Dashboard from "../../components/dashboard";
 
 export const metadata = {
 	title: "デモモード - 資産管理アプリ",

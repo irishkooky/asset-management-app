@@ -1,4 +1,4 @@
-import { Button } from "@/shared-components/button";
+import { Button } from "../../../../components/button";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 import Link from "next/link";
 

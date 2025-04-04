@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
-import { Button } from "../shared-components/button";
-import LoginButton from "../shared-components/login-button";
+import { Button } from "../components/button";
+import LoginButton from "../components/login-button";
 
 export const metadata = {
 	title: "資産管理アプリ - シンプルで使いやすい家計簿・資産管理ツール",

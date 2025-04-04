@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { Button } from "../../shared-components/button";
+import { Button } from "../../components/button";
 import { signInWithGoogleAction, signOutAction } from "../actions";
 import { DashboardLink } from "./dashboard-link";
 

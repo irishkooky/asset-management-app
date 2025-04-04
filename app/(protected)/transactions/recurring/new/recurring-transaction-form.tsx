@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "../../../../../shared-components/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect, useState } from "react";
+import { Button } from "../../../../../components/button";
 import { createRecurringTransactionAction } from "../../actions";
 
 interface RecurringTransactionFormProps {

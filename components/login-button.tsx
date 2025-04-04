@@ -1,5 +1,5 @@
-import { Button } from "./button";
 import { signInWithGoogleAction } from "../app/actions";
+import { Button } from "./button";
 
 interface LoginButtonProps {
 	variant?: "default" | "outline" | "secondary" | "ghost" | "link";

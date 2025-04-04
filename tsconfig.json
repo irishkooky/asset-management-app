@@ -21,7 +21,7 @@
 		],
 		"paths": {
 			"@/lib/*": ["./lib/*"],
-			"@/shared-components/*": ["./shared-components/*"],
+			"@/components/*": ["./components/*"],
 			"@/styles/*": ["./styles/*"],
 			"@/utils/*": ["./utils/*"],
 			"@/types/*": ["./types/*"]
