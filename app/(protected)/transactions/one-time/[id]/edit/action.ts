@@ -1,3 +1,5 @@
+"use server";
+
 import type { TransactionType } from "@/types/database";
 import {
 	deleteOneTimeTransaction,
