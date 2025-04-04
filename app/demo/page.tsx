@@ -1,4 +1,4 @@
-import Dashboard from "@/components/dashboard";
+import Dashboard from "@/app/_components/dashboard";
 import {
 	getDemoPredictions,
 	getDemoRecentTransactions,

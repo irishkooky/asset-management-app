@@ -1,7 +1,7 @@
 "use client";
 
 import { createAccountAction } from "@/app/(protected)/accounts/actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";

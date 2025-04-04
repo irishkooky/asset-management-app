@@ -4,7 +4,7 @@ import {
 	deleteOneTimeTransactionAction,
 	updateOneTimeTransactionAction,
 } from "@/app/(protected)/transactions/actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
 import type { Account, OneTimeTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

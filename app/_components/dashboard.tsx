@@ -1,5 +1,5 @@
-import LoginButton from "@/components/login-button";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
+import LoginButton from "@/app/_components/login-button";
 import Link from "next/link";
 
 interface Prediction {

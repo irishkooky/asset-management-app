@@ -1,7 +1,7 @@
 "use client";
 
 import { createRecurringTransactionAction } from "@/app/(protected)/transactions/actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

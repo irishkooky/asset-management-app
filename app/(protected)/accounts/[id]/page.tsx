@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
 import { getAccountPredictions } from "@/utils/predictions";
 import { getAccountById } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";

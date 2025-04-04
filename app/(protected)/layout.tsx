@@ -1,4 +1,4 @@
-import { NavMenu } from "@/components/nav-menu";
+import { NavMenu } from "@/app/(protected)/_components/nav-menu";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 

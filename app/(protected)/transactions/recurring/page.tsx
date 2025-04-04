@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/_components/button";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import Link from "next/link";
 
