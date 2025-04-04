@@ -1,6 +1,6 @@
-import { RecurringTransactionForm } from "@/app/(protected)/transactions/recurring/new/recurring-transaction-form";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
+import { RecurringTransactionForm } from "./recurring-transaction-form";
 
 export default async function NewRecurringTransactionPage(props: {
 	searchParams?: Promise<{ accountId?: string }>;
