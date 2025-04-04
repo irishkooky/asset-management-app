@@ -1,15 +1,15 @@
 "use client";
 
+import { Button } from "@/components/button";
 import type { Account, OneTimeTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect } from "react";
-import { Button } from "@/components/button";
 import {
 	deleteOneTimeTransactionAction,
 	updateOneTimeTransactionAction,
-} from "../../../actions";
+} from "./action";
 
 interface OneTimeTransactionEditFormProps {
 	transaction: OneTimeTransaction;
