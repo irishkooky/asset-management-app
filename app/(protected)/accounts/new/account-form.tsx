@@ -1,11 +1,11 @@
 "use client";
 
-import { createAccountAction } from "@/app/(protected)/accounts/actions";
-import { Button } from "@/app/_components/button";
+import { Button } from "@/components/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect } from "react";
+import { createAccountAction } from "../actions";
 
 export function AccountForm() {
 	const router = useRouter();

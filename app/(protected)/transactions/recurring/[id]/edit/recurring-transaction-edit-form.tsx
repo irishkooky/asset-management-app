@@ -4,7 +4,7 @@ import {
 	deleteRecurringTransactionAction,
 	updateRecurringTransactionAction,
 } from "@/app/(protected)/transactions/actions";
-import { Button } from "@/app/_components/button";
+import { Button } from "@/components/button";
 import type { Account, RecurringTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

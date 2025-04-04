@@ -1,6 +1,6 @@
-import { Button } from "@/app/_components/button";
-import LoginButton from "@/app/_components/login-button";
+import LoginButton from "@/components/login-button";
 import Link from "next/link";
+import { Button } from "./button";
 
 interface Prediction {
 	period: string;

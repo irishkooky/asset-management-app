@@ -4,7 +4,7 @@ import {
 	deleteAccountAction,
 	updateAccountAction,
 } from "@/app/(protected)/accounts/actions";
-import { Button } from "@/app/_components/button";
+import { Button } from "@/components/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

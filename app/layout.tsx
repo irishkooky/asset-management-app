@@ -1,5 +1,5 @@
-import HeaderAuth from "@/app/_components/header-auth";
-import { ThemeSwitcher } from "@/app/_components/theme-switcher";
+import HeaderAuth from "@/components/header-auth";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { ThemeProvider } from "next-themes";
 import { Geist } from "next/font/google";
 import Link from "next/link";
