@@ -1,4 +1,4 @@
-import { Button } from "../../../components/button";
+import { Button } from "@/components/button";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import Link from "next/link";
 

@@ -1,8 +1,8 @@
+import Dashboard from "@/components/dashboard";
 import { getAllPredictions } from "@/utils/predictions";
 import { getTotalBalance } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
-import Dashboard from "../../../components/dashboard";
 
 export default async function DashboardPage() {
 	const totalBalance = await getTotalBalance();
