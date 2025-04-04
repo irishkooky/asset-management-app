@@ -1,6 +1,6 @@
-import { NavMenu } from "@/components/nav-menu";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { NavMenu } from "./_components/nav-menu";
 
 export default async function ProtectedLayout({
 	children,

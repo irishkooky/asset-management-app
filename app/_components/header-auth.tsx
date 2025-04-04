@@ -1,7 +1,7 @@
-import { signInWithGoogleAction, signOutAction } from "@/app/actions";
+import { Button } from "@/components/button";
 import { createClient } from "@/utils/supabase/server";
+import { signInWithGoogleAction, signOutAction } from "../actions";
 import { DashboardLink } from "./dashboard-link";
-import { Button } from "./ui/button";
 
 export default async function AuthButton() {
 	const supabase = await createClient();

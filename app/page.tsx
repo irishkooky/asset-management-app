@@ -1,5 +1,5 @@
-import LoginButton from "@/components/login-button";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/button";
+import { LoginButton } from "@/components/login-button";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 

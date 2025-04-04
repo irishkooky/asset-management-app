@@ -1,5 +1,5 @@
-import { signInWithGoogleAction } from "@/app/actions";
-import { Button } from "@/components/ui/button";
+import { signInWithGoogleAction } from "../app/actions";
+import { Button } from "./button";
 
 interface LoginButtonProps {
 	variant?: "default" | "outline" | "secondary" | "ghost" | "link";
@@ -8,7 +8,7 @@ interface LoginButtonProps {
 	children?: React.ReactNode;
 }
 
-export default function LoginButton({
+export function LoginButton({
 	variant = "default",
 	size = "default",
 	className = "",

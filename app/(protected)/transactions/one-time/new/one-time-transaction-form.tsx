@@ -1,12 +1,12 @@
 "use client";
 
-import { createOneTimeTransactionAction } from "@/app/(protected)/transactions/actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/button";
 import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useEffect, useState } from "react";
+import { createOneTimeTransactionAction } from "./action";
 
 interface OneTimeTransactionFormProps {
 	accounts?: Account[];
