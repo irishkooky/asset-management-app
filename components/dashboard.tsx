@@ -1,6 +1,7 @@
 import { Button } from "@/components/button";
 import { LoginButton } from "@/components/login-button";
 import Link from "next/link";
+import { UpdateBalancesButton } from "../app/_components/update-balances-button";
 
 interface Prediction {
 	period: string;
@@ -65,8 +66,15 @@ export default function Dashboard({
 
 			{/* 現在の総残高 */}
 			<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-				<h2 className="text-lg font-medium mb-2">現在の総残高</h2>
-				<p className="text-3xl font-bold">¥{totalBalance.toLocaleString()}</p>
+				<div className="flex justify-between items-start">
+					<div>
+						<h2 className="text-lg font-medium mb-2">現在の総残高</h2>
+						<p className="text-3xl font-bold">
+							¥{totalBalance.toLocaleString()}
+						</p>
+					</div>
+					{!isDemo && <UpdateBalancesButton />}
+				</div>
 			</div>
 
 			{/* 貯蓄予測 */}
