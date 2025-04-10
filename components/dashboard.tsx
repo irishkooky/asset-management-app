@@ -24,7 +24,7 @@ interface Transaction {
 interface DashboardProps {
 	totalBalance: number;
 	predictions: Prediction[];
-	monthlyPredictions: Prediction[];
+	monthlyPredictions?: Prediction[];
 	recurringTransactions: Transaction[];
 	recentTransactions: Transaction[];
 	isDemo?: boolean;
@@ -242,7 +242,7 @@ export default function Dashboard({
 										</tr>
 									</thead>
 									<tbody>
-										{monthlyPredictions.map((prediction) => {
+										{monthlyPredictions?.map((prediction) => {
 											// 期間ラベルを生成（例: "1month" -> "1ヶ月後", "2months" -> "2ヶ月後"）
 											let periodLabel = "1ヶ月後";
 											if (prediction.period === "1month") {
@@ -276,7 +276,7 @@ export default function Dashboard({
 							</h2>
 							<div className="h-64 flex items-center justify-center">
 								<div className="flex h-full w-full items-end justify-between gap-1 overflow-x-auto px-2">
-									{monthlyPredictions.map((prediction) => {
+									{monthlyPredictions?.map((prediction) => {
 										// 期間ラベルを生成
 										let periodLabel = "1ヶ月後";
 										if (prediction.period === "1month") {
@@ -290,7 +290,7 @@ export default function Dashboard({
 
 										// 最大値を基準にした相対的な高さを計算
 										const maxAmount = Math.max(
-											...monthlyPredictions.map((p) => p.amount),
+											...(monthlyPredictions?.map((p) => p.amount) ?? []),
 										);
 										const heightPercentage =
 											(prediction.amount / maxAmount) * 100;
