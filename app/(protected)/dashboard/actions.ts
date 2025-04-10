@@ -7,7 +7,9 @@ import {
 
 export const updateAccountBalancesAction = async () => {
 	try {
+		// 今日の日付を取得し、翌日の0時0分0秒に設定（今日の取引も含めるため）
 		const today = new Date();
+		today.setDate(today.getDate() + 1);
 		today.setHours(0, 0, 0, 0);
 
 		// 口座処理
