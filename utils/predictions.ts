@@ -123,6 +123,52 @@ export async function getAllPredictions(): Promise<SavingsPrediction[]> {
 }
 
 /**
+ * 1か月ごとの貯蓄額を予測する（1ヶ月後から12ヶ月後まで）
+ */
+export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
+	// 1から12までの月数の配列を作成
+	const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+	// 各月の予測を計算
+	const predictions = await Promise.all(
+		months.map(async (month) => {
+			const futureDate = getFutureDate(month);
+
+			// 現在の総残高を取得
+			const currentBalance = await getTotalBalance();
+
+			// 月間の定期的な収支を取得
+			const monthlyRecurring = await getMonthlyRecurringTotal();
+			const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
+
+			// 予測期間内の臨時収支を取得
+			const today = new Date();
+			const oneTimeTransactions = await getOneTimeTransactionsTotal(
+				today,
+				futureDate,
+			);
+			const oneTimeNet =
+				oneTimeTransactions.income - oneTimeTransactions.expense;
+
+			// 将来の貯蓄額を計算
+			const predictedAmount = currentBalance + monthlyNet * month + oneTimeNet;
+
+			// 期間を文字列に変換（例: "1month", "2months"）
+			const periodStr =
+				month === 1 ? "1month" : (`${month}months` as PredictionPeriod);
+
+			return {
+				period: periodStr,
+				amount: predictedAmount,
+				date: futureDate.toISOString().split("T")[0],
+			};
+		}),
+	);
+
+	return predictions;
+}
+
+/**
  * 特定の口座の全ての予測期間に対する貯蓄額を予測する
  */
 export async function getAccountPredictions(
