@@ -21,10 +21,10 @@ interface MonthlySummary {
 }
 
 interface PageProps {
-	searchParams: {
+	searchParams: Promise<{
 		year?: string;
 		month?: string;
-	};
+	}>;
 }
 
 export default async function MonthlySummaryPage({ searchParams }: PageProps) {
@@ -34,12 +34,9 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 	const currentMonth = now.getMonth() + 1; // JavaScriptの月は0から始まるため+1
 
 	// URLパラメータから年月を取得（指定がない場合は現在の年月を使用）
-	const year = searchParams.year
-		? Number.parseInt(searchParams.year)
-		: currentYear;
-	const month = searchParams.month
-		? Number.parseInt(searchParams.month)
-		: currentMonth;
+	const params = await searchParams;
+	const year = params.year ? Number.parseInt(params.year) : currentYear;
+	const month = params.month ? Number.parseInt(params.month) : currentMonth;
 
 	// 前月と翌月のリンク用のパラメータを計算
 	let prevYear = year;
