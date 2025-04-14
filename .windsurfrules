@@ -17,8 +17,6 @@
 
 # General Code Style & Formatting
 - Always declare the type of each variable and function (parameters and return value).
-- Use the type that best describes the data instead of importing types from 'react' or other libraries.
-- Do not use type-only imports for React types.
 - Avoid using any.
 - Create necessary types.
 - One export per file.
