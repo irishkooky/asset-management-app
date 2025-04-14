@@ -68,7 +68,7 @@ export function AccountForm() {
 							id="initialBalance"
 							name="initialBalance"
 							type="number"
-							step="0.01"
+							step="1"
 							className="w-full p-2 border rounded-md"
 							placeholder="0"
 						/>

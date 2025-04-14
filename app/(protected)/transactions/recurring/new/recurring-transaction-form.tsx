@@ -113,7 +113,7 @@ export function RecurringTransactionForm({
 							id="amount"
 							name="amount"
 							type="number"
-							step="0.01"
+							step="1"
 							required
 							className="w-full p-2 border rounded-md"
 							placeholder="0"
