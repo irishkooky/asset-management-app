@@ -8,7 +8,6 @@ import { updateAccountBalancesAction } from "./actions";
 export default async function DashboardPage() {
 	await updateAccountBalancesAction();
 
-	// 更新後の残高と予測などを並列で取得
 	const oneMonthAgo = new Date();
 	oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
