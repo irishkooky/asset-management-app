@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
 	// パブリックパス（認証なしでアクセス可能なパス）のチェック
 	const isPublicPath =
 		request.nextUrl.pathname === "/" ||
+		request.nextUrl.pathname === "/demo" ||
 		request.nextUrl.pathname.startsWith("/auth/");
 
 	// ユーザーが認証されていない場合、パブリックパス以外へのアクセスをランディングページにリダイレクト
