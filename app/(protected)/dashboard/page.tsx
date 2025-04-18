@@ -1,5 +1,5 @@
 import { Dashboard } from "@/components/dashboard";
-import { getAllPredictions, getMonthlyPredictions } from "@/utils/predictions";
+import { getMonthlyPredictions } from "@/utils/predictions";
 import { getTotalBalance } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
@@ -13,13 +13,11 @@ export default async function DashboardPage() {
 
 	const [
 		totalBalance,
-		predictions,
 		monthlyPredictions,
 		recurringTransactions,
 		recentTransactions,
 	] = await Promise.all([
 		getTotalBalance(),
-		getAllPredictions(),
 		getMonthlyPredictions(),
 		getUserRecurringTransactions(),
 		getUserOneTimeTransactions(undefined, oneMonthAgo, new Date()),
@@ -28,7 +26,6 @@ export default async function DashboardPage() {
 	return (
 		<Dashboard
 			totalBalance={totalBalance}
-			predictions={predictions}
 			monthlyPredictions={monthlyPredictions}
 			recurringTransactions={recurringTransactions}
 			recentTransactions={recentTransactions}
