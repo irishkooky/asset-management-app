@@ -1,3 +1,5 @@
+![project‑status](https://img.shields.io/badge/project--status-work--in--progress-orange)<!--  [oai_citation_attribution:0‡Shields.io | Shields.io](https://img.shields.io/badge/project--status-work--in--progress-orange?utm_source=chatgpt.com) -->
+
 # Asset Management App
 
 A full-stack web application built with Next.js, Supabase, and TailwindCSS for managing assets and resources.
