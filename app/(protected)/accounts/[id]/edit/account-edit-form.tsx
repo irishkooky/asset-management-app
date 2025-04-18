@@ -81,7 +81,7 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 							id="currentBalance"
 							name="currentBalance"
 							type="number"
-							step="0.01"
+							step="1"
 							defaultValue={account.current_balance}
 							className="w-full p-2 border rounded-md"
 						/>

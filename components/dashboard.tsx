@@ -30,7 +30,7 @@ interface DashboardProps {
 	isDemo?: boolean;
 }
 
-export default function Dashboard({
+export function Dashboard({
 	totalBalance,
 	predictions,
 	monthlyPredictions,

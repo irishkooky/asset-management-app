@@ -112,7 +112,7 @@ export function OneTimeTransactionEditForm({
 							id="amount"
 							name="amount"
 							type="number"
-							step="0.01"
+							step="1"
 							required
 							defaultValue={transaction.amount}
 							className="w-full p-2 border rounded-md"
