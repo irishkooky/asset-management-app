@@ -97,9 +97,6 @@ export default async function Home() {
 					<LoginButton size="lg" variant="default">
 						無料で始める
 					</LoginButton>
-					<Button asChild>
-						<Link href="/login">ログインして始める</Link>
-					</Button>
 				</div>
 			</section>
 		</div>
