@@ -1,10 +1,6 @@
 "use client";
 
-import { Button } from "@/components/button";
-import { LoginButton } from "@/components/login-button";
-import Link from "next/link";
 import { useState } from "react";
-import { UpdateBalancesButton } from "../app/_components/update-balances-button";
 
 interface Prediction {
 	period: string;
@@ -23,20 +19,16 @@ interface Transaction {
 
 interface DashboardProps {
 	totalBalance: number;
-	predictions: Prediction[];
 	monthlyPredictions?: Prediction[];
 	recurringTransactions: Transaction[];
 	recentTransactions: Transaction[];
-	isDemo?: boolean;
 }
 
 export function Dashboard({
 	totalBalance,
-	predictions,
 	monthlyPredictions,
 	recurringTransactions,
 	recentTransactions,
-	isDemo = false,
 }: DashboardProps) {
 	const [activeTab, setActiveTab] = useState<"overview" | "savings-prediction">(
 		"overview",
@@ -44,35 +36,6 @@ export function Dashboard({
 
 	return (
 		<div className="space-y-8">
-			{/* デモモード通知 */}
-			{isDemo && (
-				<div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-					<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-						<div>
-							<h3 className="font-medium text-blue-800 dark:text-blue-300">
-								デモモード
-							</h3>
-							<p className="text-sm text-blue-700 dark:text-blue-400">
-								これはデモデータです。実際のデータを管理するにはログインしてください。
-							</p>
-						</div>
-						<div className="flex gap-2">
-							<LoginButton size="sm" className="whitespace-nowrap">
-								ログインする
-							</LoginButton>
-							<Button
-								asChild
-								size="sm"
-								variant="outline"
-								className="whitespace-nowrap"
-							>
-								<Link href="/">ホームに戻る</Link>
-							</Button>
-						</div>
-					</div>
-				</div>
-			)}
-
 			{/* タブナビゲーション */}
 			<div className="w-full">
 				{/* タブヘッダー */}
@@ -113,7 +76,6 @@ export function Dashboard({
 										¥{totalBalance.toLocaleString()}
 									</p>
 								</div>
-								{!isDemo && <UpdateBalancesButton />}
 							</div>
 						</div>
 
@@ -223,7 +185,6 @@ export function Dashboard({
 										¥{totalBalance.toLocaleString()}
 									</p>
 								</div>
-								{!isDemo && <UpdateBalancesButton />}
 							</div>
 						</div>
 

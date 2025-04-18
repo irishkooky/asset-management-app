@@ -38,9 +38,6 @@ export default async function Home() {
 								今すぐ始める
 							</LoginButton>
 						)}
-						<Button variant="outline" size="lg" asChild>
-							<Link href="/demo">デモを見る</Link>
-						</Button>
 					</div>
 				</div>
 			</section>
@@ -100,9 +97,6 @@ export default async function Home() {
 					<LoginButton size="lg" variant="default">
 						無料で始める
 					</LoginButton>
-					<Button variant="outline" size="lg" asChild>
-						<Link href="/demo">デモを試す</Link>
-					</Button>
 				</div>
 			</section>
 		</div>
