@@ -74,12 +74,8 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 
 	return (
 		<div className="space-y-8">
-			<div className="flex justify-between items-center">
-				<h1 className="text-2xl font-bold">月次収支サマリー</h1>
-			</div>
-
 			{/* ヘッダー部分（月選択、全体サマリー） */}
-			<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+			<div>
 				{/* 月選択 */}
 				<div className="flex justify-between items-center mb-6">
 					<Button variant="outline" size="sm" asChild>
@@ -98,25 +94,23 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 				</div>
 
 				{/* 全体サマリー */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-						<p className="text-sm text-gray-600 dark:text-gray-400">総収入</p>
-						<p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+				<div className="grid grid-cols-3 gap-2 md:gap-4 text-center md:text-left">
+					<div>
+						<p className="text-xs text-gray-600 dark:text-gray-400">収入</p>
+						<p className="text-lg font-bold text-blue-600 dark:text-blue-400">
 							¥{summary.totalIncome.toLocaleString()}
 						</p>
 					</div>
-					<div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-						<p className="text-sm text-gray-600 dark:text-gray-400">総支出</p>
-						<p className="text-2xl font-bold text-red-600 dark:text-red-400">
+					<div>
+						<p className="text-xs text-gray-600 dark:text-gray-400">支出</p>
+						<p className="text-lg font-bold text-red-600 dark:text-red-400">
 							¥{summary.totalExpense.toLocaleString()}
 						</p>
 					</div>
-					<div
-						className={`${summary.netBalance >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"} p-4 rounded-lg`}
-					>
-						<p className="text-sm text-gray-600 dark:text-gray-400">差引</p>
+					<div>
+						<p className="text-xs text-gray-600 dark:text-gray-400">収支</p>
 						<p
-							className={`text-2xl font-bold ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+							className={`text-lg font-bold ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
 						>
 							¥{summary.netBalance.toLocaleString()}
 						</p>
