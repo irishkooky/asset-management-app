@@ -1,4 +1,5 @@
 import { Button } from "@/components/button";
+import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getMonthlySummary } from "../../../app/actions";
@@ -36,51 +37,38 @@ async function SummaryContent({
 	// 月次収支データを取得
 	const summary = await getMonthlySummary(year, month);
 
-	// 日本語の月名
-	const monthNames = [
-		"1月",
-		"2月",
-		"3月",
-		"4月",
-		"5月",
-		"6月",
-		"7月",
-		"8月",
-		"9月",
-		"10月",
-		"11月",
-		"12月",
-	];
-
 	return (
 		<>
 			{/* 全体サマリー */}
-			<div className="grid grid-cols-3 gap-2 md:gap-4 text-center md:text-left">
-				<div>
-					<p className="text-xs text-gray-600 dark:text-gray-400">収入</p>
-					<p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-						¥{summary.totalIncome.toLocaleString()}
-					</p>
-				</div>
-				<div>
-					<p className="text-xs text-gray-600 dark:text-gray-400">支出</p>
-					<p className="text-lg font-bold text-red-600 dark:text-red-400">
-						¥{summary.totalExpense.toLocaleString()}
-					</p>
-				</div>
-				<div>
-					<p className="text-xs text-gray-600 dark:text-gray-400">収支</p>
-					<p
-						className={`text-lg font-bold ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-					>
-						¥{summary.netBalance.toLocaleString()}
-					</p>
-				</div>
-			</div>
+			<Card>
+				<CardBody>
+					<div className="grid grid-cols-3 gap-2 md:gap-4 text-center md:text-left">
+						<div>
+							<p className="text-xs text-gray-600 dark:text-gray-400">収入</p>
+							<p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+								¥{summary.totalIncome.toLocaleString()}
+							</p>
+						</div>
+						<div>
+							<p className="text-xs text-gray-600 dark:text-gray-400">支出</p>
+							<p className="text-lg font-bold text-red-600 dark:text-red-400">
+								¥{summary.totalExpense.toLocaleString()}
+							</p>
+						</div>
+						<div>
+							<p className="text-xs text-gray-600 dark:text-gray-400">収支</p>
+							<p
+								className={`text-lg font-bold ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+							>
+								¥{summary.netBalance.toLocaleString()}
+							</p>
+						</div>
+					</div>
+				</CardBody>
+			</Card>
 
 			{/* 口座別サマリーリスト */}
 			<div className="space-y-4">
-				<h2 className="text-xl font-semibold">口座別収支</h2>
 				{summary.accounts.map((account: AccountSummary) => (
 					<div
 						key={account.id}
