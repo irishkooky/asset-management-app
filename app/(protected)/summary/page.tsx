@@ -42,26 +42,44 @@ async function SummaryContent({
 			{/* 全体サマリー */}
 			<Card>
 				<CardBody>
-					<div className="grid grid-cols-3 gap-2 md:gap-4 text-center md:text-left">
-						<div>
-							<p className="text-xs text-gray-600 dark:text-gray-400">収入</p>
-							<p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-								¥{summary.totalIncome.toLocaleString()}
-							</p>
+					<div className="grid grid-cols-2 gap-0">
+						<div className="border-r border-gray-200 dark:border-gray-700 pr-4">
+							<div className="flex justify-between items-center py-2">
+								<div className="text-xs text-gray-600 dark:text-gray-400">
+									収入
+								</div>
+								<div className="text-lg font-medium text-green-600 dark:text-green-400">
+									¥{summary.totalIncome.toLocaleString()}
+								</div>
+							</div>
+							<div className="flex justify-between items-center py-2">
+								<div className="text-xs text-gray-600 dark:text-gray-400">
+									支出
+								</div>
+								<div className="text-lg font-medium text-red-600 dark:text-red-400">
+									¥{summary.totalExpense.toLocaleString()}
+								</div>
+							</div>
+							<div className="border-t border-gray-200 dark:border-gray-700 mt-1 pt-2">
+								<div className="flex justify-between items-center py-2">
+									<div className="text-xs text-gray-600 dark:text-gray-400">
+										収支
+									</div>
+									<div
+										className={`text-lg font-medium ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+									>
+										¥{summary.netBalance.toLocaleString()}
+									</div>
+								</div>
+							</div>
 						</div>
-						<div>
-							<p className="text-xs text-gray-600 dark:text-gray-400">支出</p>
-							<p className="text-lg font-bold text-red-600 dark:text-red-400">
-								¥{summary.totalExpense.toLocaleString()}
-							</p>
-						</div>
-						<div>
-							<p className="text-xs text-gray-600 dark:text-gray-400">収支</p>
-							<p
-								className={`text-lg font-bold ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-							>
-								¥{summary.netBalance.toLocaleString()}
-							</p>
+						<div className="flex text-center flex-col justify-center">
+							<div className="text-xs text-gray-600 dark:text-gray-400">
+								残高
+							</div>
+							<div className="text-xl font-medium text-green-600 dark:text-green-400">
+								¥{summary.totalBalance.toLocaleString()}
+							</div>
 						</div>
 					</div>
 				</CardBody>
