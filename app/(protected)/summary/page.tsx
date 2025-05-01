@@ -13,15 +13,6 @@ interface AccountSummary {
 	balance: number;
 }
 
-// 月次サマリーの型定義
-interface MonthlySummary {
-	totalIncome: number;
-	totalExpense: number;
-	totalBalance: number;
-	netBalance: number;
-	accounts: AccountSummary[];
-}
-
 interface PageProps {
 	searchParams: Promise<{
 		year?: string;
