@@ -64,7 +64,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 	];
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			<div className="flex justify-between items-center mb-6">
 				<Button variant="outline" size="sm" asChild>
 					<Link href={`/summary?year=${prevYear}&month=${prevMonth}`}>
