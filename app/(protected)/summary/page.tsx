@@ -3,6 +3,7 @@ import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getMonthlySummary } from "../../../app/actions";
+import { AccountAccordion } from "./_components/account-accordion";
 
 // 口座サマリーの型定義
 interface AccountSummary {
@@ -142,41 +143,12 @@ async function SummaryContent({
 				</CardBody>
 			</Card>
 
-			{/* 口座別サマリーリスト */}
 			<div className="space-y-4">
-				{summary.accounts.map((account: AccountSummary) => (
-					<div
-						key={account.id}
-						className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
-					>
-						<div className="flex justify-between items-start mb-4">
-							<h3 className="text-lg font-semibold">{account.name}</h3>
-							<Button variant="outline" size="sm" asChild>
-								<Link href={`/accounts/${account.id}`}>詳細</Link>
-							</Button>
-						</div>
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-							<div>
-								<p className="text-sm text-gray-600 dark:text-gray-400">収入</p>
-								<p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-									¥{account.income.toLocaleString()}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-600 dark:text-gray-400">支出</p>
-								<p className="text-xl font-bold text-red-600 dark:text-red-400">
-									¥{account.expense.toLocaleString()}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-600 dark:text-gray-400">残高</p>
-								<p className="text-xl font-bold">
-									¥{account.balance.toLocaleString()}
-								</p>
-							</div>
-						</div>
-					</div>
-				))}
+				<Card>
+					<CardBody>
+						<AccountAccordion accounts={summary.accounts} />
+					</CardBody>
+				</Card>
 			</div>
 		</>
 	);
