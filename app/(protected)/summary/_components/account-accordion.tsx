@@ -23,13 +23,18 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 					title={
 						<div className="flex justify-between items-center w-full">
 							<span className="font-semibold">{account.name}</span>
-							<span className="text-gray-600">
-								¥{account.balance.toLocaleString()}
-							</span>
+							<div className="text-right">
+								<div className="text-xs text-gray-600">収支</div>
+								<div
+									className={`${account.balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+								>
+									¥{account.balance.toLocaleString()}
+								</div>
+							</div>
 						</div>
 					}
 				>
-					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
+					<div className="grid grid-cols-3 gap-4">
 						<div>
 							<p className="text-sm text-gray-600 dark:text-gray-400">収入</p>
 							<p className="text-xl font-bold text-blue-600 dark:text-blue-400">
@@ -44,7 +49,9 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 						</div>
 						<div>
 							<p className="text-sm text-gray-600 dark:text-gray-400">残高</p>
-							<p className="text-xl font-bold">
+							<p
+								className={`${account.balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+							>
 								¥{account.balance.toLocaleString()}
 							</p>
 						</div>
