@@ -16,7 +16,7 @@ interface AccountAccordionProps {
 
 export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 	return (
-		<Accordion variant="light" selectionMode="multiple">
+		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
 			{accounts.map((account) => (
 				<AccordionItem
 					key={account.id}

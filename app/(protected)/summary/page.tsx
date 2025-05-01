@@ -144,11 +144,7 @@ async function SummaryContent({
 			</Card>
 
 			<div className="space-y-4">
-				<Card>
-					<CardBody>
-						<AccountAccordion accounts={summary.accounts} />
-					</CardBody>
-				</Card>
+				<AccountAccordion accounts={summary.accounts} />
 			</div>
 		</>
 	);
