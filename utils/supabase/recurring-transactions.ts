@@ -1,5 +1,9 @@
 import type { RecurringTransaction, TransactionType } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
+import {
+	validateCreateTransaction,
+	validateUpdateTransaction,
+} from "@/utils/validators/recurring-transaction";
 
 /**
  * ユーザーの全定期的な収支を取得する
@@ -62,7 +66,7 @@ export async function createRecurringTransaction(
 	name: string,
 	amount: number,
 	type: TransactionType,
-	dayOfMonth: number,
+	dayOfMonth: number | string,
 	description?: string,
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
@@ -75,23 +79,26 @@ export async function createRecurringTransaction(
 		throw new Error("ユーザーが認証されていません");
 	}
 
-	// 日付が正しく保存されるように明示的に整数値として扱う
-	const day = Number.parseInt(String(dayOfMonth), 10);
-
-	if (Number.isNaN(day) || day < 1 || day > 31) {
-		throw new Error("日付は1から31の間で入力してください");
-	}
+	// Valibotを使用して入力値をバリデーション
+	const validatedData = validateCreateTransaction({
+		accountId,
+		name,
+		amount,
+		type,
+		dayOfMonth,
+		description,
+	});
 
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.insert([
 			{
-				account_id: accountId,
-				name,
-				amount,
-				type,
-				day_of_month: day, // 明示的に整数値として保存
-				description: description || null,
+				account_id: validatedData.accountId,
+				name: validatedData.name,
+				amount: validatedData.amount,
+				type: validatedData.type,
+				day_of_month: validatedData.dayOfMonth, // バリデーション済みの整数値
+				description: validatedData.description || null,
 				user_id: user.id, // ユーザーIDを設定
 			},
 		])
@@ -115,26 +122,42 @@ export async function updateRecurringTransaction(
 		name?: string;
 		amount?: number;
 		type?: TransactionType;
-		day_of_month?: number;
+		dayOfMonth?: number | string;
 		description?: string | null;
 	},
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
 
-	// 日付が指定されている場合は、正しく処理されるよう明示的に整数値として扱う
-	const processedUpdates = { ...updates };
-	if (typeof updates.day_of_month !== 'undefined') {
-		const day = Number.parseInt(String(updates.day_of_month), 10);
-		if (Number.isNaN(day) || day < 1 || day > 31) {
-			throw new Error("日付は1から31の間で入力してください");
-		}
-		processedUpdates.day_of_month = day;
+	// Valibotを使用して入力値をバリデーション
+	const validatedData = validateUpdateTransaction(updates);
+
+	// DBカラム名に合わせてキーを変換
+	const dbUpdates: Record<string, unknown> = {};
+
+	if (validatedData.name !== undefined) {
+		dbUpdates.name = validatedData.name;
+	}
+
+	if (validatedData.amount !== undefined) {
+		dbUpdates.amount = validatedData.amount;
+	}
+
+	if (validatedData.type !== undefined) {
+		dbUpdates.type = validatedData.type;
+	}
+
+	if (validatedData.dayOfMonth !== undefined) {
+		dbUpdates.day_of_month = validatedData.dayOfMonth;
+	}
+
+	if (validatedData.description !== undefined) {
+		dbUpdates.description = validatedData.description;
 	}
 
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.update({
-			...processedUpdates,
+			...dbUpdates,
 			updated_at: new Date().toISOString(),
 		})
 		.eq("id", transactionId)
