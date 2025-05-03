@@ -5,15 +5,6 @@ import { Suspense } from "react";
 import { getMonthlySummary } from "../../../app/actions";
 import { AccountAccordion } from "./_components/account-accordion";
 
-// 口座サマリーの型定義
-interface AccountSummary {
-	id: string;
-	name: string;
-	income: number;
-	expense: number;
-	balance: number;
-}
-
 interface PageProps {
 	searchParams: Promise<{
 		year?: string;

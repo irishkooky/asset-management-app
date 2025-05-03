@@ -5,6 +5,7 @@ import type {
 	OneTimeTransaction,
 	RecurringTransaction,
 } from "@/types/database";
+import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
@@ -104,14 +105,23 @@ function calculateMonthlySummary(
 	recurringTransactions: RecurringTransaction[],
 	month: number,
 ) {
+	// 口座IDごとのトランザクション配列を作成
+	const accountTransactions = new Map<string, Transaction[]>();
+
 	// 口座ごとの収支データを初期化
-	const accountSummaries = accounts.map((account) => ({
-		id: account.id,
-		name: account.name,
-		income: 0,
-		expense: 0,
-		balance: account.current_balance,
-	}));
+	const accountSummaries: AccountSummary[] = accounts.map((account) => {
+		// トランザクション配列を初期化
+		accountTransactions.set(account.id, []);
+		
+		return {
+			id: account.id,
+			name: account.name,
+			income: 0,
+			expense: 0,
+			balance: account.current_balance,
+			transactions: [] as Transaction[],
+		};
+	});
 
 	// 口座IDをキーとしたマップを作成（高速アクセス用）
 	const accountMap = new Map(
@@ -127,11 +137,25 @@ function calculateMonthlySummary(
 			} else {
 				accountSummary.expense += transaction.amount;
 			}
+
+			// トランザクションリストに追加
+			accountSummary.transactions.push({
+				id: transaction.id,
+				name: transaction.name,
+				amount: transaction.amount,
+				type: transaction.type,
+				transaction_date: transaction.transaction_date,
+				description: transaction.description || undefined,
+			});
 		}
 	}
 
 	// 定期的な収支を集計（当月に該当するもののみ）
 	for (const transaction of recurringTransactions) {
+		// 当月の該当する日付を作成
+		const transactionDate = new Date(new Date().getFullYear(), month - 1, transaction.day_of_month);
+		const formattedTransactionDate = transactionDate.toISOString().split('T')[0];
+
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
 		const accountSummary = accountMap.get(transaction.account_id);
 		if (accountSummary) {
@@ -140,7 +164,24 @@ function calculateMonthlySummary(
 			} else {
 				accountSummary.expense += transaction.amount;
 			}
+
+			// トランザクションリストに追加
+			accountSummary.transactions.push({
+				id: transaction.id,
+				name: transaction.name,
+				amount: transaction.amount,
+				type: transaction.type,
+				transaction_date: formattedTransactionDate,
+				description: transaction.description || undefined,
+			});
 		}
+	}
+
+	// 各口座のトランザクションを日付順にソート
+	for (const account of accountSummaries) {
+		account.transactions.sort((a, b) => {
+			return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+		});
 	}
 
 	// 全体の合計を計算
@@ -164,5 +205,11 @@ function calculateMonthlySummary(
 		totalBalance,
 		netBalance,
 		accounts: accountSummaries,
+	} as {
+		totalIncome: number;
+		totalExpense: number;
+		totalBalance: number;
+		netBalance: number;
+		accounts: AccountSummary[];
 	};
 }
