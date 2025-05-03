@@ -2,7 +2,7 @@ import { Button } from "@/components/button";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { getMonthlySummary } from "../../../app/actions";
+import { getMonthlySummary } from "./actions";
 import { AccountAccordion } from "./_components/account-accordion";
 
 interface PageProps {
