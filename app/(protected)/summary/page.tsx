@@ -2,8 +2,8 @@ import { Button } from "@/components/button";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { getMonthlySummary } from "./actions";
 import { AccountAccordion } from "./_components/account-accordion";
+import { getMonthlySummary } from "./actions";
 
 interface PageProps {
 	searchParams: Promise<{

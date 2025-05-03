@@ -112,7 +112,7 @@ function calculateMonthlySummary(
 	const accountSummaries: AccountSummary[] = accounts.map((account) => {
 		// トランザクション配列を初期化
 		accountTransactions.set(account.id, []);
-		
+
 		return {
 			id: account.id,
 			name: account.name,
@@ -153,8 +153,14 @@ function calculateMonthlySummary(
 	// 定期的な収支を集計（当月に該当するもののみ）
 	for (const transaction of recurringTransactions) {
 		// 当月の該当する日付を作成
-		const transactionDate = new Date(new Date().getFullYear(), month - 1, transaction.day_of_month);
-		const formattedTransactionDate = transactionDate.toISOString().split('T')[0];
+		const transactionDate = new Date(
+			new Date().getFullYear(),
+			month - 1,
+			transaction.day_of_month,
+		);
+		const formattedTransactionDate = transactionDate
+			.toISOString()
+			.split("T")[0];
 
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
 		const accountSummary = accountMap.get(transaction.account_id);
@@ -180,7 +186,10 @@ function calculateMonthlySummary(
 	// 各口座のトランザクションを日付順にソート
 	for (const account of accountSummaries) {
 		account.transactions.sort((a, b) => {
-			return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+			return (
+				new Date(a.transaction_date).getTime() -
+				new Date(b.transaction_date).getTime()
+			);
 		});
 	}
 
