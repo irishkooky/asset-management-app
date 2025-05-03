@@ -75,6 +75,13 @@ export async function createRecurringTransaction(
 		throw new Error("ユーザーが認証されていません");
 	}
 
+	// 日付が正しく保存されるように明示的に整数値として扱う
+	const day = Number.parseInt(String(dayOfMonth), 10);
+
+	if (Number.isNaN(day) || day < 1 || day > 31) {
+		throw new Error("日付は1から31の間で入力してください");
+	}
+
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.insert([
@@ -83,7 +90,7 @@ export async function createRecurringTransaction(
 				name,
 				amount,
 				type,
-				day_of_month: dayOfMonth,
+				day_of_month: day, // 明示的に整数値として保存
 				description: description || null,
 				user_id: user.id, // ユーザーIDを設定
 			},
@@ -114,10 +121,20 @@ export async function updateRecurringTransaction(
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
 
+	// 日付が指定されている場合は、正しく処理されるよう明示的に整数値として扱う
+	const processedUpdates = { ...updates };
+	if (typeof updates.day_of_month !== 'undefined') {
+		const day = Number.parseInt(String(updates.day_of_month), 10);
+		if (Number.isNaN(day) || day < 1 || day > 31) {
+			throw new Error("日付は1から31の間で入力してください");
+		}
+		processedUpdates.day_of_month = day;
+	}
+
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.update({
-			...updates,
+			...processedUpdates,
 			updated_at: new Date().toISOString(),
 		})
 		.eq("id", transactionId)
