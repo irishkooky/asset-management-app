@@ -78,38 +78,44 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 										return history;
 									}, []);
 
-									return balanceHistory.map(({ transaction, balance }) => (
-										<tr key={transaction.id}>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												{format(new Date(transaction.transaction_date), "M/d", {
-													locale: ja,
-												})}
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												<div className="flex items-center">
-													<span>{transaction.name}</span>
-													{transaction.description && (
-														<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-															{transaction.description}
-														</span>
+									return balanceHistory.map(
+										({ transaction, balance }, index, array) => (
+											<tr key={transaction.id}>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+													{format(
+														new Date(transaction.transaction_date),
+														"M/d",
+														{
+															locale: ja,
+														},
 													)}
-												</div>
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-												<span
-													className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-												>
-													{transaction.type === "income" ? "" : "-"}¥
-													{Math.abs(transaction.amount).toLocaleString()}
-												</span>
-												<div
-													className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}
-												>
-													残高: ¥{balance.toLocaleString()}
-												</div>
-											</td>
-										</tr>
-									));
+												</td>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+													<div className="flex items-center">
+														<span>{transaction.name}</span>
+														{transaction.description && (
+															<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+																{transaction.description}
+															</span>
+														)}
+													</div>
+												</td>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+													<span
+														className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+													>
+														{transaction.type === "income" ? "" : "-"}¥
+														{Math.abs(transaction.amount).toLocaleString()}
+													</span>
+													<div
+														className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
+													>
+														残高: ¥{balance.toLocaleString()}
+													</div>
+												</td>
+											</tr>
+										),
+									);
 								})()}
 							</tbody>
 						</table>
