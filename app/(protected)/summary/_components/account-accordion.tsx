@@ -82,11 +82,13 @@ export const AccountAccordion = ({
 											: account.balance;
 
 									// 月初日を表示するための文字列
-									const monthStartDateStr = `${selectedYear}/${selectedMonth}/1`;
+									const monthStartDateStr = `${selectedMonth}/1`;
 
 									return (
 										<tr>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700" />
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+												{monthStartDateStr}
+											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
 												<div className="flex items-center">
 													<span className="font-medium">月初残高</span>
