@@ -18,7 +18,7 @@ export default async function ProtectedLayout({
 	}
 
 	return (
-		<div className="w-full max-w-5xl mx-auto p-4">
+		<div className="w-full max-w-5xl mx-auto">
 			<NavMenu />
 			{children}
 		</div>

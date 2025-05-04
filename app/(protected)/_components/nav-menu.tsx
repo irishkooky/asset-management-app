@@ -20,20 +20,22 @@ export function NavMenu() {
 
 	return (
 		<nav className="mb-6">
-			<div className="grid grid-cols-2 gap-2 sm:flex sm:space-x-4">
-				{navItems.map((item) => (
-					<Link
-						key={item.href}
-						href={item.href}
-						className={`px-3 py-2 rounded-md text-sm font-medium text-center ${
-							isActive(item.href)
-								? "bg-primary text-primary-foreground"
-								: "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-						}`}
-					>
-						{item.label}
-					</Link>
-				))}
+			<div className="flex overflow-x-auto pb-2 hide-scrollbar">
+				<div className="flex space-x-2">
+					{navItems.map((item) => (
+						<Link
+							key={item.href}
+							href={item.href}
+							className={`whitespace-nowrap px-2.5 py-1.5 rounded-md text-xs font-medium text-center flex-shrink-0 ${
+								isActive(item.href)
+									? "bg-primary text-primary-foreground"
+									: "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+							}`}
+						>
+							{item.label}
+						</Link>
+					))}
+				</div>
 			</div>
 		</nav>
 	);
