@@ -13,7 +13,13 @@ interface AccountAccordionProps {
 	selectedMonth: number;
 }
 
-export const AccountAccordion = ({ accounts, previousMonthBalances, currentDate, selectedYear, selectedMonth }: AccountAccordionProps) => {
+export const AccountAccordion = ({
+	accounts,
+	previousMonthBalances,
+	currentDate,
+	selectedYear,
+	selectedMonth,
+}: AccountAccordionProps) => {
 	return (
 		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
 			{accounts.map((account) => (
@@ -51,6 +57,51 @@ export const AccountAccordion = ({ accounts, previousMonthBalances, currentDate,
 					{account.transactions.length > 0 ? (
 						<table className="w-full border-collapse">
 							<tbody>
+								{/* 月初残高の計算と表示 */}
+								{(() => {
+									// 選択した年月が現在の年月より後か判定
+									const selectedDate = new Date(
+										selectedYear,
+										selectedMonth - 1,
+										1,
+									);
+									const currentYearMonth = new Date(
+										currentDate.getFullYear(),
+										currentDate.getMonth(),
+										1,
+									);
+									const isSelectedDateAfterCurrent =
+										selectedDate > currentYearMonth;
+
+									// 初期残高を決定（コンポーネントスコープで使用するため外部から参照可能な変数に格納）
+									const initialBalanceValue =
+										isSelectedDateAfterCurrent &&
+										previousMonthBalances &&
+										previousMonthBalances[account.id] !== undefined
+											? previousMonthBalances[account.id]
+											: account.balance;
+
+									// 月初日を表示するための文字列
+									const monthStartDateStr = `${selectedYear}/${selectedMonth}/1`;
+
+									return (
+										<tr>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700" />
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+												<div className="flex items-center">
+													<span className="font-medium">月初残高</span>
+												</div>
+											</td>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+												<div
+													className={`font-medium ${initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+												>
+													¥{initialBalanceValue.toLocaleString()}
+												</div>
+											</td>
+										</tr>
+									);
+								})()}
 								{(() => {
 									// トランザクションを日付が古い順にソート
 									const sortedTransactions = [...account.transactions].sort(
@@ -59,18 +110,18 @@ export const AccountAccordion = ({ accounts, previousMonthBalances, currentDate,
 											new Date(b.transaction_date).getTime(),
 									);
 
-									// 選択した年月が現在の年月より後か判定
-									const selectedDate = new Date(selectedYear, selectedMonth - 1, 1);
-									const currentYearMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-									const isSelectedDateAfterCurrent = selectedDate > currentYearMonth;
-
-									// 初期残高を決定
-									let initialBalance = account.balance;
-
-									// 選択した年月が現在より後で、前月の残高情報が利用可能な場合は前月の残高を使用
-									if (isSelectedDateAfterCurrent && previousMonthBalances && previousMonthBalances[account.id] !== undefined) {
-										initialBalance = previousMonthBalances[account.id];
-									}
+									// 初期残高を計算（前の関数と同じロジックを使用）
+									const initialBalance =
+										previousMonthBalances &&
+										previousMonthBalances[account.id] !== undefined &&
+										new Date(selectedYear, selectedMonth - 1, 1) >
+											new Date(
+												currentDate.getFullYear(),
+												currentDate.getMonth(),
+												1,
+											)
+											? previousMonthBalances[account.id]
+											: account.balance;
 
 									// 基本残高から始めて、各トランザクション後の残高を計算
 									const balanceHistory = sortedTransactions.reduce<
