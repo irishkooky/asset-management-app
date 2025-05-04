@@ -15,6 +15,7 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 			{accounts.map((account) => (
 				<AccordionItem
 					key={account.id}
+					textValue={account.name}
 					title={
 						<div className="flex justify-between items-center w-full">
 							<span className="font-semibold">{account.name}</span>
