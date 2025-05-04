@@ -92,44 +92,88 @@ async function SummaryContent({
 	// 翌月以降のビューを表示している場合は、前月の残高情報も取得
 	let previousMonthBalances: Record<string, number> | undefined;
 
-	// 選択された年月が現在より後の場合のみ前月のデータを取得
+	// 選択した年月が現在より後の場合、現在から選択した月までのすべての月のデータを考慮する
 	const selectedDate = new Date(year, month - 1, 1);
 	const currentYearMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
 	if (selectedDate > currentYearMonth) {
-		// 前月の年月を計算
-		let prevYear = year;
-		let prevMonth = month - 1;
-		if (prevMonth < 1) {
-			prevYear--;
-			prevMonth = 12;
+		// 月別残高情報を格納するオブジェクトを初期化
+		previousMonthBalances = {} as Record<string, number>;
+
+		// 現在の月を順次処理するための月範囲を計算
+		const currentMonth = now.getMonth() + 1; // 0-basedから1-basedに変換
+		const currentYear = now.getFullYear();
+
+		// 以前の月の収支データを取得しながら残高を計算する
+
+		// 適用すべき月を計算する
+		const monthsToProcess = [];
+
+		// 現在の月から選択した月の前月までのすべての月をリスト化
+		let processYear = currentYear;
+		let processMonth = currentMonth;
+
+		while (
+			processYear < year ||
+			(processYear === year && processMonth < month)
+		) {
+			monthsToProcess.push({ year: processYear, month: processMonth });
+
+			// 次の月に進む
+			processMonth++;
+			if (processMonth > 12) {
+				processYear++;
+				processMonth = 1;
+			}
 		}
 
-		// 前月の月次収支データを取得
-		const prevMonthSummary = await getMonthlySummary(prevYear, prevMonth);
+		// 口座ごとの最新の残高を追跡するオブジェクト
+		const latestBalances: Record<string, number> = {};
 
-		// 前月の最終残高を計算して保存
-		previousMonthBalances = {};
+		// 各月を順番に処理
+		for (const { year: processYear, month: processMonth } of monthsToProcess) {
+			// 現在処理している月のデータを取得
+			const monthSummary = await getMonthlySummary(processYear, processMonth);
 
-		for (const account of prevMonthSummary.accounts) {
-			// 取引を日付順にソート
-			const sortedTransactions = [...account.transactions].sort(
-				(a, b) =>
-					new Date(a.transaction_date).getTime() -
-					new Date(b.transaction_date).getTime(),
-			);
+			// 各口座を処理
+			for (const account of monthSummary.accounts) {
+				// 初回の処理では、current_balanceを初期ベースとして使用
+				if (latestBalances[account.id] === undefined) {
+					latestBalances[account.id] = account.balance;
+				}
 
-			// 基本残高から始めて、すべての取引を適用した後の最終残高を計算
-			let finalBalance = account.balance;
-			for (const transaction of sortedTransactions) {
-				finalBalance =
-					transaction.type === "income"
-						? finalBalance + transaction.amount
-						: finalBalance - transaction.amount;
+				// 取引を日付順にソート
+				const sortedTransactions = [...account.transactions].sort(
+					(a, b) =>
+						new Date(a.transaction_date).getTime() -
+						new Date(b.transaction_date).getTime(),
+				);
+
+				// 前月からの残高をベースにして、すべての取引を適用
+				let currentBalance = latestBalances[account.id];
+
+				for (const transaction of sortedTransactions) {
+					currentBalance =
+						transaction.type === "income"
+							? currentBalance + transaction.amount
+							: currentBalance - transaction.amount;
+				}
+
+				// 全ての取引を適用した後の最終残高を次の月の初期残高として保存
+				latestBalances[account.id] = currentBalance;
+
+				// 選択した月の前月の最終残高を記録
+				if (processYear === year && processMonth === month - 1) {
+					previousMonthBalances[account.id] = currentBalance;
+				} else if (
+					processYear === year - 1 &&
+					processMonth === 12 &&
+					month === 1
+				) {
+					// 1月の場合は前年の12月の残高を使用
+					previousMonthBalances[account.id] = currentBalance;
+				}
 			}
-
-			// 最終残高を記録
-			previousMonthBalances[account.id] = finalBalance;
 		}
 	}
 
