@@ -44,7 +44,7 @@ export async function updateRecurringTransactionAction(
 			name,
 			amount,
 			type,
-			day_of_month: dayOfMonth,
+			dayOfMonth,
 			description: description || null,
 		});
 		return { success: "定期的な収支が正常に更新されました" };
