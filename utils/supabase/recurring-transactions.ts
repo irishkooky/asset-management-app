@@ -1,5 +1,9 @@
 import type { RecurringTransaction, TransactionType } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
+import {
+	validateCreateTransaction,
+	validateUpdateTransaction,
+} from "@/utils/validators/recurring-transaction";
 
 /**
  * ユーザーの全定期的な収支を取得する
@@ -62,7 +66,7 @@ export async function createRecurringTransaction(
 	name: string,
 	amount: number,
 	type: TransactionType,
-	dayOfMonth: number,
+	dayOfMonth: number | string,
 	description?: string,
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
@@ -75,16 +79,26 @@ export async function createRecurringTransaction(
 		throw new Error("ユーザーが認証されていません");
 	}
 
+	// Valibotを使用して入力値をバリデーション
+	const validatedData = validateCreateTransaction({
+		accountId,
+		name,
+		amount,
+		type,
+		dayOfMonth,
+		description,
+	});
+
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.insert([
 			{
-				account_id: accountId,
-				name,
-				amount,
-				type,
-				day_of_month: dayOfMonth,
-				description: description || null,
+				account_id: validatedData.accountId,
+				name: validatedData.name,
+				amount: validatedData.amount,
+				type: validatedData.type,
+				day_of_month: validatedData.dayOfMonth, // バリデーション済みの整数値
+				description: validatedData.description || null,
 				user_id: user.id, // ユーザーIDを設定
 			},
 		])
@@ -108,16 +122,42 @@ export async function updateRecurringTransaction(
 		name?: string;
 		amount?: number;
 		type?: TransactionType;
-		day_of_month?: number;
+		dayOfMonth?: number | string;
 		description?: string | null;
 	},
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
 
+	// Valibotを使用して入力値をバリデーション
+	const validatedData = validateUpdateTransaction(updates);
+
+	// DBカラム名に合わせてキーを変換
+	const dbUpdates: Record<string, unknown> = {};
+
+	if (validatedData.name !== undefined) {
+		dbUpdates.name = validatedData.name;
+	}
+
+	if (validatedData.amount !== undefined) {
+		dbUpdates.amount = validatedData.amount;
+	}
+
+	if (validatedData.type !== undefined) {
+		dbUpdates.type = validatedData.type;
+	}
+
+	if (validatedData.dayOfMonth !== undefined) {
+		dbUpdates.day_of_month = validatedData.dayOfMonth;
+	}
+
+	if (validatedData.description !== undefined) {
+		dbUpdates.description = validatedData.description;
+	}
+
 	const { data, error } = await supabase
 		.from("recurring_transactions")
 		.update({
-			...updates,
+			...dbUpdates,
 			updated_at: new Date().toISOString(),
 		})
 		.eq("id", transactionId)

@@ -7,24 +7,49 @@ import { ja } from "date-fns/locale";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
+	previousMonthBalances?: Record<string, number>;
+	currentDate: Date;
+	selectedYear: number;
+	selectedMonth: number;
 }
 
-export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
+export const AccountAccordion = ({
+	accounts,
+	previousMonthBalances,
+	currentDate,
+	selectedYear,
+	selectedMonth,
+}: AccountAccordionProps) => {
 	return (
 		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
 			{accounts.map((account) => (
 				<AccordionItem
 					key={account.id}
+					textValue={account.name}
 					title={
 						<div className="flex justify-between items-center w-full">
 							<span className="font-semibold">{account.name}</span>
 							<div className="text-right">
 								<div className="text-xs text-gray-600">収支</div>
-								<div
-									className={`${account.balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-								>
-									¥{account.balance.toLocaleString()}
-								</div>
+								{(() => {
+									// トランザクションの合計を計算
+									const totalBalance = account.transactions.reduce(
+										(total, transaction) => {
+											return transaction.type === "income"
+												? total + transaction.amount
+												: total - transaction.amount;
+										},
+										0,
+									);
+
+									return (
+										<div
+											className={`${totalBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+										>
+											¥{totalBalance.toLocaleString()}
+										</div>
+									);
+								})()}
 							</div>
 						</div>
 					}
@@ -32,6 +57,53 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 					{account.transactions.length > 0 ? (
 						<table className="w-full border-collapse">
 							<tbody>
+								{/* 月初残高の計算と表示 */}
+								{(() => {
+									// 選択した年月が現在の年月より後か判定
+									const selectedDate = new Date(
+										selectedYear,
+										selectedMonth - 1,
+										1,
+									);
+									const currentYearMonth = new Date(
+										currentDate.getFullYear(),
+										currentDate.getMonth(),
+										1,
+									);
+									const isSelectedDateAfterCurrent =
+										selectedDate > currentYearMonth;
+
+									// 初期残高を決定（コンポーネントスコープで使用するため外部から参照可能な変数に格納）
+									const initialBalanceValue =
+										isSelectedDateAfterCurrent &&
+										previousMonthBalances &&
+										previousMonthBalances[account.id] !== undefined
+											? previousMonthBalances[account.id]
+											: account.balance;
+
+									// 月初日を表示するための文字列
+									const monthStartDateStr = `${selectedMonth}/1`;
+
+									return (
+										<tr>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+												{monthStartDateStr}
+											</td>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+												<div className="flex items-center">
+													<span className="font-medium">月初残高</span>
+												</div>
+											</td>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+												<div
+													className={`font-medium ${initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+												>
+													¥{initialBalanceValue.toLocaleString()}
+												</div>
+											</td>
+										</tr>
+									);
+								})()}
 								{(() => {
 									// トランザクションを日付が古い順にソート
 									const sortedTransactions = [...account.transactions].sort(
@@ -39,6 +111,19 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 											new Date(a.transaction_date).getTime() -
 											new Date(b.transaction_date).getTime(),
 									);
+
+									// 初期残高を計算（前の関数と同じロジックを使用）
+									const initialBalance =
+										previousMonthBalances &&
+										previousMonthBalances[account.id] !== undefined &&
+										new Date(selectedYear, selectedMonth - 1, 1) >
+											new Date(
+												currentDate.getFullYear(),
+												currentDate.getMonth(),
+												1,
+											)
+											? previousMonthBalances[account.id]
+											: account.balance;
 
 									// 基本残高から始めて、各トランザクション後の残高を計算
 									const balanceHistory = sortedTransactions.reduce<
@@ -51,7 +136,7 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 										const previousBalance =
 											history.length > 0
 												? history[history.length - 1].balance
-												: account.balance;
+												: initialBalance;
 
 										// 収入ならプラス、支出ならマイナス
 										const newBalance =
@@ -63,38 +148,44 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 										return history;
 									}, []);
 
-									return balanceHistory.map(({ transaction, balance }) => (
-										<tr key={transaction.id}>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												{format(new Date(transaction.transaction_date), "M/d", {
-													locale: ja,
-												})}
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												<div className="flex items-center">
-													<span>{transaction.name}</span>
-													{transaction.description && (
-														<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-															{transaction.description}
-														</span>
+									return balanceHistory.map(
+										({ transaction, balance }, index, array) => (
+											<tr key={transaction.id}>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+													{format(
+														new Date(transaction.transaction_date),
+														"M/d",
+														{
+															locale: ja,
+														},
 													)}
-												</div>
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-												<span
-													className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-												>
-													{transaction.type === "income" ? "" : "-"}¥
-													{Math.abs(transaction.amount).toLocaleString()}
-												</span>
-												<div
-													className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}
-												>
-													残高: ¥{balance.toLocaleString()}
-												</div>
-											</td>
-										</tr>
-									));
+												</td>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+													<div className="flex items-center">
+														<span>{transaction.name}</span>
+														{transaction.description && (
+															<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+																{transaction.description}
+															</span>
+														)}
+													</div>
+												</td>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+													<span
+														className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+													>
+														{transaction.type === "income" ? "" : "-"}¥
+														{Math.abs(transaction.amount).toLocaleString()}
+													</span>
+													<div
+														className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
+													>
+														残高: ¥{balance.toLocaleString()}
+													</div>
+												</td>
+											</tr>
+										),
+									);
 								})()}
 							</tbody>
 						</table>

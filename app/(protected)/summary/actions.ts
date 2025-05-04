@@ -7,6 +7,7 @@ import type {
 } from "@/types/database";
 import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
+import { format, setDate, setMonth, setYear } from "date-fns";
 
 /**
  * 月次収支サマリーデータを取得する
@@ -17,6 +18,8 @@ export async function getMonthlySummary(year: number, month: number) {
 	// 指定された月の開始日と終了日を計算
 	const startDate = new Date(year, month - 1, 1);
 	const endDate = new Date(year, month, 0); // 月の最終日
+	const formattedStartDate = format(startDate, "yyyy-MM-dd");
+	const formattedEndDate = format(endDate, "yyyy-MM-dd");
 
 	// 1. アカウント情報を取得
 	const { data: accounts, error: accountsError } = await supabase
@@ -33,8 +36,8 @@ export async function getMonthlySummary(year: number, month: number) {
 	const { data: oneTimeTransactions, error: oneTimeError } = await supabase
 		.from("one_time_transactions")
 		.select("*")
-		.gte("transaction_date", startDate.toISOString().split("T")[0])
-		.lte("transaction_date", endDate.toISOString().split("T")[0]);
+		.gte("transaction_date", formattedStartDate)
+		.lte("transaction_date", formattedEndDate);
 
 	if (oneTimeError) {
 		console.error("Error fetching one-time transactions:", oneTimeError);
@@ -118,15 +121,14 @@ function calculateMonthlySummary(
 
 	// 定期的な収支を集計（当月に該当するもののみ）
 	for (const transaction of recurringTransactions) {
-		// 当月の該当する日付を作成
-		const transactionDate = new Date(
-			new Date().getFullYear(),
-			month - 1,
+		// 当月の該当する日付をdate-fnsを使用して作成
+		const baseDate = new Date();
+		const transactionDate = setDate(
+			setMonth(setYear(baseDate, baseDate.getFullYear()), month - 1),
 			transaction.day_of_month,
 		);
-		const formattedTransactionDate = transactionDate
-			.toISOString()
-			.split("T")[0];
+		// タイムゾーンの影響を受けないようにdate-fnsのformat関数を使用
+		const formattedTransactionDate = format(transactionDate, "yyyy-MM-dd");
 
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
 		const accountSummary = accountMap.get(transaction.account_id);
