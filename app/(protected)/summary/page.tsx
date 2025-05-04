@@ -89,14 +89,17 @@ async function SummaryContent({
 	// 月次収支データを取得
 	const summary = await getMonthlySummary(year, month);
 
-	// 翌月以降のビューを表示している場合は、前月の残高情報も取得
-	let previousMonthBalances: Record<string, number> | undefined;
-
-	// 選択した年月が現在より後の場合、現在から選択した月までのすべての月のデータを考慮する
+	// 選択した年月が現在より後か判定
 	const selectedDate = new Date(year, month - 1, 1);
 	const currentYearMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+	const isSelectedDateAfterCurrent = selectedDate > currentYearMonth;
 
-	if (selectedDate > currentYearMonth) {
+	// 月末残高の合計を格納する変数
+	let totalEndOfMonthBalance = 0;
+
+	// 翌月以降のビューを表示している場合は、前月の残高情報も取得
+	let previousMonthBalances: Record<string, number> | undefined;
+	if (isSelectedDateAfterCurrent) {
 		// 月別残高情報を格納するオブジェクトを初期化
 		previousMonthBalances = {} as Record<string, number>;
 
@@ -177,6 +180,40 @@ async function SummaryContent({
 		}
 	}
 
+	// 各口座の月末残高を計算して合計を求める
+	for (const account of summary.accounts) {
+		// 初期残高を取得
+		let initialBalance = account.balance;
+
+		// 選択した年月が現在より後で、前月の残高情報が利用可能な場合は前月の残高を使用
+		if (
+			isSelectedDateAfterCurrent &&
+			previousMonthBalances &&
+			previousMonthBalances[account.id] !== undefined
+		) {
+			initialBalance = previousMonthBalances[account.id];
+		}
+
+		// 取引を日付順にソート
+		const sortedTransactions = [...account.transactions].sort(
+			(a, b) =>
+				new Date(a.transaction_date).getTime() -
+				new Date(b.transaction_date).getTime(),
+		);
+
+		// 全取引を適用した後の最終残高を計算
+		let finalBalance = initialBalance;
+		for (const transaction of sortedTransactions) {
+			finalBalance =
+				transaction.type === "income"
+					? finalBalance + transaction.amount
+					: finalBalance - transaction.amount;
+		}
+
+		// 月末残高を合計に加算
+		totalEndOfMonthBalance += finalBalance;
+	}
+
 	return (
 		<>
 			{/* 全体サマリー */}
@@ -215,10 +252,10 @@ async function SummaryContent({
 						</div>
 						<div className="flex text-center flex-col justify-center">
 							<div className="text-xs text-gray-600 dark:text-gray-400">
-								残高
+								月末見込残高
 							</div>
 							<div className="text-xl font-medium text-blue-600 dark:text-blue-400">
-								¥{summary.totalBalance.toLocaleString()}
+								¥{totalEndOfMonthBalance.toLocaleString()}
 							</div>
 						</div>
 					</div>
