@@ -21,11 +21,25 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 							<span className="font-semibold">{account.name}</span>
 							<div className="text-right">
 								<div className="text-xs text-gray-600">収支</div>
-								<div
-									className={`${account.balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-								>
-									¥{account.balance.toLocaleString()}
-								</div>
+								{(() => {
+									// トランザクションの合計を計算
+									const totalBalance = account.transactions.reduce(
+										(total, transaction) => {
+											return transaction.type === "income"
+												? total + transaction.amount
+												: total - transaction.amount;
+										},
+										0,
+									);
+
+									return (
+										<div
+											className={`${totalBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+										>
+											¥{totalBalance.toLocaleString()}
+										</div>
+									);
+								})()}
 							</div>
 						</div>
 					}
