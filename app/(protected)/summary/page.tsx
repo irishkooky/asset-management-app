@@ -97,7 +97,7 @@ async function SummaryContent({
 								<div className="text-xs text-gray-600 dark:text-gray-400">
 									収入
 								</div>
-								<div className="text-lg font-medium text-green-600 dark:text-green-400">
+								<div className="text-lg font-medium text-blue-600 dark:text-blue-400">
 									¥{summary.totalIncome.toLocaleString()}
 								</div>
 							</div>
@@ -115,7 +115,7 @@ async function SummaryContent({
 										収支
 									</div>
 									<div
-										className={`text-lg font-medium ${summary.netBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+										className={`text-lg font-medium ${summary.netBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
 									>
 										¥{summary.netBalance.toLocaleString()}
 									</div>
@@ -126,7 +126,7 @@ async function SummaryContent({
 							<div className="text-xs text-gray-600 dark:text-gray-400">
 								残高
 							</div>
-							<div className="text-xl font-medium text-green-600 dark:text-green-400">
+							<div className="text-xl font-medium text-blue-600 dark:text-blue-400">
 								¥{summary.totalBalance.toLocaleString()}
 							</div>
 						</div>

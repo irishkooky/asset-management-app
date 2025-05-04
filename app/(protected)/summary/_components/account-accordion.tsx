@@ -34,7 +34,7 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 
 									return (
 										<div
-											className={`${totalBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+											className={`${totalBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
 										>
 											¥{totalBalance.toLocaleString()}
 										</div>
