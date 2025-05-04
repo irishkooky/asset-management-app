@@ -7,9 +7,13 @@ import { ja } from "date-fns/locale";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
+	previousMonthBalances?: Record<string, number>;
+	currentDate: Date;
+	selectedYear: number;
+	selectedMonth: number;
 }
 
-export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
+export const AccountAccordion = ({ accounts, previousMonthBalances, currentDate, selectedYear, selectedMonth }: AccountAccordionProps) => {
 	return (
 		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
 			{accounts.map((account) => (
@@ -55,6 +59,19 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 											new Date(b.transaction_date).getTime(),
 									);
 
+									// 選択した年月が現在の年月より後か判定
+									const selectedDate = new Date(selectedYear, selectedMonth - 1, 1);
+									const currentYearMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+									const isSelectedDateAfterCurrent = selectedDate > currentYearMonth;
+
+									// 初期残高を決定
+									let initialBalance = account.balance;
+
+									// 選択した年月が現在より後で、前月の残高情報が利用可能な場合は前月の残高を使用
+									if (isSelectedDateAfterCurrent && previousMonthBalances && previousMonthBalances[account.id] !== undefined) {
+										initialBalance = previousMonthBalances[account.id];
+									}
+
 									// 基本残高から始めて、各トランザクション後の残高を計算
 									const balanceHistory = sortedTransactions.reduce<
 										Array<{
@@ -66,7 +83,7 @@ export const AccountAccordion = ({ accounts }: AccountAccordionProps) => {
 										const previousBalance =
 											history.length > 0
 												? history[history.length - 1].balance
-												: account.balance;
+												: initialBalance;
 
 										// 収入ならプラス、支出ならマイナス
 										const newBalance =

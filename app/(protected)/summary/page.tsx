@@ -83,8 +83,52 @@ async function SummaryContent({
 	year,
 	month,
 }: { year: number; month: number }) {
+	// 現在の日付を取得
+	const now = new Date();
+	
 	// 月次収支データを取得
 	const summary = await getMonthlySummary(year, month);
+	
+	// 翌月以降のビューを表示している場合は、前月の残高情報も取得
+	let previousMonthBalances: Record<string, number> | undefined;
+	
+	// 選択された年月が現在より後の場合のみ前月のデータを取得
+	const selectedDate = new Date(year, month - 1, 1);
+	const currentYearMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+	
+	if (selectedDate > currentYearMonth) {
+		// 前月の年月を計算
+		let prevYear = year;
+		let prevMonth = month - 1;
+		if (prevMonth < 1) {
+			prevYear--;
+			prevMonth = 12;
+		}
+		
+		// 前月の月次収支データを取得
+		const prevMonthSummary = await getMonthlySummary(prevYear, prevMonth);
+		
+		// 前月の最終残高を計算して保存
+		previousMonthBalances = {};
+		
+		for (const account of prevMonthSummary.accounts) {
+			// 取引を日付順にソート
+			const sortedTransactions = [...account.transactions].sort(
+				(a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+			);
+			
+			// 基本残高から始めて、すべての取引を適用した後の最終残高を計算
+			let finalBalance = account.balance;
+			for (const transaction of sortedTransactions) {
+				finalBalance = transaction.type === "income" 
+					? finalBalance + transaction.amount 
+					: finalBalance - transaction.amount;
+			}
+			
+			// 最終残高を記録
+			previousMonthBalances[account.id] = finalBalance;
+		}
+	}
 
 	return (
 		<>
@@ -135,7 +179,13 @@ async function SummaryContent({
 			</Card>
 
 			<div className="space-y-4">
-				<AccountAccordion accounts={summary.accounts} />
+				<AccountAccordion 
+					accounts={summary.accounts}
+					previousMonthBalances={previousMonthBalances}
+					currentDate={now}
+					selectedYear={year}
+					selectedMonth={month}
+				/>
 			</div>
 		</>
 	);
