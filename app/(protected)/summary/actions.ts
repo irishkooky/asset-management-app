@@ -49,8 +49,6 @@ export async function getMonthlySummary(year: number, month: number) {
 		.from("recurring_transactions")
 		.select("*");
 
-	console.log("recurringTransactions", recurringTransactions);
-
 	if (recurringError) {
 		console.error("Error fetching recurring transactions:", recurringError);
 		throw new Error("定期的な収支情報の取得に失敗しました");
@@ -63,8 +61,6 @@ export async function getMonthlySummary(year: number, month: number) {
 		recurringTransactions as RecurringTransaction[],
 		month,
 	);
-
-	console.log("summary", summary.accounts[0].transactions);
 
 	return summary;
 }
