@@ -2,6 +2,7 @@
 - Follow the Airbnb Style Guide for code formatting.
 - Use kebab-case for React component file names (e.g., user-card.tsx, not UserCard.tsx).
 - Prefer named exports for components.
+- Use pnpm for package manager.
 
 # Project Structure & Architecture
 - Follow Next.js patterns and use the App Router.

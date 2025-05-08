@@ -2,6 +2,7 @@ import { Button } from "@/components/button";
 import { LoginButton } from "@/components/login-button";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 
 export const metadata = {
 	title: "資産管理アプリ - シンプルで使いやすい家計簿・資産管理ツール",
@@ -14,6 +15,8 @@ export default async function Home() {
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
+
+	const appUrl = "https://asset-management-app-irishkookys.vercel.app";
 
 	return (
 		<div className="space-y-16 py-8">
@@ -82,6 +85,23 @@ export default async function Home() {
 						number={3}
 						title="資産の可視化"
 						description="ダッシュボードで資産状況を確認し、将来の貯蓄目標を立てましょう。"
+					/>
+				</div>
+			</section>
+
+			{/* QRコードセクション */}
+			<section className="text-center space-y-6 py-8">
+				<h2 className="text-3xl font-bold">アプリのQRコード</h2>
+				<p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+					スマートフォンでQRコードを読み取って、アプリにアクセスできます。
+				</p>
+				<div className="flex justify-center py-4">
+					<QRCodeSVG
+						value={appUrl}
+						size={192}
+						bgColor={"#ffffff"}
+						fgColor={"#000000"}
+						level={"L"}
 					/>
 				</div>
 			</section>
