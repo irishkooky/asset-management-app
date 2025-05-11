@@ -3,7 +3,8 @@ import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AccountAccordion } from "./_components/account-accordion";
-import { getMonthlySummary } from "./actions";
+import { getMonthlySummary, recordMonthlyBalances } from "./actions";
+import { createClient } from "@/utils/supabase/server";
 
 interface PageProps {
 	searchParams: Promise<{
@@ -85,6 +86,49 @@ async function SummaryContent({
 }: { year: number; month: number }) {
 	// 現在の日付を取得
 	const now = new Date();
+
+	// ユーザー情報とSupabaseクライアントを取得
+	const supabase = await createClient();
+	
+	// 現在の年月の最初の日
+	const currentDate = new Date();
+	const currentYear = currentDate.getFullYear();
+	const currentMonth = currentDate.getMonth() + 1;
+	const firstDayOfCurrentMonth = new Date(currentYear, currentMonth - 1, 1);
+	const firstDayOfSelectedMonth = new Date(year, month - 1, 1);
+	
+	// 現在の月の1日から3日までであれば、月初残高を記録
+	const today = new Date();
+	if (today.getDate() <= 3) {
+		// 既に今月分の残高記録があるか確認
+		const { data: existingRecords } = await supabase
+			.from('monthly_account_balances')
+			.select('id')
+			.eq('year', currentYear)
+			.eq('month', currentMonth)
+			.limit(1);
+		
+		// 記録がなければ新規記録
+		if (!existingRecords || existingRecords.length === 0) {
+			// 月初残高を記録
+			await recordMonthlyBalances(currentYear, currentMonth);
+		}
+	}
+
+	// 月初残高データを取得
+	const { data: monthlyBalances } = await supabase
+		.from('monthly_account_balances')
+		.select('*')
+		.eq('year', year)
+		.eq('month', month);
+
+	// 月初残高をアカウントIDをキーとしたオブジェクトに変換
+	const monthlyBalanceMap: Record<string, number> = {};
+	if (monthlyBalances) {
+		for (const balance of monthlyBalances) {
+			monthlyBalanceMap[balance.account_id] = balance.balance;
+		}
+	}
 
 	// 月次収支データを取得
 	const summary = await getMonthlySummary(year, month);
@@ -269,6 +313,7 @@ async function SummaryContent({
 					currentDate={now}
 					selectedYear={year}
 					selectedMonth={month}
+					monthlyBalanceMap={monthlyBalanceMap}
 				/>
 			</div>
 		</>
