@@ -1,6 +1,7 @@
 import { Button } from "@/components/button";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import Link from "next/link";
+import { RefreshHandler } from "./_components/refresh-handler";
 
 export default async function RecurringTransactionsPage() {
 	// 定期的な収支データ取得
@@ -61,13 +62,7 @@ export default async function RecurringTransactionsPage() {
 										</td>
 										<td className="text-right py-3 px-4">
 											<div className="flex justify-end space-x-2">
-												<Button variant="outline" size="sm" asChild>
-													<Link
-														href={`/transactions/recurring/${transaction.id}/edit`}
-													>
-														編集
-													</Link>
-												</Button>
+												<RefreshHandler transaction={transaction} />
 											</div>
 										</td>
 									</tr>

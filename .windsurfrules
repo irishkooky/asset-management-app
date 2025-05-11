@@ -44,3 +44,8 @@
 - Prefer immutability for data:
 - Use readonly for immutable properties.
 - Use as const for literals that never change.
+
+# Directory Structure
+- Each directory should follow the summary directory pattern:
+  - Place server actions in a dedicated "actions.ts" file at the root of the directory.
+  - Organize components in a "_components" subdirectory.
