@@ -181,14 +181,14 @@ async function SummaryContent({
 		for (const { year: processYear, month: processMonth } of monthsToProcess) {
 			// 現在処理している月のデータを取得
 			const monthSummary = await getMonthlySummary(processYear, processMonth);
-			
+
 			// この月の月初残高データを取得
 			const { data: processMonthBalances } = await supabase
 				.from("monthly_account_balances")
 				.select("*")
 				.eq("year", processYear)
 				.eq("month", processMonth);
-			
+
 			// 月初残高マップを作成
 			const processMonthBalanceMap: Record<string, number> = {};
 			if (processMonthBalances) {
@@ -201,9 +201,12 @@ async function SummaryContent({
 			for (const account of monthSummary.accounts) {
 				// 初期残高を決定（月初残高テーブル > 前月計算値 > 現在残高）
 				let processInitialBalance: number;
-				
+
 				// 月初残高テーブルにデータがあればそれを使用
-				if (processMonthBalanceMap && processMonthBalanceMap[account.id] !== undefined) {
+				if (
+					processMonthBalanceMap &&
+					processMonthBalanceMap[account.id] !== undefined
+				) {
 					processInitialBalance = processMonthBalanceMap[account.id];
 				}
 				// 最初の月でない場合は、前月の最終残高を使用
@@ -253,7 +256,7 @@ async function SummaryContent({
 	for (const account of summary.accounts) {
 		// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
 		let initialBalance = account.balance; // デフォルト値
-		
+
 		// 月初残高テーブルにデータがあればそれを使用
 		if (monthlyBalanceMap && monthlyBalanceMap[account.id] !== undefined) {
 			initialBalance = monthlyBalanceMap[account.id];
