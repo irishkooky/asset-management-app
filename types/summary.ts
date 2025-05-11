@@ -15,3 +15,14 @@ export interface AccountSummary {
 	balance: number;
 	transactions: Transaction[];
 }
+
+export interface MonthlyAccountBalance {
+	id: string;
+	account_id: string;
+	user_id: string;
+	year: number;
+	month: number;
+	balance: number;
+	created_at: string;
+	updated_at: string;
+}

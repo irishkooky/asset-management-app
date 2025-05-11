@@ -190,3 +190,75 @@ function calculateMonthlySummary(
 		accounts: AccountSummary[];
 	};
 }
+
+/**
+ * 月初残高を記録する
+ * 新しい月が開始した時に各口座の残高を保存する
+ */
+export async function recordMonthlyBalances(
+	year: number,
+	month: number,
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const supabase = await createClient();
+
+		// ユーザー認証の確認
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+		if (!user) {
+			return { success: false, error: "認証に失敗しました" };
+		}
+
+		// ユーザーのすべての口座を取得
+		const { data: accounts, error: accountsError } = await supabase
+			.from("accounts")
+			.select("id, current_balance")
+			.eq("user_id", user.id);
+
+		if (accountsError) {
+			console.error("口座情報の取得に失敗しました:", accountsError);
+			return { success: false, error: "口座情報の取得に失敗しました" };
+		}
+
+		// 各口座について月初残高を記録
+		for (const account of accounts) {
+			// 既存のレコードを確認
+			const { data: existingRecord } = await supabase
+				.from("monthly_account_balances")
+				.select("id")
+				.eq("account_id", account.id)
+				.eq("year", year)
+				.eq("month", month)
+				.maybeSingle();
+
+			if (existingRecord) {
+				// 既存レコードの更新
+				await supabase
+					.from("monthly_account_balances")
+					.update({
+						balance: account.current_balance,
+						updated_at: new Date().toISOString(),
+					})
+					.eq("id", existingRecord.id);
+			} else {
+				// 新規レコードの挿入
+				await supabase.from("monthly_account_balances").insert({
+					account_id: account.id,
+					user_id: user.id,
+					year,
+					month,
+					balance: account.current_balance,
+				});
+			}
+		}
+
+		return { success: true };
+	} catch (error) {
+		console.error("月初残高の記録中にエラーが発生しました:", error);
+		return {
+			success: false,
+			error: "月初残高の記録中にエラーが発生しました",
+		};
+	}
+}
