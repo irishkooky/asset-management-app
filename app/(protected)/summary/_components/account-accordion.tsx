@@ -78,9 +78,12 @@ export const AccountAccordion = ({
 									// 初期残高を決定
 									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値, 3. 現在の口座残高
 									let initialBalanceValue = account.balance; // デフォルト値
-									
+
 									// 月初残高テーブルにデータがあればそれを使用
-									if (monthlyBalanceMap && monthlyBalanceMap[account.id] !== undefined) {
+									if (
+										monthlyBalanceMap &&
+										monthlyBalanceMap[account.id] !== undefined
+									) {
 										initialBalanceValue = monthlyBalanceMap[account.id];
 									}
 									// 月初残高テーブルにデータがなく、選択月が現在より後の場合は前月計算値を使用

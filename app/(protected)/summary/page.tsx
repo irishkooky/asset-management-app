@@ -1,10 +1,10 @@
 import { Button } from "@/components/button";
+import { createClient } from "@/utils/supabase/server";
 import { Card, CardBody } from "@heroui/react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AccountAccordion } from "./_components/account-accordion";
 import { getMonthlySummary, recordMonthlyBalances } from "./actions";
-import { createClient } from "@/utils/supabase/server";
 
 interface PageProps {
 	searchParams: Promise<{
@@ -89,25 +89,25 @@ async function SummaryContent({
 
 	// ユーザー情報とSupabaseクライアントを取得
 	const supabase = await createClient();
-	
+
 	// 現在の年月の最初の日
 	const currentDate = new Date();
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth() + 1;
 	const firstDayOfCurrentMonth = new Date(currentYear, currentMonth - 1, 1);
 	const firstDayOfSelectedMonth = new Date(year, month - 1, 1);
-	
+
 	// 現在の月の1日から3日までであれば、月初残高を記録
 	const today = new Date();
 	if (today.getDate() <= 3) {
 		// 既に今月分の残高記録があるか確認
 		const { data: existingRecords } = await supabase
-			.from('monthly_account_balances')
-			.select('id')
-			.eq('year', currentYear)
-			.eq('month', currentMonth)
+			.from("monthly_account_balances")
+			.select("id")
+			.eq("year", currentYear)
+			.eq("month", currentMonth)
 			.limit(1);
-		
+
 		// 記録がなければ新規記録
 		if (!existingRecords || existingRecords.length === 0) {
 			// 月初残高を記録
@@ -117,10 +117,10 @@ async function SummaryContent({
 
 	// 月初残高データを取得
 	const { data: monthlyBalances } = await supabase
-		.from('monthly_account_balances')
-		.select('*')
-		.eq('year', year)
-		.eq('month', month);
+		.from("monthly_account_balances")
+		.select("*")
+		.eq("year", year)
+		.eq("month", month);
 
 	// 月初残高をアカウントIDをキーとしたオブジェクトに変換
 	const monthlyBalanceMap: Record<string, number> = {};
