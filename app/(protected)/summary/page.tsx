@@ -181,12 +181,38 @@ async function SummaryContent({
 		for (const { year: processYear, month: processMonth } of monthsToProcess) {
 			// 現在処理している月のデータを取得
 			const monthSummary = await getMonthlySummary(processYear, processMonth);
+			
+			// この月の月初残高データを取得
+			const { data: processMonthBalances } = await supabase
+				.from("monthly_account_balances")
+				.select("*")
+				.eq("year", processYear)
+				.eq("month", processMonth);
+			
+			// 月初残高マップを作成
+			const processMonthBalanceMap: Record<string, number> = {};
+			if (processMonthBalances) {
+				for (const balance of processMonthBalances) {
+					processMonthBalanceMap[balance.account_id] = balance.balance;
+				}
+			}
 
 			// 各口座を処理
 			for (const account of monthSummary.accounts) {
-				// 初回の処理では、current_balanceを初期ベースとして使用
-				if (latestBalances[account.id] === undefined) {
-					latestBalances[account.id] = account.balance;
+				// 初期残高を決定（月初残高テーブル > 前月計算値 > 現在残高）
+				let processInitialBalance: number;
+				
+				// 月初残高テーブルにデータがあればそれを使用
+				if (processMonthBalanceMap && processMonthBalanceMap[account.id] !== undefined) {
+					processInitialBalance = processMonthBalanceMap[account.id];
+				}
+				// 最初の月でない場合は、前月の最終残高を使用
+				else if (latestBalances[account.id] !== undefined) {
+					processInitialBalance = latestBalances[account.id];
+				}
+				// 初回の処理なら現在の残高を使用
+				else {
+					processInitialBalance = account.balance;
 				}
 
 				// 取引を日付順にソート
@@ -196,29 +222,28 @@ async function SummaryContent({
 						new Date(b.transaction_date).getTime(),
 				);
 
-				// 前月からの残高をベースにして、すべての取引を適用
-				let currentBalance = latestBalances[account.id];
-
+				// 残高計算
+				let finalBalance = processInitialBalance;
 				for (const transaction of sortedTransactions) {
-					currentBalance =
+					finalBalance =
 						transaction.type === "income"
-							? currentBalance + transaction.amount
-							: currentBalance - transaction.amount;
+							? finalBalance + transaction.amount
+							: finalBalance - transaction.amount;
 				}
 
 				// 全ての取引を適用した後の最終残高を次の月の初期残高として保存
-				latestBalances[account.id] = currentBalance;
+				latestBalances[account.id] = finalBalance;
 
 				// 選択した月の前月の最終残高を記録
 				if (processYear === year && processMonth === month - 1) {
-					previousMonthBalances[account.id] = currentBalance;
+					previousMonthBalances[account.id] = finalBalance;
 				} else if (
 					processYear === year - 1 &&
 					processMonth === 12 &&
 					month === 1
 				) {
 					// 1月の場合は前年の12月の残高を使用
-					previousMonthBalances[account.id] = currentBalance;
+					previousMonthBalances[account.id] = finalBalance;
 				}
 			}
 		}
@@ -226,11 +251,15 @@ async function SummaryContent({
 
 	// 各口座の月末残高を計算して合計を求める
 	for (const account of summary.accounts) {
-		// 初期残高を取得
-		let initialBalance = account.balance;
-
-		// 選択した年月が現在より後で、前月の残高情報が利用可能な場合は前月の残高を使用
-		if (
+		// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
+		let initialBalance = account.balance; // デフォルト値
+		
+		// 月初残高テーブルにデータがあればそれを使用
+		if (monthlyBalanceMap && monthlyBalanceMap[account.id] !== undefined) {
+			initialBalance = monthlyBalanceMap[account.id];
+		}
+		// 将来月の場合は前月残高を使用
+		else if (
 			isSelectedDateAfterCurrent &&
 			previousMonthBalances &&
 			previousMonthBalances[account.id] !== undefined

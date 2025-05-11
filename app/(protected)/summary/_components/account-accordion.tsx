@@ -126,8 +126,18 @@ export const AccountAccordion = ({
 											new Date(b.transaction_date).getTime(),
 									);
 
-									// 初期残高を計算（前の関数と同じロジックを使用）
-									const initialBalance =
+									// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
+									let initialBalance = account.balance; // デフォルト値
+
+									// 月初残高テーブルにデータがあればそれを優先的に使用
+									if (
+										monthlyBalanceMap &&
+										monthlyBalanceMap[account.id] !== undefined
+									) {
+										initialBalance = monthlyBalanceMap[account.id];
+									}
+									// 月初残高テーブルにデータがなく、将来月の場合は前月計算値を使用
+									else if (
 										previousMonthBalances &&
 										previousMonthBalances[account.id] !== undefined &&
 										new Date(selectedYear, selectedMonth - 1, 1) >
@@ -136,8 +146,9 @@ export const AccountAccordion = ({
 												currentDate.getMonth(),
 												1,
 											)
-											? previousMonthBalances[account.id]
-											: account.balance;
+									) {
+										initialBalance = previousMonthBalances[account.id];
+									}
 
 									// 基本残高から始めて、各トランザクション後の残高を計算
 									const balanceHistory = sortedTransactions.reduce<
