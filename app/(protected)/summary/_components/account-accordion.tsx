@@ -4,8 +4,11 @@ import type { AccountSummary } from "@/types/summary";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { useCallback, useState } from "react";
+import { setAmountForMonth } from "../../transactions/recurring/actions";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
@@ -16,6 +19,21 @@ interface AccountAccordionProps {
 	monthlyBalanceMap?: Record<string, number>;
 }
 
+// サーバーアクションをラップしたクライアント側の関数
+const updateTransactionAmount = async (
+	transactionId: string,
+	year: number,
+	month: number,
+	amount: number,
+): Promise<void> => {
+	try {
+		await setAmountForMonth(transactionId, year, month, amount);
+	} catch (error) {
+		console.error("金額の更新に失敗しました:", error);
+		alert("金額の更新に失敗しました");
+	}
+};
+
 export const AccountAccordion = ({
 	accounts,
 	previousMonthBalances,
@@ -24,6 +42,76 @@ export const AccountAccordion = ({
 	selectedMonth,
 	monthlyBalanceMap,
 }: AccountAccordionProps) => {
+	// 編集中のトランザクションを管理するstate
+	const [editingTransactionId, setEditingTransactionId] = useState<
+		string | null
+	>(null);
+	const [editingAmount, setEditingAmount] = useState<string>("");
+
+	// 金額編集モードを開始
+	const startEditing = useCallback(
+		(transaction: { id: string; amount: number }) => {
+			setEditingTransactionId(transaction.id);
+			setEditingAmount(String(Math.abs(transaction.amount)));
+		},
+		[],
+	);
+
+	// 金額編集モードを終了
+	const cancelEditing = useCallback(() => {
+		setEditingTransactionId(null);
+		setEditingAmount("");
+	}, []);
+
+	// 金額を保存
+	const saveAmount = useCallback(
+		async (
+			transaction: { id: string; type: string },
+			year: number,
+			month: number,
+		) => {
+			if (!editingAmount) return cancelEditing();
+
+			const amount = Number.parseInt(editingAmount, 10);
+			if (Number.isNaN(amount) || amount < 0) {
+				alert("有効な金額を入力してください");
+				return;
+			}
+
+			// 収入か支出かに応じた金額（支出の場合は負の値）
+			const finalAmount = transaction.type === "income" ? amount : -amount;
+
+			// カスタム金額を保存
+			await updateTransactionAmount(transaction.id, year, month, finalAmount);
+
+			// 編集モード終了
+			cancelEditing();
+
+			// 更新を反映するためにページをリロード
+			window.location.reload();
+		},
+		[editingAmount, cancelEditing],
+	);
+
+	// Enterキーで保存、Escキーでキャンセル
+	const handleKeyDown = useCallback(
+		(
+			e: React.KeyboardEvent,
+			transaction: { id: string; type: string },
+			year: number,
+			month: number,
+		) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				void saveAmount(transaction, year, month);
+			} else if (e.key === "Escape") {
+				e.preventDefault();
+				cancelEditing();
+			}
+		},
+		[saveAmount, cancelEditing],
+	);
+
 	return (
 		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
 			{accounts.map((account) => (
@@ -212,12 +300,65 @@ export const AccountAccordion = ({
 													</div>
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-													<span
-														className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-													>
-														{transaction.type === "income" ? "" : "-"}¥
-														{Math.abs(transaction.amount).toLocaleString()}
-													</span>
+													{editingTransactionId === transaction.id ? (
+														<div className="flex justify-end items-center">
+															<span
+																className={`mr-3 ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+															>
+																{transaction.type === "income" ? "" : "-"}¥
+															</span>
+															<Input
+																size="sm"
+																type="number"
+																value={editingAmount}
+																min={0}
+																className="w-24 font-medium"
+																onChange={(e) =>
+																	setEditingAmount(e.target.value)
+																}
+																onKeyDown={(e) =>
+																	handleKeyDown(
+																		e,
+																		transaction,
+																		selectedYear,
+																		selectedMonth,
+																	)
+																}
+																autoFocus
+																onBlur={() => cancelEditing()}
+															/>
+															<div className="flex ml-2">
+																<Button
+																	size="sm"
+																	variant="light"
+																	className="mr-1"
+																	onPress={() =>
+																		void saveAmount(
+																			transaction,
+																			selectedYear,
+																			selectedMonth,
+																		)
+																	}
+																>
+																	保存
+																</Button>
+																<Button
+																	size="sm"
+																	variant="light"
+																	onPress={() => cancelEditing()}
+																>
+																	キャンセル
+																</Button>
+															</div>
+														</div>
+													) : (
+														<span
+															className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+														>
+															{transaction.type === "income" ? "" : "-"}¥
+															{Math.abs(transaction.amount).toLocaleString()}
+														</span>
+													)}
 													<div
 														className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
 													>
@@ -231,9 +372,7 @@ export const AccountAccordion = ({
 														variant="light"
 														radius="sm"
 														aria-label="トランザクション操作"
-														onPress={() => {
-															// ここに編集メニューを表示するロジックを追加
-														}}
+														onPress={() => startEditing(transaction)}
 													>
 														<EllipsisHorizontalIcon className="w-4 h-4" />
 													</Button>
