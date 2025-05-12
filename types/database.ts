@@ -14,10 +14,21 @@ export type RecurringTransaction = {
 	user_id: string;
 	account_id: string;
 	amount: number;
+	default_amount: number;
 	type: TransactionType;
 	name: string;
 	description: string | null;
 	day_of_month: number;
+	created_at: string;
+	updated_at: string;
+};
+
+export type RecurringTransactionAmount = {
+	id: string;
+	recurring_transaction_id: string;
+	year: number;
+	month: number;
+	amount: number;
 	created_at: string;
 	updated_at: string;
 };

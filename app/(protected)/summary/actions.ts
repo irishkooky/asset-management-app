@@ -4,6 +4,7 @@ import type {
 	Account,
 	OneTimeTransaction,
 	RecurringTransaction,
+	RecurringTransactionAmount,
 } from "@/types/database";
 import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
@@ -54,12 +55,27 @@ export async function getMonthlySummary(year: number, month: number) {
 		throw new Error("定期的な収支情報の取得に失敗しました");
 	}
 
-	// 4. 月次サマリーデータを計算
+	// 4. 特定の年月の定期取引金額を取得
+	const { data: recurringAmounts, error: recurringAmountsError } =
+		await supabase
+			.from("recurring_transaction_amounts")
+			.select("*")
+			.eq("year", year)
+			.eq("month", month);
+
+	if (recurringAmountsError) {
+		console.error("Error fetching recurring amounts:", recurringAmountsError);
+		throw new Error("定期的な収支の月別金額の取得に失敗しました");
+	}
+
+	// 5. 月次サマリーデータを計算
 	const summary = calculateMonthlySummary(
 		accounts as Account[],
 		oneTimeTransactions as OneTimeTransaction[],
 		recurringTransactions as RecurringTransaction[],
 		month,
+		year,
+		recurringAmounts as RecurringTransactionAmount[],
 	);
 
 	return summary;
@@ -73,6 +89,8 @@ function calculateMonthlySummary(
 	oneTimeTransactions: OneTimeTransaction[],
 	recurringTransactions: RecurringTransaction[],
 	month: number,
+	year: number,
+	recurringAmounts: RecurringTransactionAmount[],
 ) {
 	// 口座IDごとのトランザクション配列を作成
 	const accountTransactions = new Map<string, Transaction[]>();
@@ -119,12 +137,18 @@ function calculateMonthlySummary(
 		}
 	}
 
+	// 定期取引のカスタム金額をマップとして保持
+	const recurringAmountsMap = new Map<string, number>();
+	for (const amount of recurringAmounts) {
+		recurringAmountsMap.set(amount.recurring_transaction_id, amount.amount);
+	}
+
 	// 定期的な収支を集計（当月に該当するもののみ）
 	for (const transaction of recurringTransactions) {
 		// 当月の該当する日付をdate-fnsを使用して作成
 		const baseDate = new Date();
 		const transactionDate = setDate(
-			setMonth(setYear(baseDate, baseDate.getFullYear()), month - 1),
+			setMonth(setYear(baseDate, year), month - 1),
 			transaction.day_of_month,
 		);
 		// タイムゾーンの影響を受けないようにdate-fnsのformat関数を使用
@@ -133,17 +157,22 @@ function calculateMonthlySummary(
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
 		const accountSummary = accountMap.get(transaction.account_id);
 		if (accountSummary) {
+			// 特定の年月のカスタム金額があればそれを使用し、なければデフォルト金額を使用
+			const customAmount = recurringAmountsMap.get(transaction.id);
+			const transactionAmount =
+				customAmount !== undefined ? customAmount : transaction.default_amount;
+
 			if (transaction.type === "income") {
-				accountSummary.income += transaction.amount;
+				accountSummary.income += transactionAmount;
 			} else {
-				accountSummary.expense += transaction.amount;
+				accountSummary.expense += transactionAmount;
 			}
 
 			// トランザクションリストに追加
 			accountSummary.transactions.push({
 				id: transaction.id,
 				name: transaction.name,
-				amount: transaction.amount,
+				amount: transactionAmount,
 				type: transaction.type,
 				transaction_date: formattedTransactionDate,
 				description: transaction.description || undefined,
