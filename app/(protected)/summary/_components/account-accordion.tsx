@@ -1,7 +1,9 @@
 "use client";
 
 import type { AccountSummary } from "@/types/summary";
+import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Accordion, AccordionItem } from "@heroui/accordion";
+import { Button } from "@heroui/button";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
@@ -115,6 +117,20 @@ export const AccountAccordion = ({
 													¥{initialBalanceValue.toLocaleString()}
 												</div>
 											</td>
+											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
+												<Button
+													isIconOnly
+													size="sm"
+													variant="light"
+													radius="sm"
+													aria-label="トランザクション操作"
+													onPress={(e) => {
+														// ここに編集メニューを表示するロジックを追加
+													}}
+												>
+													<EllipsisHorizontalIcon className="w-4 h-4" />
+												</Button>
+											</td>
 										</tr>
 									);
 								})()}
@@ -207,6 +223,20 @@ export const AccountAccordion = ({
 													>
 														残高: ¥{balance.toLocaleString()}
 													</div>
+												</td>
+												<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
+													<Button
+														isIconOnly
+														size="sm"
+														variant="light"
+														radius="sm"
+														aria-label="トランザクション操作"
+														onPress={() => {
+															// ここに編集メニューを表示するロジックを追加
+														}}
+													>
+														<EllipsisHorizontalIcon className="w-4 h-4" />
+													</Button>
 												</td>
 											</tr>
 										),
