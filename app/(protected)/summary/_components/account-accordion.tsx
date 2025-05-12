@@ -166,8 +166,8 @@ export const AccountAccordion = ({
 										selectedDate > currentYearMonth;
 
 									// 初期残高を決定
-									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値, 3. 現在の口座残高
-									let initialBalanceValue = account.balance; // デフォルト値
+									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
+									let initialBalanceValue: number | undefined;
 
 									// 月初残高テーブルにデータがあればそれを使用
 									if (
@@ -200,9 +200,11 @@ export const AccountAccordion = ({
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
 												<div
-													className={`font-medium ${initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+													className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
 												>
-													¥{initialBalanceValue.toLocaleString()}
+													{initialBalanceValue === undefined
+														? "？？？"
+														: `¥${initialBalanceValue.toLocaleString()}`}
 												</div>
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
