@@ -74,7 +74,7 @@ export const EditModal = ({
 				<div className="fixed inset-0 bg-black/70" aria-hidden="true" />
 				<div className="fixed inset-0 overflow-y-auto">
 					<div className="flex min-h-full items-center justify-center p-4">
-						<div>
+						<div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
 							<MonthlyAmountEditor
 								recurringTransaction={recurringTransaction}
 								onClose={() => setShowMonthlyEditor(false)}
@@ -115,7 +115,11 @@ export const EditModal = ({
 					type="button"
 				/>
 				<div className="flex min-h-full items-center justify-center p-4">
-					<div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+					<div 
+						className="bg-gray-800 rounded-lg p-6 w-full max-w-md relative z-10" 
+						onClick={(e) => e.stopPropagation()}
+						onKeyDown={(e) => e.stopPropagation()}
+					>
 						<h2 className="text-xl font-bold mb-4">定期的な収支の編集</h2>
 
 						<div className="space-y-4">
