@@ -208,18 +208,22 @@ export const AccountAccordion = ({
 												</div>
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													radius="sm"
-													aria-label="トランザクション操作"
-													onPress={(e) => {
-														// ここに編集メニューを表示するロジックを追加
-													}}
-												>
-													<EllipsisHorizontalIcon className="w-4 h-4" />
-												</Button>
+												{!(
+													selectedYear > currentDate.getFullYear() ||
+													(selectedYear === currentDate.getFullYear() &&
+														selectedMonth > currentDate.getMonth() + 1)
+												) && (
+													<Button
+														isIconOnly
+														size="sm"
+														variant="light"
+														radius="sm"
+														aria-label="月初残高操作"
+														onPress={() => {}}
+													>
+														<EllipsisHorizontalIcon className="w-4 h-4" />
+													</Button>
+												)}
 											</td>
 										</tr>
 									);
