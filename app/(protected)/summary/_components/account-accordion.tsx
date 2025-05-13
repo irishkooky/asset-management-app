@@ -183,7 +183,11 @@ export const AccountAccordion = ({
 	);
 
 	return (
-		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
+		<Accordion
+			variant="splitted"
+			selectionMode="multiple"
+			className="px-0 [&>*]:px-2"
+		>
 			{accounts.map((account) => (
 				<AccordionItem
 					key={account.id}
