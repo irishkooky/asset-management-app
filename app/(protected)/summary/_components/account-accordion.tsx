@@ -289,20 +289,21 @@ export const AccountAccordion = ({
 																)
 															}
 															autoFocus
-															onBlur={() => cancelEditingInitialBalance()}
 														/>
 														<div className="flex ml-2">
 															<Button
 																size="sm"
 																variant="light"
 																className="mr-1"
-																onPress={() =>
-																	void saveInitialBalance(
+																onPress={() => {
+																	saveInitialBalance(
 																		account.id,
 																		selectedYear,
 																		selectedMonth,
-																	)
-																}
+																	).catch((error) => {
+																		console.error("保存に失敗しました:", error);
+																	});
+																}}
 															>
 																保存
 															</Button>
