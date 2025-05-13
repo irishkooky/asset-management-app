@@ -296,13 +296,11 @@ export const AccountAccordion = ({
 																variant="light"
 																className="mr-1"
 																onPress={() => {
-																	saveInitialBalance(
+																	void saveInitialBalance(
 																		account.id,
 																		selectedYear,
 																		selectedMonth,
-																	).catch((error) => {
-																		console.error("保存に失敗しました:", error);
-																	});
+																	);
 																}}
 															>
 																保存
