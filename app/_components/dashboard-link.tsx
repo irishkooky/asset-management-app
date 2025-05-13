@@ -10,7 +10,7 @@ export function DashboardLink() {
 	if (pathname !== "/") return null;
 
 	return (
-		<Link href="/dashboard">
+		<Link href="/summary">
 			<Button variant="default" size="sm">
 				ダッシュボード
 			</Button>
