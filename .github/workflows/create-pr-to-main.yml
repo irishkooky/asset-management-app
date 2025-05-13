@@ -1,0 +1,32 @@
+name: create-pr-to-main
+
+on:
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr-to-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+
+      - run: gem install -N git-pr-release
+      - run: git-pr-release
+        env:
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
+          GIT_PR_RELEASE_BRANCH_STAGING: staging
+          GIT_PR_RELEASE_LABELS: release
+          GIT_PR_RELEASE_TEMPLATE: .git-pr-release/main.template
+          TZ: Asia/Tokyo
