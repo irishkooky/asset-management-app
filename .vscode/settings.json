@@ -17,6 +17,6 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"githubPullRequests.ignoredPullRequestBranches": ["develop"],
+	"githubPullRequests.ignoredPullRequestBranches": ["develop", "staging"],
 	"cSpell.words": ["heroui", "knip", "qrcode", "supabase"]
 }
