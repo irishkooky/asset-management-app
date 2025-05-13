@@ -1,10 +1,10 @@
 "use client";
 
 import type { AccountSummary } from "@/types/summary";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
+import { IconPencil } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useCallback, useState } from "react";
@@ -221,7 +221,7 @@ export const AccountAccordion = ({
 														aria-label="月初残高操作"
 														onPress={() => {}}
 													>
-														<EllipsisHorizontalIcon className="w-4 h-4" />
+														<IconPencil size={16} />
 													</Button>
 												)}
 											</td>
@@ -382,7 +382,7 @@ export const AccountAccordion = ({
 														aria-label="トランザクション操作"
 														onPress={() => startEditing(transaction)}
 													>
-														<EllipsisHorizontalIcon className="w-4 h-4" />
+														<IconPencil size={16} />
 													</Button>
 												</td>
 											</tr>
