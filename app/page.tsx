@@ -31,7 +31,7 @@ export default async function Home() {
 					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
 						{user ? (
-							<Link href="/dashboard">
+							<Link href="/summary">
 								<Button size="lg" variant="default">
 									ダッシュボード
 								</Button>
