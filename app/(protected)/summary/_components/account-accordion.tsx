@@ -4,7 +4,7 @@ import type { AccountSummary } from "@/types/summary";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
-import { IconPencil } from "@tabler/icons-react";
+import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useCallback, useRef, useState } from "react";
@@ -332,9 +332,25 @@ export const AccountAccordion = ({
 													<div
 														className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
 													>
-														{initialBalanceValue === undefined
-															? "？？？"
-															: `¥${initialBalanceValue.toLocaleString()}`}
+														{initialBalanceValue === undefined ? (
+															<Button
+																size="sm"
+																variant="light"
+																color="primary"
+																startContent={<IconPlus size={14} />}
+																onPress={() =>
+																	startEditingInitialBalance(
+																		account.id,
+																		initialBalanceValue,
+																	)
+																}
+																className="px-2 py-1 h-7"
+															>
+																残高を入力
+															</Button>
+														) : (
+															`¥${initialBalanceValue.toLocaleString()}`
+														)}
 													</div>
 												)}
 											</td>
