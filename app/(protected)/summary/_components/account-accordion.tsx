@@ -7,7 +7,7 @@ import { Input } from "@heroui/input";
 import { IconPencil } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
 import { updateInitialBalance } from "../actions";
 
@@ -53,6 +53,9 @@ export const AccountAccordion = ({
 	const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
 	const [editingInitialBalance, setEditingInitialBalance] =
 		useState<string>("");
+
+	// ボタン操作中かどうかを追跡するref
+	const isButtonActionRef = useRef(false);
 
 	// 金額編集モードを開始
 	const startEditing = useCallback(
@@ -289,12 +292,23 @@ export const AccountAccordion = ({
 																)
 															}
 															autoFocus
+															onBlur={() => {
+																// ボタン操作中でなければキャンセル
+																if (!isButtonActionRef.current) {
+																	cancelEditingInitialBalance();
+																}
+																// フラグをリセット
+																isButtonActionRef.current = false;
+															}}
 														/>
 														<div className="flex ml-2">
 															<Button
 																size="sm"
 																variant="light"
 																className="mr-1"
+																onMouseDown={() => {
+																	isButtonActionRef.current = true;
+																}}
 																onPress={() => {
 																	void saveInitialBalance(
 																		account.id,
@@ -308,6 +322,9 @@ export const AccountAccordion = ({
 															<Button
 																size="sm"
 																variant="light"
+																onMouseDown={() => {
+																	isButtonActionRef.current = true;
+																}}
 																onPress={() => cancelEditingInitialBalance()}
 															>
 																キャンセル
@@ -453,13 +470,23 @@ export const AccountAccordion = ({
 																	)
 																}
 																autoFocus
-																onBlur={() => cancelEditing()}
+																onBlur={() => {
+																	// ボタン操作中でなければキャンセル
+																	if (!isButtonActionRef.current) {
+																		cancelEditing();
+																	}
+																	// フラグをリセット
+																	isButtonActionRef.current = false;
+																}}
 															/>
 															<div className="flex ml-2">
 																<Button
 																	size="sm"
 																	variant="light"
 																	className="mr-1"
+																	onMouseDown={() => {
+																		isButtonActionRef.current = true;
+																	}}
 																	onPress={() =>
 																		void saveAmount(
 																			transaction,
@@ -473,6 +500,9 @@ export const AccountAccordion = ({
 																<Button
 																	size="sm"
 																	variant="light"
+																	onMouseDown={() => {
+																		isButtonActionRef.current = true;
+																	}}
 																	onPress={() => cancelEditing()}
 																>
 																	キャンセル
