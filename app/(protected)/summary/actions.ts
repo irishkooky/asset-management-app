@@ -9,6 +9,7 @@ import type {
 import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
 import { format, setDate, setMonth, setYear } from "date-fns";
+import { revalidatePath } from "next/cache";
 
 /**
  * 月次収支サマリーデータを取得する
@@ -290,4 +291,55 @@ export async function recordMonthlyBalances(
 			error: "月初残高の記録中にエラーが発生しました",
 		};
 	}
+}
+
+/**
+ * 指定アカウントの月初残高を更新または追加するアクション
+ */
+export async function updateInitialBalance(
+	accountId: string,
+	year: number,
+	month: number,
+	amount: number,
+): Promise<void> {
+	const supabase = await createClient();
+
+	// ユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("認証が必要です");
+	}
+
+	// 既存のレコードを確認
+	const { data: existingBalance } = await supabase
+		.from("monthly_account_balances")
+		.select("id")
+		.eq("account_id", accountId)
+		.eq("year", year)
+		.eq("month", month)
+		.eq("user_id", user.id)
+		.single();
+
+	if (existingBalance) {
+		// 更新
+		await supabase
+			.from("monthly_account_balances")
+			.update({ balance: amount })
+			.eq("id", existingBalance.id);
+	} else {
+		// 新規作成
+		await supabase.from("monthly_account_balances").insert({
+			account_id: accountId,
+			year,
+			month,
+			balance: amount,
+			user_id: user.id,
+		});
+	}
+
+	// キャッシュをクリア
+	revalidatePath("/summary");
 }

@@ -1,14 +1,15 @@
 "use client";
 
 import type { AccountSummary } from "@/types/summary";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
+import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
+import { updateInitialBalance } from "../actions";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
@@ -48,6 +49,14 @@ export const AccountAccordion = ({
 	>(null);
 	const [editingAmount, setEditingAmount] = useState<string>("");
 
+	// 編集中の月初残高を管理するstate
+	const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+	const [editingInitialBalance, setEditingInitialBalance] =
+		useState<string>("");
+
+	// ボタン操作中かどうかを追跡するref
+	const isButtonActionRef = useRef(false);
+
 	// 金額編集モードを開始
 	const startEditing = useCallback(
 		(transaction: { id: string; amount: number }) => {
@@ -57,10 +66,27 @@ export const AccountAccordion = ({
 		[],
 	);
 
+	// 月初残高編集モードを開始
+	const startEditingInitialBalance = useCallback(
+		(accountId: string, initialBalance: number | undefined) => {
+			setEditingAccountId(accountId);
+			setEditingInitialBalance(
+				initialBalance !== undefined ? String(initialBalance) : "",
+			);
+		},
+		[],
+	);
+
 	// 金額編集モードを終了
 	const cancelEditing = useCallback(() => {
 		setEditingTransactionId(null);
 		setEditingAmount("");
+	}, []);
+
+	// 月初残高編集モードを終了
+	const cancelEditingInitialBalance = useCallback(() => {
+		setEditingAccountId(null);
+		setEditingInitialBalance("");
 	}, []);
 
 	// 金額を保存
@@ -78,11 +104,8 @@ export const AccountAccordion = ({
 				return;
 			}
 
-			// 収入か支出かに応じた金額（支出の場合は負の値）
-			const finalAmount = transaction.type === "income" ? amount : -amount;
-
 			// カスタム金額を保存
-			await updateTransactionAmount(transaction.id, year, month, finalAmount);
+			await updateTransactionAmount(transaction.id, year, month, amount);
 
 			// 編集モード終了
 			cancelEditing();
@@ -91,6 +114,34 @@ export const AccountAccordion = ({
 			window.location.reload();
 		},
 		[editingAmount, cancelEditing],
+	);
+
+	// 月初残高を保存
+	const saveInitialBalance = useCallback(
+		async (accountId: string, year: number, month: number) => {
+			if (!editingInitialBalance) return cancelEditingInitialBalance();
+
+			const amount = Number.parseInt(editingInitialBalance, 10);
+			if (Number.isNaN(amount)) {
+				alert("有効な金額を入力してください");
+				return;
+			}
+
+			try {
+				// サーバーアクションを呼び出して月初残高を保存
+				await updateInitialBalance(accountId, year, month, amount);
+
+				// 編集モード終了
+				cancelEditingInitialBalance();
+
+				// 更新を反映するためにページをリロード
+				window.location.reload();
+			} catch (error) {
+				console.error("月初残高の更新に失敗しました:", error);
+				alert("月初残高の更新に失敗しました");
+			}
+		},
+		[editingInitialBalance, cancelEditingInitialBalance],
 	);
 
 	// Enterキーで保存、Escキーでキャンセル
@@ -112,8 +163,31 @@ export const AccountAccordion = ({
 		[saveAmount, cancelEditing],
 	);
 
+	// 月初残高のキーボードイベント処理
+	const handleInitialBalanceKeyDown = useCallback(
+		(
+			e: React.KeyboardEvent,
+			accountId: string,
+			year: number,
+			month: number,
+		) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				void saveInitialBalance(accountId, year, month);
+			} else if (e.key === "Escape") {
+				e.preventDefault();
+				cancelEditingInitialBalance();
+			}
+		},
+		[saveInitialBalance, cancelEditingInitialBalance],
+	);
+
 	return (
-		<Accordion variant="splitted" selectionMode="multiple" className="px-0">
+		<Accordion
+			variant="splitted"
+			selectionMode="multiple"
+			className="px-0 [&>*]:px-2"
+		>
 			{accounts.map((account) => (
 				<AccordionItem
 					key={account.id}
@@ -166,8 +240,8 @@ export const AccountAccordion = ({
 										selectedDate > currentYearMonth;
 
 									// 初期残高を決定
-									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値, 3. 現在の口座残高
-									let initialBalanceValue = account.balance; // デフォルト値
+									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
+									let initialBalanceValue: number | undefined;
 
 									// 月初残高テーブルにデータがあればそれを使用
 									if (
@@ -199,25 +273,113 @@ export const AccountAccordion = ({
 												</div>
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-												<div
-													className={`font-medium ${initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
-												>
-													¥{initialBalanceValue.toLocaleString()}
-												</div>
+												{editingAccountId === account.id ? (
+													<div className="flex justify-end items-center">
+														<span className="mr-3">¥</span>
+														<Input
+															size="sm"
+															type="number"
+															value={editingInitialBalance}
+															className="w-24 font-medium"
+															onChange={(e) =>
+																setEditingInitialBalance(e.target.value)
+															}
+															onKeyDown={(e) =>
+																handleInitialBalanceKeyDown(
+																	e,
+																	account.id,
+																	selectedYear,
+																	selectedMonth,
+																)
+															}
+															autoFocus
+															onBlur={() => {
+																// ボタン操作中でなければキャンセル
+																if (!isButtonActionRef.current) {
+																	cancelEditingInitialBalance();
+																}
+																// フラグをリセット
+																isButtonActionRef.current = false;
+															}}
+														/>
+														<div className="flex ml-2">
+															<Button
+																size="sm"
+																variant="light"
+																className="mr-1"
+																onMouseDown={() => {
+																	isButtonActionRef.current = true;
+																}}
+																onPress={() => {
+																	void saveInitialBalance(
+																		account.id,
+																		selectedYear,
+																		selectedMonth,
+																	);
+																}}
+															>
+																保存
+															</Button>
+															<Button
+																size="sm"
+																variant="light"
+																onMouseDown={() => {
+																	isButtonActionRef.current = true;
+																}}
+																onPress={() => cancelEditingInitialBalance()}
+															>
+																キャンセル
+															</Button>
+														</div>
+													</div>
+												) : (
+													<div
+														className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+													>
+														{initialBalanceValue === undefined ? (
+															<Button
+																size="sm"
+																variant="light"
+																color="primary"
+																startContent={<IconPlus size={14} />}
+																onPress={() =>
+																	startEditingInitialBalance(
+																		account.id,
+																		initialBalanceValue,
+																	)
+																}
+																className="px-2 py-1 h-7"
+															>
+																残高を入力
+															</Button>
+														) : (
+															`¥${initialBalanceValue.toLocaleString()}`
+														)}
+													</div>
+												)}
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													radius="sm"
-													aria-label="トランザクション操作"
-													onPress={(e) => {
-														// ここに編集メニューを表示するロジックを追加
-													}}
-												>
-													<EllipsisHorizontalIcon className="w-4 h-4" />
-												</Button>
+												{!(
+													selectedYear > currentDate.getFullYear() ||
+													(selectedYear === currentDate.getFullYear() &&
+														selectedMonth > currentDate.getMonth() + 1)
+												) && (
+													<Button
+														isIconOnly
+														size="sm"
+														variant="light"
+														radius="sm"
+														aria-label="月初残高操作"
+														onPress={() =>
+															startEditingInitialBalance(
+																account.id,
+																initialBalanceValue,
+															)
+														}
+													>
+														<IconPencil size={16} />
+													</Button>
+												)}
 											</td>
 										</tr>
 									);
@@ -325,13 +487,23 @@ export const AccountAccordion = ({
 																	)
 																}
 																autoFocus
-																onBlur={() => cancelEditing()}
+																onBlur={() => {
+																	// ボタン操作中でなければキャンセル
+																	if (!isButtonActionRef.current) {
+																		cancelEditing();
+																	}
+																	// フラグをリセット
+																	isButtonActionRef.current = false;
+																}}
 															/>
 															<div className="flex ml-2">
 																<Button
 																	size="sm"
 																	variant="light"
 																	className="mr-1"
+																	onMouseDown={() => {
+																		isButtonActionRef.current = true;
+																	}}
 																	onPress={() =>
 																		void saveAmount(
 																			transaction,
@@ -345,6 +517,9 @@ export const AccountAccordion = ({
 																<Button
 																	size="sm"
 																	variant="light"
+																	onMouseDown={() => {
+																		isButtonActionRef.current = true;
+																	}}
 																	onPress={() => cancelEditing()}
 																>
 																	キャンセル
@@ -376,7 +551,7 @@ export const AccountAccordion = ({
 														aria-label="トランザクション操作"
 														onPress={() => startEditing(transaction)}
 													>
-														<EllipsisHorizontalIcon className="w-4 h-4" />
+														<IconPencil size={16} />
 													</Button>
 												</td>
 											</tr>
