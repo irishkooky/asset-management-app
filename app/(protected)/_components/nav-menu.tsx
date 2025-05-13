@@ -12,7 +12,7 @@ export function NavMenu() {
 
 	const navItems = [
 		{ href: "/summary", label: "月次収支" },
-		{ href: "/dashboard", label: "ダッシュボード" },
+		{ href: "/dashboard", label: "貯蓄予想" },
 		{ href: "/accounts", label: "口座管理" },
 		{ href: "/transactions/recurring", label: "定期的な収支" },
 		{ href: "/transactions/one-time", label: "臨時収支" },
