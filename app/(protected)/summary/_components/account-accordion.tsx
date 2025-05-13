@@ -104,11 +104,8 @@ export const AccountAccordion = ({
 				return;
 			}
 
-			// 収入か支出かに応じた金額（支出の場合は負の値）
-			const finalAmount = transaction.type === "income" ? amount : -amount;
-
 			// カスタム金額を保存
-			await updateTransactionAmount(transaction.id, year, month, finalAmount);
+			await updateTransactionAmount(transaction.id, year, month, amount);
 
 			// 編集モード終了
 			cancelEditing();
