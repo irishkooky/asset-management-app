@@ -315,7 +315,7 @@ export async function updateInitialBalance(
 
 	// 既存のレコードを確認
 	const { data: existingBalance } = await supabase
-		.from("monthly_balances")
+		.from("monthly_account_balances")
 		.select("id")
 		.eq("account_id", accountId)
 		.eq("year", year)
@@ -326,16 +326,16 @@ export async function updateInitialBalance(
 	if (existingBalance) {
 		// 更新
 		await supabase
-			.from("monthly_balances")
-			.update({ amount })
+			.from("monthly_account_balances")
+			.update({ balance: amount })
 			.eq("id", existingBalance.id);
 	} else {
 		// 新規作成
-		await supabase.from("monthly_balances").insert({
+		await supabase.from("monthly_account_balances").insert({
 			account_id: accountId,
 			year,
 			month,
-			amount,
+			balance: amount,
 			user_id: user.id,
 		});
 	}

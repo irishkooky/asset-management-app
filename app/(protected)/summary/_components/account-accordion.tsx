@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useCallback, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
+import { updateInitialBalance } from "../actions";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
@@ -48,6 +49,11 @@ export const AccountAccordion = ({
 	>(null);
 	const [editingAmount, setEditingAmount] = useState<string>("");
 
+	// 編集中の月初残高を管理するstate
+	const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+	const [editingInitialBalance, setEditingInitialBalance] =
+		useState<string>("");
+
 	// 金額編集モードを開始
 	const startEditing = useCallback(
 		(transaction: { id: string; amount: number }) => {
@@ -57,10 +63,27 @@ export const AccountAccordion = ({
 		[],
 	);
 
+	// 月初残高編集モードを開始
+	const startEditingInitialBalance = useCallback(
+		(accountId: string, initialBalance: number | undefined) => {
+			setEditingAccountId(accountId);
+			setEditingInitialBalance(
+				initialBalance !== undefined ? String(initialBalance) : "",
+			);
+		},
+		[],
+	);
+
 	// 金額編集モードを終了
 	const cancelEditing = useCallback(() => {
 		setEditingTransactionId(null);
 		setEditingAmount("");
+	}, []);
+
+	// 月初残高編集モードを終了
+	const cancelEditingInitialBalance = useCallback(() => {
+		setEditingAccountId(null);
+		setEditingInitialBalance("");
 	}, []);
 
 	// 金額を保存
@@ -93,6 +116,34 @@ export const AccountAccordion = ({
 		[editingAmount, cancelEditing],
 	);
 
+	// 月初残高を保存
+	const saveInitialBalance = useCallback(
+		async (accountId: string, year: number, month: number) => {
+			if (!editingInitialBalance) return cancelEditingInitialBalance();
+
+			const amount = Number.parseInt(editingInitialBalance, 10);
+			if (Number.isNaN(amount)) {
+				alert("有効な金額を入力してください");
+				return;
+			}
+
+			try {
+				// サーバーアクションを呼び出して月初残高を保存
+				await updateInitialBalance(accountId, year, month, amount);
+
+				// 編集モード終了
+				cancelEditingInitialBalance();
+
+				// 更新を反映するためにページをリロード
+				window.location.reload();
+			} catch (error) {
+				console.error("月初残高の更新に失敗しました:", error);
+				alert("月初残高の更新に失敗しました");
+			}
+		},
+		[editingInitialBalance, cancelEditingInitialBalance],
+	);
+
 	// Enterキーで保存、Escキーでキャンセル
 	const handleKeyDown = useCallback(
 		(
@@ -110,6 +161,25 @@ export const AccountAccordion = ({
 			}
 		},
 		[saveAmount, cancelEditing],
+	);
+
+	// 月初残高のキーボードイベント処理
+	const handleInitialBalanceKeyDown = useCallback(
+		(
+			e: React.KeyboardEvent,
+			accountId: string,
+			year: number,
+			month: number,
+		) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				void saveInitialBalance(accountId, year, month);
+			} else if (e.key === "Escape") {
+				e.preventDefault();
+				cancelEditingInitialBalance();
+			}
+		},
+		[saveInitialBalance, cancelEditingInitialBalance],
 	);
 
 	return (
@@ -199,13 +269,61 @@ export const AccountAccordion = ({
 												</div>
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-												<div
-													className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
-												>
-													{initialBalanceValue === undefined
-														? "？？？"
-														: `¥${initialBalanceValue.toLocaleString()}`}
-												</div>
+												{editingAccountId === account.id ? (
+													<div className="flex justify-end items-center">
+														<span className="mr-3">¥</span>
+														<Input
+															size="sm"
+															type="number"
+															value={editingInitialBalance}
+															className="w-24 font-medium"
+															onChange={(e) =>
+																setEditingInitialBalance(e.target.value)
+															}
+															onKeyDown={(e) =>
+																handleInitialBalanceKeyDown(
+																	e,
+																	account.id,
+																	selectedYear,
+																	selectedMonth,
+																)
+															}
+															autoFocus
+															onBlur={() => cancelEditingInitialBalance()}
+														/>
+														<div className="flex ml-2">
+															<Button
+																size="sm"
+																variant="light"
+																className="mr-1"
+																onPress={() =>
+																	void saveInitialBalance(
+																		account.id,
+																		selectedYear,
+																		selectedMonth,
+																	)
+																}
+															>
+																保存
+															</Button>
+															<Button
+																size="sm"
+																variant="light"
+																onPress={() => cancelEditingInitialBalance()}
+															>
+																キャンセル
+															</Button>
+														</div>
+													</div>
+												) : (
+													<div
+														className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+													>
+														{initialBalanceValue === undefined
+															? "？？？"
+															: `¥${initialBalanceValue.toLocaleString()}`}
+													</div>
+												)}
 											</td>
 											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
 												{!(
@@ -219,7 +337,12 @@ export const AccountAccordion = ({
 														variant="light"
 														radius="sm"
 														aria-label="月初残高操作"
-														onPress={() => {}}
+														onPress={() =>
+															startEditingInitialBalance(
+																account.id,
+																initialBalanceValue,
+															)
+														}
 													>
 														<IconPencil size={16} />
 													</Button>
