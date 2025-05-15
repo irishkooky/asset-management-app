@@ -1,180 +1,24 @@
 "use client";
 
-import { useState } from "react";
-
 interface Prediction {
 	period: string;
 	date: string;
 	amount: number;
 }
 
-interface Transaction {
-	id: string;
-	name: string;
-	type: "income" | "expense";
-	amount: number;
-	day_of_month?: number;
-	transaction_date?: string;
-}
-
 interface DashboardProps {
 	totalBalance: number;
 	monthlyPredictions?: Prediction[];
-	recurringTransactions: Transaction[];
-	recentTransactions: Transaction[];
 }
 
 export function Dashboard({
 	totalBalance,
 	monthlyPredictions,
-	recurringTransactions,
-	recentTransactions,
 }: DashboardProps) {
-	const [activeTab, setActiveTab] = useState<"overview" | "savings-prediction">(
-		"overview",
-	);
-
 	return (
 		<div className="space-y-8">
-			{/* タブナビゲーション */}
 			<div className="w-full">
-				{/* タブヘッダー */}
-				<div className="grid w-full grid-cols-2 mb-4 border-b">
-					<button
-						type="button"
-						onClick={() => setActiveTab("overview")}
-						className={`py-2 text-center font-medium transition-colors ${
-							activeTab === "overview"
-								? "border-b-2 border-primary text-primary"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						概要
-					</button>
-					<button
-						type="button"
-						onClick={() => setActiveTab("savings-prediction")}
-						className={`py-2 text-center font-medium transition-colors ${
-							activeTab === "savings-prediction"
-								? "border-b-2 border-primary text-primary"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						貯蓄予想
-					</button>
-				</div>
-
-				{/* 概要タブコンテンツ */}
-				{activeTab === "overview" && (
-					<div className="space-y-8">
-						{/* 現在の総残高 */}
-						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-							<div className="flex justify-between items-start">
-								<div>
-									<h2 className="text-lg font-medium mb-2">現在の総残高</h2>
-									<p className="text-3xl font-bold">
-										¥{totalBalance.toLocaleString()}
-									</p>
-								</div>
-							</div>
-						</div>
-
-						{/* 定期的な収支 */}
-						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-							<h2 className="text-lg font-medium mb-4">定期的な収支</h2>
-							{recurringTransactions.length > 0 ? (
-								<div className="overflow-x-auto">
-									<table className="w-full">
-										<thead>
-											<tr className="border-b">
-												<th className="text-left py-2">名前</th>
-												<th className="text-left py-2">種別</th>
-												<th className="text-left py-2">日付</th>
-												<th className="text-right py-2">金額</th>
-											</tr>
-										</thead>
-										<tbody>
-											{recurringTransactions.map((transaction) => (
-												<tr key={transaction.id} className="border-b">
-													<td className="py-2">{transaction.name}</td>
-													<td className="py-2">
-														<span
-															className={
-																transaction.type === "income"
-																	? "text-green-600"
-																	: "text-red-600"
-															}
-														>
-															{transaction.type === "income" ? "収入" : "支出"}
-														</span>
-													</td>
-													<td className="py-2">
-														毎月{transaction.day_of_month}日
-													</td>
-													<td className="text-right py-2">
-														¥{transaction.amount.toLocaleString()}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
-							) : (
-								<p className="text-gray-500">
-									定期的な収支はまだ登録されていません
-								</p>
-							)}
-						</div>
-
-						{/* 最近の臨時収支 */}
-						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-							<h2 className="text-lg font-medium mb-4">最近の臨時収支</h2>
-							{recentTransactions.length > 0 ? (
-								<div className="overflow-x-auto">
-									<table className="w-full">
-										<thead>
-											<tr className="border-b">
-												<th className="text-left py-2">名前</th>
-												<th className="text-left py-2">種別</th>
-												<th className="text-left py-2">日付</th>
-												<th className="text-right py-2">金額</th>
-											</tr>
-										</thead>
-										<tbody>
-											{recentTransactions.map((transaction) => (
-												<tr key={transaction.id} className="border-b">
-													<td className="py-2">{transaction.name}</td>
-													<td className="py-2">
-														<span
-															className={
-																transaction.type === "income"
-																	? "text-green-600"
-																	: "text-red-600"
-															}
-														>
-															{transaction.type === "income" ? "収入" : "支出"}
-														</span>
-													</td>
-													<td className="py-2">
-														{transaction.transaction_date}
-													</td>
-													<td className="text-right py-2">
-														¥{transaction.amount.toLocaleString()}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
-							) : (
-								<p className="text-gray-500">最近の臨時収支はありません</p>
-							)}
-						</div>
-					</div>
-				)}
-
-				{/* 貯蓄予想タブコンテンツ */}
-				{activeTab === "savings-prediction" && (
+				{/* 貯蓄予想コンテンツ */}
 					<div className="space-y-8">
 						{/* 現在の総残高 */}
 						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -283,7 +127,6 @@ export function Dashboard({
 							</div>
 						</div>
 					</div>
-				)}
 			</div>
 		</div>
 	);
