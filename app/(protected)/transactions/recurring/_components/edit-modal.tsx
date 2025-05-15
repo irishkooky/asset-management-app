@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	deleteRecurringTransaction,
+	getUserAccountsServerAction,
 	updateRecurringTransaction,
 } from "../actions";
 import type { RecurringTransaction } from "../types";
@@ -13,6 +14,12 @@ type EditModalProps = {
 	onClose: () => void;
 	recurringTransaction: RecurringTransaction | null;
 	onUpdate: () => void;
+};
+
+type Account = {
+	id: string;
+	name: string;
+	current_balance: number;
 };
 
 export const EditModal = ({
@@ -40,6 +47,24 @@ export const EditModal = ({
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>("");
 	const [showMonthlyEditor, setShowMonthlyEditor] = useState<boolean>(false);
+	const [accounts, setAccounts] = useState<Account[]>([]);
+
+	// 口座一覧を取得
+	useEffect(() => {
+		const fetchAccounts = async (): Promise<void> => {
+			try {
+				const accountsData = await getUserAccountsServerAction();
+				setAccounts(accountsData);
+			} catch (err) {
+				console.error("口座一覧の取得に失敗しました", err);
+				setError("口座一覧の取得に失敗しました");
+			}
+		};
+
+		if (isOpen) {
+			fetchAccounts();
+		}
+	}, [isOpen]);
 
 	const handleSubmit = async (): Promise<void> => {
 		if (!recurringTransaction) return;
@@ -187,6 +212,24 @@ export const EditModal = ({
 										step="100"
 										placeholder="金額を入力"
 									/>
+								</label>
+							</div>
+
+							<div className="mb-4">
+								<label className="block text-sm font-medium mb-1">
+									口座
+									<select
+										value={accountId}
+										onChange={(e) => setAccountId(e.target.value)}
+										className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 mt-1"
+									>
+										<option value="">口座を選択</option>
+										{accounts.map((account) => (
+											<option key={account.id} value={account.id}>
+												{account.name}
+											</option>
+										))}
+									</select>
 								</label>
 							</div>
 
