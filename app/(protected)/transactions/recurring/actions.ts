@@ -1,8 +1,8 @@
 "use server";
 
+import type { Account } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { Account } from "@/types/database";
 import type {
 	MonthlyAmount,
 	RecurringTransaction,
