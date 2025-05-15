@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { updateRecurringTransaction } from "../actions";
+import { useEffect, useState } from "react";
+import {
+	deleteRecurringTransaction,
+	getUserAccountsServerAction,
+	updateRecurringTransaction,
+} from "../actions";
 import type { RecurringTransaction } from "../types";
 import { MonthlyAmountEditor } from "./monthly-amount-editor";
 
@@ -10,6 +14,12 @@ type EditModalProps = {
 	onClose: () => void;
 	recurringTransaction: RecurringTransaction | null;
 	onUpdate: () => void;
+};
+
+type Account = {
+	id: string;
+	name: string;
+	current_balance: number;
 };
 
 export const EditModal = ({
@@ -37,6 +47,24 @@ export const EditModal = ({
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>("");
 	const [showMonthlyEditor, setShowMonthlyEditor] = useState<boolean>(false);
+	const [accounts, setAccounts] = useState<Account[]>([]);
+
+	// 口座一覧を取得
+	useEffect(() => {
+		const fetchAccounts = async (): Promise<void> => {
+			try {
+				const accountsData = await getUserAccountsServerAction();
+				setAccounts(accountsData);
+			} catch (err) {
+				console.error("口座一覧の取得に失敗しました", err);
+				setError("口座一覧の取得に失敗しました");
+			}
+		};
+
+		if (isOpen) {
+			fetchAccounts();
+		}
+	}, [isOpen]);
 
 	const handleSubmit = async (): Promise<void> => {
 		if (!recurringTransaction) return;
@@ -59,6 +87,26 @@ export const EditModal = ({
 		} catch (err: unknown) {
 			const errorMessage = err instanceof Error ? err.message : "不明なエラー";
 			setError(`エラーが発生しました: ${errorMessage}`);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// 削除処理の追加
+	const handleDelete = async (): Promise<void> => {
+		if (!recurringTransaction) return;
+
+		if (!window.confirm("本当に削除しますか？この操作は元に戻せません。"))
+			return;
+
+		try {
+			setLoading(true);
+			await deleteRecurringTransaction(recurringTransaction.id);
+			onUpdate();
+			onClose();
+		} catch (err: unknown) {
+			const errorMessage = err instanceof Error ? err.message : "不明なエラー";
+			setError(`削除に失敗しました: ${errorMessage}`);
 		} finally {
 			setLoading(false);
 		}
@@ -169,6 +217,24 @@ export const EditModal = ({
 
 							<div className="mb-4">
 								<label className="block text-sm font-medium mb-1">
+									口座
+									<select
+										value={accountId}
+										onChange={(e) => setAccountId(e.target.value)}
+										className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 mt-1"
+									>
+										<option value="">口座を選択</option>
+										{accounts.map((account) => (
+											<option key={account.id} value={account.id}>
+												{account.name}
+											</option>
+										))}
+									</select>
+								</label>
+							</div>
+
+							<div className="mb-4">
+								<label className="block text-sm font-medium mb-1">
 									種別
 									<select
 										value={type}
@@ -215,51 +281,41 @@ export const EditModal = ({
 							</div>
 						)}
 
-						<div className="mt-6 flex justify-end space-x-4">
+						<div className="flex justify-between mt-6">
 							<button
 								type="button"
-								onClick={onClose}
-								className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded transition duration-200 ease-in-out"
+								className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded font-medium transition duration-200 ease-in-out"
 								disabled={loading}
+								onClick={handleDelete}
 							>
-								キャンセル
+								削除
 							</button>
-							<button
-								type="button"
-								onClick={handleSubmit}
-								className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded font-medium transition duration-200 ease-in-out"
-								disabled={loading}
-							>
-								{loading ? (
-									<span className="flex items-center justify-center">
-										<svg
-											className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											aria-hidden="true"
-										>
-											<title>ローディングインジケーター</title>
-											<circle
-												className="opacity-25"
-												cx="12"
-												cy="12"
-												r="10"
-												stroke="currentColor"
-												strokeWidth="4"
-											/>
-											<path
-												className="opacity-75"
-												fill="currentColor"
-												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-											/>
-										</svg>
-										保存中...
-									</span>
-								) : (
-									"保存"
-								)}
-							</button>
+
+							<div className="flex space-x-3">
+								<button
+									type="button"
+									onClick={onClose}
+									className="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded font-medium transition duration-200 ease-in-out"
+									disabled={loading}
+								>
+									キャンセル
+								</button>
+								<button
+									type="button"
+									onClick={handleSubmit}
+									className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-medium transition duration-200 ease-in-out"
+									disabled={loading}
+								>
+									{loading ? (
+										<span className="flex items-center justify-center">
+											<span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+											処理中...
+										</span>
+									) : (
+										"保存"
+									)}
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -267,3 +323,5 @@ export const EditModal = ({
 		</div>
 	);
 };
+
+export default EditModal;
