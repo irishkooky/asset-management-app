@@ -31,6 +31,7 @@ export const createTransactionSchema = object({
 	accountId: string("口座IDは必須です"),
 	name: string("名前は必須です"),
 	amount: pipe(number(), minValue(0, "金額は正の数値で入力してください")),
+	defaultAmount: pipe(number(), minValue(0, "初期金額は正の数値で入力してください")),
 	type: transactionTypeSchema,
 	dayOfMonth: dayOfMonthSchema,
 	description: optional(string()),
@@ -42,6 +43,9 @@ export const updateTransactionSchema = object({
 	amount: optional(
 		pipe(number(), minValue(0, "金額は正の数値で入力してください")),
 	),
+	defaultAmount: optional(
+		pipe(number(), minValue(0, "初期金額は正の数値で入力してください")),
+	),
 	type: optional(transactionTypeSchema),
 	dayOfMonth: optional(dayOfMonthSchema),
 	description: optional(string()),
@@ -52,6 +56,7 @@ export type CreateTransactionInput = {
 	accountId: string;
 	name: string;
 	amount: number;
+	defaultAmount: number;
 	type: TransactionType;
 	dayOfMonth: number | string;
 	description?: string;
@@ -62,6 +67,7 @@ export type CreateTransactionOutput = {
 	accountId: string;
 	name: string;
 	amount: number;
+	defaultAmount: number;
 	type: TransactionType;
 	dayOfMonth: number;
 	description?: string;
@@ -71,6 +77,7 @@ export type CreateTransactionOutput = {
 export type UpdateTransactionInput = {
 	name?: string;
 	amount?: number;
+	defaultAmount?: number;
 	type?: TransactionType;
 	dayOfMonth?: number | string;
 	description?: string | null;
@@ -80,6 +87,7 @@ export type UpdateTransactionInput = {
 export type UpdateTransactionOutput = {
 	name?: string;
 	amount?: number;
+	defaultAmount?: number;
 	type?: TransactionType;
 	dayOfMonth?: number;
 	description?: string;
