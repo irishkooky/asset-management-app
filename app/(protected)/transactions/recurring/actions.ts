@@ -6,6 +6,7 @@ import type {
 	RecurringTransaction,
 	RecurringTransactionAmount,
 } from "./types";
+import { revalidatePath } from "next/cache";
 
 /**
  * 定期的な収支データを取得する
@@ -234,4 +235,23 @@ export async function updateRecurringTransaction(
 	if (error)
 		throw new Error(`定期的な収支の更新に失敗しました: ${error.message}`);
 	return data as RecurringTransaction;
+}
+
+/**
+ * 定期的な収支を削除する
+ */
+export async function deleteRecurringTransaction(transactionId: string): Promise<void> {
+	const supabase = await createClient();
+
+	const { error } = await supabase
+		.from("recurring_transactions")
+		.delete()
+		.eq("id", transactionId);
+
+	if (error) {
+		throw new Error(`定期的な収支の削除に失敗しました: ${error.message}`);
+	}
+
+	// キャッシュを再検証
+	revalidatePath("/transactions/recurring");
 }
