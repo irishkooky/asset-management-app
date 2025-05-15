@@ -31,7 +31,10 @@ export const createTransactionSchema = object({
 	accountId: string("口座IDは必須です"),
 	name: string("名前は必須です"),
 	amount: pipe(number(), minValue(0, "金額は正の数値で入力してください")),
-	defaultAmount: pipe(number(), minValue(0, "初期金額は正の数値で入力してください")),
+	defaultAmount: pipe(
+		number(),
+		minValue(0, "初期金額は正の数値で入力してください"),
+	),
 	type: transactionTypeSchema,
 	dayOfMonth: dayOfMonthSchema,
 	description: optional(string()),
