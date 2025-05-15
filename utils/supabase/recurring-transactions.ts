@@ -65,6 +65,7 @@ export async function createRecurringTransaction(
 	accountId: string,
 	name: string,
 	amount: number,
+	defaultAmount: number,
 	type: TransactionType,
 	dayOfMonth: number | string,
 	description?: string,
@@ -84,6 +85,7 @@ export async function createRecurringTransaction(
 		accountId,
 		name,
 		amount,
+		defaultAmount,
 		type,
 		dayOfMonth,
 		description,
@@ -96,6 +98,7 @@ export async function createRecurringTransaction(
 				account_id: validatedData.accountId,
 				name: validatedData.name,
 				amount: validatedData.amount,
+				default_amount: validatedData.defaultAmount,
 				type: validatedData.type,
 				day_of_month: validatedData.dayOfMonth, // バリデーション済みの整数値
 				description: validatedData.description || null,

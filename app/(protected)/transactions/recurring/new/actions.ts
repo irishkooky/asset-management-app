@@ -16,6 +16,8 @@ export async function createRecurringTransactionAction(
 	const type = formData.get("type") as TransactionType;
 	const dayOfMonth = Number.parseInt(formData.get("dayOfMonth") as string, 10);
 	const description = formData.get("description") as string;
+	// default_amountはamountと同じ値で初期化
+	const defaultAmount = amount;
 
 	if (!accountId) {
 		return { error: "口座を選択してください" };
@@ -42,6 +44,7 @@ export async function createRecurringTransactionAction(
 			accountId,
 			name,
 			amount,
+			defaultAmount,
 			type,
 			dayOfMonth,
 			description,
