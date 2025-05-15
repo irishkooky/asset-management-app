@@ -1,12 +1,12 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 import type {
 	MonthlyAmount,
 	RecurringTransaction,
 	RecurringTransactionAmount,
 } from "./types";
-import { revalidatePath } from "next/cache";
 
 /**
  * 定期的な収支データを取得する
@@ -240,7 +240,9 @@ export async function updateRecurringTransaction(
 /**
  * 定期的な収支を削除する
  */
-export async function deleteRecurringTransaction(transactionId: string): Promise<void> {
+export async function deleteRecurringTransaction(
+	transactionId: string,
+): Promise<void> {
 	const supabase = await createClient();
 
 	const { error } = await supabase

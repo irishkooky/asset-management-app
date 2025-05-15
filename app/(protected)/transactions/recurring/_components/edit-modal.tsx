@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { updateRecurringTransaction, deleteRecurringTransaction } from "../actions";
+import {
+	deleteRecurringTransaction,
+	updateRecurringTransaction,
+} from "../actions";
 import type { RecurringTransaction } from "../types";
 import { MonthlyAmountEditor } from "./monthly-amount-editor";
 
@@ -68,7 +71,8 @@ export const EditModal = ({
 	const handleDelete = async (): Promise<void> => {
 		if (!recurringTransaction) return;
 
-		if (!window.confirm("本当に削除しますか？この操作は元に戻せません。")) return;
+		if (!window.confirm("本当に削除しますか？この操作は元に戻せません。"))
+			return;
 
 		try {
 			setLoading(true);
