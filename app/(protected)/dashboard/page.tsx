@@ -6,10 +6,7 @@ import { updateAccountBalancesAction } from "./actions";
 export default async function DashboardPage() {
 	await updateAccountBalancesAction();
 
-	const [
-		totalBalance,
-		monthlyPredictions,
-	] = await Promise.all([
+	const [totalBalance, monthlyPredictions] = await Promise.all([
 		getTotalBalance(),
 		getMonthlyPredictions(),
 	]);
