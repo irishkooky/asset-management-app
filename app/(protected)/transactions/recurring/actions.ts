@@ -1,6 +1,8 @@
 "use server";
 
+import type { Account } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 import type {
 	MonthlyAmount,
 	RecurringTransaction,
@@ -234,4 +236,44 @@ export async function updateRecurringTransaction(
 	if (error)
 		throw new Error(`定期的な収支の更新に失敗しました: ${error.message}`);
 	return data as RecurringTransaction;
+}
+
+/**
+ * 定期的な収支を削除する
+ */
+export async function deleteRecurringTransaction(
+	transactionId: string,
+): Promise<void> {
+	const supabase = await createClient();
+
+	const { error } = await supabase
+		.from("recurring_transactions")
+		.delete()
+		.eq("id", transactionId);
+
+	if (error) {
+		throw new Error(`定期的な収支の削除に失敗しました: ${error.message}`);
+	}
+
+	// キャッシュを再検証
+	revalidatePath("/transactions/recurring");
+}
+
+/**
+ * ユーザーの口座一覧を取得する
+ */
+export async function getUserAccountsServerAction(): Promise<Account[]> {
+	const supabase = await createClient();
+
+	const { data, error } = await supabase
+		.from("accounts")
+		.select("*")
+		.order("name");
+
+	if (error) {
+		console.error("Error fetching accounts:", error);
+		throw new Error("口座情報の取得に失敗しました");
+	}
+
+	return data as Account[];
 }
