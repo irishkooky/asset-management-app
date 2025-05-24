@@ -182,6 +182,15 @@ export const AccountAccordion = ({
 		[saveInitialBalance, cancelEditingInitialBalance],
 	);
 
+	const foo = (name: number) => {
+		return hoge(name);
+	};
+	const result = foo(selectedYear);
+
+	const hoge = (name: number) => {
+		return `hoge ${name}`;
+	};
+
 	return (
 		<Accordion
 			variant="splitted"
@@ -196,7 +205,7 @@ export const AccountAccordion = ({
 						<div className="flex justify-between items-center w-full">
 							<span className="font-semibold">{account.name}</span>
 							<div className="text-right">
-								<div className="text-xs text-gray-600">収支</div>
+								<div className="text-xs text-gray-600">({result})</div>
 								{(() => {
 									// トランザクションの合計を計算
 									const totalBalance = account.transactions.reduce(
