@@ -32,68 +32,45 @@ export const TransactionGroups = ({
 							</div>
 						}
 					>
-						<div className="overflow-x-auto">
-							<table className="w-full">
-								<thead>
-									<tr className="bg-gray-50 dark:bg-gray-700 border-b">
-										<th className="text-left py-3 px-4">名前</th>
-										<th className="text-left py-3 px-4">種別</th>
-										<th className="text-left py-3 px-4">日付</th>
-										<th className="text-right py-3 px-4">金額</th>
-										<th className="text-right py-3 px-4">操作</th>
-									</tr>
-								</thead>
-								<tbody>
-									{group.transactions.map((transaction) => (
-										<tr
-											key={transaction.id}
-											className="border-b last:border-b-0"
-										>
-											<td className="py-3 px-4">
-												<div>
-													<span>{transaction.name}</span>
-													{transaction.description && (
-														<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-															{transaction.description}
-														</p>
-													)}
-												</div>
-											</td>
-											<td className="py-3 px-4">
-												<span
-													className={
-														transaction.type === "income"
-															? "text-green-600 dark:text-green-400"
-															: "text-red-600 dark:text-red-400"
-													}
-												>
-													{transaction.type === "income" ? "収入" : "支出"}
-												</span>
-											</td>
-											<td className="py-3 px-4">
+						<div>
+							{/* モバイル対応のカードベースレイアウト */}
+							<div className="grid gap-4 p-4">
+								{group.transactions.map((transaction) => (
+									<div
+										key={transaction.id}
+										className="bg-white dark:bg-gray-700 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-600"
+									>
+										<div className="flex justify-between items-start mb-2">
+											<div className="flex-1">
+												<h3 className="font-medium">{transaction.name}</h3>
+												{transaction.description && (
+													<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+														{transaction.description}
+													</p>
+												)}
+											</div>
+											<span
+												className={
+													transaction.type === "income"
+														? "text-green-600 dark:text-green-400 font-medium"
+														: "text-red-600 dark:text-red-400 font-medium"
+												}
+											>
+												{transaction.type === "income" ? "" : "-"}¥
+												{transaction.amount.toLocaleString()}
+											</span>
+										</div>
+										<div className="flex justify-between items-center text-sm">
+											<span className="text-gray-600 dark:text-gray-300">
 												毎月{transaction.day_of_month}日
-											</td>
-											<td className="text-right py-3 px-4">
-												<span
-													className={
-														transaction.type === "income"
-															? "text-green-600 dark:text-green-400"
-															: "text-red-600 dark:text-red-400"
-													}
-												>
-													{transaction.type === "income" ? "" : "-"}¥
-													{transaction.amount.toLocaleString()}
-												</span>
-											</td>
-											<td className="text-right py-3 px-4">
-												<div className="flex justify-end space-x-2">
-													<RefreshHandler transaction={transaction} />
-												</div>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
+											</span>
+											<div className="flex space-x-2">
+												<RefreshHandler transaction={transaction} />
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
 						</div>
 					</AccordionItem>
 				))}
