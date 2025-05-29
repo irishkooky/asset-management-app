@@ -18,7 +18,7 @@ export const TransactionGroups = ({
 }: TransactionGroupsProps) => {
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-			<Accordion>
+			<Accordion defaultExpandedKeys={transactionGroups.map(group => group.accountId)}>
 				{transactionGroups.map((group) => (
 					<AccordionItem
 						key={group.accountId}
