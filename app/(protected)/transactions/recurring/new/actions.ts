@@ -27,8 +27,8 @@ export async function createRecurringTransactionAction(
 		return { error: "名前は必須です" };
 	}
 
-	if (Number.isNaN(amount) || amount <= 0) {
-		return { error: "金額は正の数値で入力してください" };
+	if (Number.isNaN(amount)) {
+		return { error: "金額は数値で入力してください" };
 	}
 
 	if (type !== "income" && type !== "expense") {
