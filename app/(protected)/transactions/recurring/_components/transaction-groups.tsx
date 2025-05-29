@@ -25,6 +25,7 @@ export const TransactionGroups = ({
 					<AccordionItem
 						key={group.accountId}
 						className="border-b last:border-b-0"
+						textValue={`${group.accountName} - ${group.transactions.length}件の定期取引`}
 						title={
 							<div className="flex justify-between items-center py-2 px-4">
 								<span className="font-medium">{group.accountName}</span>
