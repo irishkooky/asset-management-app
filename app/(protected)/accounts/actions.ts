@@ -81,8 +81,8 @@ export async function deleteAccountAction(
 }
 
 export async function updateAccountOrderAction(
-	accountId: string, 
-	sortOrder: number
+	accountId: string,
+	sortOrder: number,
 ): Promise<ActionState> {
 	if (!accountId) {
 		return { error: "口座IDが見つかりません" };
