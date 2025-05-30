@@ -1,6 +1,8 @@
 "use client";
+import { Button } from "@/components/button";
 import type { RecurringTransaction } from "@/types/database";
 import { Accordion, AccordionItem } from "@heroui/accordion";
+import Link from "next/link";
 import { RefreshHandler } from "./refresh-handler";
 
 interface AccountGroup {
@@ -37,7 +39,7 @@ export const TransactionGroups = ({
 					>
 						<div>
 							{/* モバイル対応のカードベースレイアウト */}
-							<div className="grid gap-4 p-4">
+							<div className="grid gap-4 px-4 pb-4">
 								{group.transactions.map((transaction) => (
 									<div
 										key={transaction.id}
@@ -73,6 +75,20 @@ export const TransactionGroups = ({
 										</div>
 									</div>
 								))}
+								<div className="flex justify-center py-3 px-4 mt-2">
+									<Button
+										size="sm"
+										variant="outline"
+										className="w-full"
+										asChild
+									>
+										<Link
+											href={`/transactions/recurring/new?accountId=${group.accountId}`}
+										>
+											この口座の定期収支を追加
+										</Link>
+									</Button>
+								</div>
 							</div>
 						</div>
 					</AccordionItem>
