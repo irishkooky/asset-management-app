@@ -10,7 +10,7 @@ export async function getUserAccounts(): Promise<Account[]> {
 	const { data, error } = await supabase
 		.from("accounts")
 		.select("*")
-		.order("name");
+		.order("sort_order", { ascending: true });
 
 	if (error) {
 		console.error("Error fetching accounts:", error);
@@ -137,4 +137,27 @@ export async function getTotalBalance(): Promise<number> {
 		(total, account) => total + account.current_balance,
 		0,
 	);
+}
+
+/**
+ * 口座の並び順を更新する
+ */
+export async function updateAccountOrder(
+	accountId: string,
+	sortOrder: number,
+): Promise<void> {
+	const supabase = await createClient();
+
+	const { error } = await supabase
+		.from("accounts")
+		.update({
+			sort_order: sortOrder,
+			updated_at: new Date().toISOString(),
+		})
+		.eq("id", accountId);
+
+	if (error) {
+		console.error("Error updating account order:", error);
+		throw new Error("口座の並び順の更新に失敗しました");
+	}
 }
