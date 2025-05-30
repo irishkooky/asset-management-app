@@ -3,6 +3,7 @@ export type Account = {
 	user_id: string;
 	name: string;
 	current_balance: number;
+	sort_order: number;
 	created_at: string;
 	updated_at: string;
 };

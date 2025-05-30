@@ -4,6 +4,7 @@ import {
 	createAccount,
 	deleteAccount,
 	updateAccount,
+	updateAccountOrder,
 } from "@/utils/supabase/accounts";
 
 type ActionState = { error?: string; success?: string };
@@ -76,5 +77,22 @@ export async function deleteAccountAction(
 	} catch (error) {
 		console.error("Error deleting account:", error);
 		return { error: "口座の削除に失敗しました" };
+	}
+}
+
+export async function updateAccountOrderAction(
+	accountId: string,
+	sortOrder: number,
+): Promise<ActionState> {
+	if (!accountId) {
+		return { error: "口座IDが見つかりません" };
+	}
+
+	try {
+		await updateAccountOrder(accountId, sortOrder);
+		return { success: "並び順が正常に更新されました" };
+	} catch (error) {
+		console.error("Error updating account order:", error);
+		return { error: "並び順の更新に失敗しました" };
 	}
 }
