@@ -1,11 +1,55 @@
 import { Button } from "@/components/button";
+import type { RecurringTransaction } from "@/types/database";
+import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import Link from "next/link";
-import { RefreshHandler } from "./_components/refresh-handler";
+import { Suspense } from "react";
+import { TransactionGroups } from "./_components/transaction-groups";
+
+// 定期取引ページのインターフェース
+interface TransactionsByAccount {
+	accountId: string;
+	accountName: string;
+	transactions: RecurringTransaction[];
+}
+
+// データを取得して口座ごとにグループ化する関数
+interface TransactionGroupsResult {
+	transactionsByAccount: TransactionsByAccount[];
+	transactions: RecurringTransaction[];
+}
+
+async function getTransactionGroups(): Promise<TransactionGroupsResult> {
+	// 口座情報と定期的な収支データを並行して取得
+	const [accounts, transactions] = await Promise.all([
+		getUserAccounts(),
+		getUserRecurringTransactions(),
+	]);
+
+	// 口座ごとにトランザクションをグループ化
+	const transactionsByAccount: TransactionsByAccount[] = [];
+
+	// 口座IDごとにグループ化
+	for (const account of accounts) {
+		const accountTransactions = transactions.filter(
+			(transaction) => transaction.account_id === account.id,
+		);
+
+		if (accountTransactions.length > 0) {
+			transactionsByAccount.push({
+				accountId: account.id,
+				accountName: account.name,
+				transactions: accountTransactions,
+			});
+		}
+	}
+
+	return { transactionsByAccount, transactions };
+}
 
 export default async function RecurringTransactionsPage() {
-	// 定期的な収支データ取得
-	const transactions = await getUserRecurringTransactions();
+	// データ取得
+	const { transactionsByAccount, transactions } = await getTransactionGroups();
 
 	return (
 		<div className="space-y-8">
@@ -17,60 +61,25 @@ export default async function RecurringTransactionsPage() {
 			</div>
 
 			{transactions.length > 0 ? (
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-					<div className="overflow-x-auto">
-						<table className="w-full">
-							<thead>
-								<tr className="bg-gray-50 dark:bg-gray-700 border-b">
-									<th className="text-left py-3 px-4">名前</th>
-									<th className="text-left py-3 px-4">種別</th>
-									<th className="text-left py-3 px-4">口座</th>
-									<th className="text-left py-3 px-4">日付</th>
-									<th className="text-right py-3 px-4">金額</th>
-									<th className="text-right py-3 px-4">操作</th>
-								</tr>
-							</thead>
-							<tbody>
-								{transactions.map((transaction) => (
-									<tr key={transaction.id} className="border-b">
-										<td className="py-3 px-4">{transaction.name}</td>
-										<td className="py-3 px-4">
-											<span
-												className={
-													transaction.type === "income"
-														? "text-green-600"
-														: "text-red-600"
-												}
-											>
-												{transaction.type === "income" ? "収入" : "支出"}
-											</span>
-										</td>
-										<td className="py-3 px-4">
-											{/* 口座名は後で実装 */}
-											<Link
-												href={`/accounts/${transaction.account_id}`}
-												className="text-blue-600 hover:underline"
-											>
-												口座詳細
-											</Link>
-										</td>
-										<td className="py-3 px-4">
-											毎月{transaction.day_of_month}日
-										</td>
-										<td className="text-right py-3 px-4">
-											¥{transaction.amount.toLocaleString()}
-										</td>
-										<td className="text-right py-3 px-4">
-											<div className="flex justify-end space-x-2">
-												<RefreshHandler transaction={transaction} />
-											</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				</div>
+				<Suspense
+					fallback={
+						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+							<div className="animate-pulse space-y-4">
+								<div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+								<div className="space-y-2">
+									{Array.from({ length: 5 }).map((_, i) => (
+										<div
+											key={`skeleton-item-${i}-${Date.now()}`}
+											className="h-4 bg-gray-200 dark:bg-gray-700 rounded"
+										/>
+									))}
+								</div>
+							</div>
+						</div>
+					}
+				>
+					<TransactionGroups transactionGroups={transactionsByAccount} />
+				</Suspense>
 			) : (
 				<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
 					<p className="text-lg mb-4">定期的な収支はまだ登録されていません</p>

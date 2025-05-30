@@ -4,6 +4,13 @@ import type { AccountSummary } from "@/types/summary";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
+import {
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+} from "@heroui/modal";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -35,6 +42,166 @@ const updateTransactionAmount = async (
 	}
 };
 
+// トランザクション編集モーダルコンポーネント
+const TransactionEditModal = ({
+	isOpen,
+	onClose,
+	transaction,
+	editingAmount,
+	setEditingAmount,
+	onSave,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	transaction: {
+		id: string;
+		amount: number;
+		type: string;
+		name: string;
+		transaction_date?: string;
+		description?: string;
+	} | null;
+	editingAmount: string;
+	setEditingAmount: (value: string) => void;
+	onSave: () => void;
+}) => {
+	// 日付をフォーマット
+	const formattedDate = transaction?.transaction_date
+		? format(new Date(transaction.transaction_date), "yyyy年M月d日", {
+				locale: ja,
+			})
+		: "";
+
+	return (
+		<Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur">
+			<ModalContent className="dark:bg-gray-900">
+				<ModalHeader className="border-b border-gray-200 dark:border-gray-700">
+					金額を編集
+				</ModalHeader>
+				<ModalBody>
+					{transaction && (
+						<div className="space-y-4">
+							{/* トランザクション情報 */}
+							<div className="space-y-2">
+								<div className="flex items-center">
+									<span className="text-sm text-gray-500 dark:text-gray-400 w-20">
+										日付:
+									</span>
+									<span className="font-medium">{formattedDate}</span>
+								</div>
+								<div className="flex items-center">
+									<span className="text-sm text-gray-500 dark:text-gray-400 w-20">
+										名称:
+									</span>
+									<span className="font-medium">{transaction.name}</span>
+								</div>
+								{transaction.description && (
+									<div className="flex items-center">
+										<span className="text-sm text-gray-500 dark:text-gray-400 w-20">
+											詳細:
+										</span>
+										<span className="text-sm text-gray-600 dark:text-gray-300">
+											{transaction.description}
+										</span>
+									</div>
+								)}
+							</div>
+
+							{/* 金額入力 */}
+							<div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+								<div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+									金額:
+								</div>
+								<div className="relative">
+									{transaction.type !== "income" && (
+										<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+											<span className="text-red-600 dark:text-red-400 font-medium">
+												-
+											</span>
+										</div>
+									)}
+									<Input
+										size="lg"
+										type="number"
+										value={editingAmount}
+										min={0}
+										className={`w-full font-medium text-right text-lg ${transaction.type === "income" ? "pl-10" : "pl-12"}`}
+										onChange={(e) => setEditingAmount(e.target.value)}
+										autoFocus
+									/>
+								</div>
+							</div>
+						</div>
+					)}
+				</ModalBody>
+				<ModalFooter>
+					<Button variant="light" onPress={onClose}>
+						キャンセル
+					</Button>
+					<Button color="primary" onPress={onSave}>
+						保存
+					</Button>
+				</ModalFooter>
+			</ModalContent>
+		</Modal>
+	);
+};
+
+// 月初残高編集モーダルコンポーネント
+const InitialBalanceEditModal = ({
+	isOpen,
+	onClose,
+	editingInitialBalance,
+	setEditingInitialBalance,
+	onSave,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	editingInitialBalance: string;
+	setEditingInitialBalance: (value: string) => void;
+	onSave: () => void;
+}) => {
+	return (
+		<Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur">
+			<ModalContent className="dark:bg-gray-900">
+				<ModalHeader className="border-b border-gray-200 dark:border-gray-700">
+					月初残高を編集
+				</ModalHeader>
+				<ModalBody>
+					<div className="space-y-4">
+						<div className="text-sm text-gray-500 dark:text-gray-400">
+							月初残高は、月の最初の日に口座に記録されている残高です。
+						</div>
+						<div className="pt-2">
+							<div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+								残高:
+							</div>
+							<div className="relative">
+								<Input
+									size="lg"
+									type="number"
+									value={editingInitialBalance}
+									className="w-full font-medium text-right text-lg pl-10"
+									onChange={(e) => setEditingInitialBalance(e.target.value)}
+									autoFocus
+								/>
+							</div>
+						</div>
+					</div>
+				</ModalBody>
+				<ModalFooter>
+					<Button variant="light" onPress={onClose}>
+						キャンセル
+					</Button>
+					<Button color="primary" onPress={onSave}>
+						保存
+					</Button>
+				</ModalFooter>
+			</ModalContent>
+		</Modal>
+	);
+};
+
 export const AccountAccordion = ({
 	accounts,
 	previousMonthBalances,
@@ -54,40 +221,101 @@ export const AccountAccordion = ({
 	const [editingInitialBalance, setEditingInitialBalance] =
 		useState<string>("");
 
+	// モーダル状態の管理
+	const [isTransactionModalOpen, setIsTransactionModalOpen] =
+		useState<boolean>(false);
+	const [isInitialBalanceModalOpen, setIsInitialBalanceModalOpen] =
+		useState<boolean>(false);
+
+	// 編集中のトランザクションと口座情報
+	const [modalTransaction, setModalTransaction] = useState<{
+		id: string;
+		amount: number;
+		type: string;
+		name: string;
+		transaction_date?: string;
+		description?: string;
+	} | null>(null);
+	const [modalAccount, setModalAccount] = useState<{
+		id: string;
+		initialBalance?: number;
+	} | null>(null);
+
 	// ボタン操作中かどうかを追跡するref
 	const isButtonActionRef = useRef(false);
 
-	// 金額編集モードを開始
-	const startEditing = useCallback(
-		(transaction: { id: string; amount: number }) => {
-			setEditingTransactionId(transaction.id);
+	// トランザクション編集モーダルを開く
+	const openTransactionModal = useCallback(
+		(transaction: {
+			id: string;
+			amount: number;
+			type: string;
+			name: string;
+		}) => {
+			setModalTransaction(transaction);
 			setEditingAmount(String(Math.abs(transaction.amount)));
+			setIsTransactionModalOpen(true);
 		},
 		[],
+	);
+
+	// 月初残高編集モーダルを開く
+	const openInitialBalanceModal = useCallback(
+		(accountId: string, initialBalance: number | undefined) => {
+			setModalAccount({ id: accountId, initialBalance });
+			setEditingInitialBalance(
+				initialBalance !== undefined ? String(initialBalance) : "",
+			);
+			setIsInitialBalanceModalOpen(true);
+		},
+		[],
+	);
+
+	// トランザクション編集モーダルを閉じる
+	const closeTransactionModal = useCallback(() => {
+		setIsTransactionModalOpen(false);
+		setModalTransaction(null);
+		setEditingAmount("");
+	}, []);
+
+	// 月初残高編集モーダルを閉じる
+	const closeInitialBalanceModal = useCallback(() => {
+		setIsInitialBalanceModalOpen(false);
+		setModalAccount(null);
+		setEditingInitialBalance("");
+	}, []);
+
+	// 以下は互換性のために残しておく
+	// 金額編集モードを開始
+	const startEditing = useCallback(
+		(transaction: {
+			id: string;
+			amount: number;
+			type: string;
+			name: string;
+		}) => {
+			openTransactionModal(transaction);
+		},
+		[openTransactionModal],
 	);
 
 	// 月初残高編集モードを開始
 	const startEditingInitialBalance = useCallback(
 		(accountId: string, initialBalance: number | undefined) => {
-			setEditingAccountId(accountId);
-			setEditingInitialBalance(
-				initialBalance !== undefined ? String(initialBalance) : "",
-			);
+			openInitialBalanceModal(accountId, initialBalance);
 		},
-		[],
+		[openInitialBalanceModal],
 	);
 
 	// 金額編集モードを終了
 	const cancelEditing = useCallback(() => {
-		setEditingTransactionId(null);
-		setEditingAmount("");
-	}, []);
+		closeTransactionModal();
+	}, [closeTransactionModal]);
 
 	// 月初残高編集モードを終了
 	const cancelEditingInitialBalance = useCallback(() => {
-		setEditingAccountId(null);
-		setEditingInitialBalance("");
-	}, []);
+		closeInitialBalanceModal();
+	}, [closeInitialBalanceModal]);
 
 	// 金額を保存
 	const saveAmount = useCallback(
@@ -96,7 +324,7 @@ export const AccountAccordion = ({
 			year: number,
 			month: number,
 		) => {
-			if (!editingAmount) return cancelEditing();
+			if (!editingAmount) return closeTransactionModal();
 
 			const amount = Number.parseInt(editingAmount, 10);
 			if (Number.isNaN(amount) || amount < 0) {
@@ -104,22 +332,27 @@ export const AccountAccordion = ({
 				return;
 			}
 
-			// カスタム金額を保存
-			await updateTransactionAmount(transaction.id, year, month, amount);
+			try {
+				// カスタム金額を保存
+				await updateTransactionAmount(transaction.id, year, month, amount);
 
-			// 編集モード終了
-			cancelEditing();
+				// モーダルを閉じる
+				closeTransactionModal();
 
-			// 更新を反映するためにページをリロード
-			window.location.reload();
+				// 更新を反映するためにページをリロード
+				window.location.reload();
+			} catch (error) {
+				console.error("金額の更新に失敗しました:", error);
+				alert("金額の更新に失敗しました");
+			}
 		},
-		[editingAmount, cancelEditing],
+		[editingAmount, closeTransactionModal],
 	);
 
 	// 月初残高を保存
 	const saveInitialBalance = useCallback(
 		async (accountId: string, year: number, month: number) => {
-			if (!editingInitialBalance) return cancelEditingInitialBalance();
+			if (!editingInitialBalance) return closeInitialBalanceModal();
 
 			const amount = Number.parseInt(editingInitialBalance, 10);
 			if (Number.isNaN(amount)) {
@@ -131,8 +364,8 @@ export const AccountAccordion = ({
 				// サーバーアクションを呼び出して月初残高を保存
 				await updateInitialBalance(accountId, year, month, amount);
 
-				// 編集モード終了
-				cancelEditingInitialBalance();
+				// モーダルを閉じる
+				closeInitialBalanceModal();
 
 				// 更新を反映するためにページをリロード
 				window.location.reload();
@@ -141,7 +374,7 @@ export const AccountAccordion = ({
 				alert("月初残高の更新に失敗しました");
 			}
 		},
-		[editingInitialBalance, cancelEditingInitialBalance],
+		[editingInitialBalance, closeInitialBalanceModal],
 	);
 
 	// Enterキーで保存、Escキーでキャンセル
@@ -182,306 +415,125 @@ export const AccountAccordion = ({
 		[saveInitialBalance, cancelEditingInitialBalance],
 	);
 
+	// モーダルの保存処理を行うハンドラ関数
+	const handleSaveTransaction = useCallback(() => {
+		if (modalTransaction) {
+			void saveAmount(modalTransaction, selectedYear, selectedMonth);
+		}
+	}, [modalTransaction, saveAmount, selectedYear, selectedMonth]);
+
+	const handleSaveInitialBalance = useCallback(() => {
+		if (modalAccount) {
+			void saveInitialBalance(modalAccount.id, selectedYear, selectedMonth);
+		}
+	}, [modalAccount, saveInitialBalance, selectedYear, selectedMonth]);
+
 	return (
-		<Accordion
-			variant="splitted"
-			selectionMode="multiple"
-			className="px-0 [&>*]:px-2"
-		>
-			{accounts.map((account) => (
-				<AccordionItem
-					key={account.id}
-					textValue={account.name}
-					title={
-						<div className="flex justify-between items-center w-full">
-							<span className="font-semibold">{account.name}</span>
-							<div className="text-right">
-								<div className="text-xs text-gray-600">収支</div>
-								{(() => {
-									// トランザクションの合計を計算
-									const totalBalance = account.transactions.reduce(
-										(total, transaction) => {
-											return transaction.type === "income"
-												? total + transaction.amount
-												: total - transaction.amount;
-										},
-										0,
-									);
+		<>
+			<Accordion
+				variant="splitted"
+				selectionMode="multiple"
+				className="px-0 [&>*]:px-2"
+			>
+				{accounts.map((account) => (
+					<AccordionItem
+						key={account.id}
+						textValue={account.name}
+						title={
+							<div className="flex justify-between items-center w-full">
+								<span className="font-semibold">{account.name}</span>
+								<div className="text-right">
+									<div className="text-xs text-gray-600">収支</div>
+									{(() => {
+										// トランザクションの合計を計算
+										const totalBalance = account.transactions.reduce(
+											(total, transaction) => {
+												return transaction.type === "income"
+													? total + transaction.amount
+													: total - transaction.amount;
+											},
+											0,
+										);
 
-									return (
-										<div
-											className={`${totalBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-										>
-											¥{totalBalance.toLocaleString()}
-										</div>
-									);
-								})()}
+										return (
+											<div
+												className={`${totalBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+											>
+												{totalBalance.toLocaleString()}
+											</div>
+										);
+									})()}
+								</div>
 							</div>
-						</div>
-					}
-				>
-					{account.transactions.length > 0 ? (
-						<table className="w-full border-collapse">
-							<tbody>
-								{/* 月初残高の計算と表示 */}
-								{(() => {
-									// 選択した年月が現在の年月より後か判定
-									const selectedDate = new Date(
-										selectedYear,
-										selectedMonth - 1,
-										1,
-									);
-									const currentYearMonth = new Date(
-										currentDate.getFullYear(),
-										currentDate.getMonth(),
-										1,
-									);
-									const isSelectedDateAfterCurrent =
-										selectedDate > currentYearMonth;
+						}
+					>
+						{account.transactions.length > 0 ? (
+							<table className="w-full border-collapse">
+								<tbody>
+									{/* 月初残高の計算と表示 */}
+									{(() => {
+										// 選択した年月が現在の年月より後か判定
+										const selectedDate = new Date(
+											selectedYear,
+											selectedMonth - 1,
+											1,
+										);
+										const currentYearMonth = new Date(
+											currentDate.getFullYear(),
+											currentDate.getMonth(),
+											1,
+										);
+										const isSelectedDateAfterCurrent =
+											selectedDate > currentYearMonth;
 
-									// 初期残高を決定
-									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
-									let initialBalanceValue: number | undefined;
+										// 初期残高を決定
+										// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
+										let initialBalanceValue: number | undefined;
 
-									// 月初残高テーブルにデータがあればそれを使用
-									if (
-										monthlyBalanceMap &&
-										monthlyBalanceMap[account.id] !== undefined
-									) {
-										initialBalanceValue = monthlyBalanceMap[account.id];
-									}
-									// 月初残高テーブルにデータがなく、選択月が現在より後の場合は前月計算値を使用
-									else if (
-										isSelectedDateAfterCurrent &&
-										previousMonthBalances &&
-										previousMonthBalances[account.id] !== undefined
-									) {
-										initialBalanceValue = previousMonthBalances[account.id];
-									}
+										// 月初残高テーブルにデータがあればそれを使用
+										if (
+											monthlyBalanceMap &&
+											monthlyBalanceMap[account.id] !== undefined
+										) {
+											initialBalanceValue = monthlyBalanceMap[account.id];
+										}
+										// 月初残高テーブルにデータがなく、選択月が現在より後の場合は前月計算値を使用
+										else if (
+											isSelectedDateAfterCurrent &&
+											previousMonthBalances &&
+											previousMonthBalances[account.id] !== undefined
+										) {
+											initialBalanceValue = previousMonthBalances[account.id];
+										}
 
-									// 月初日を表示するための文字列
-									const monthStartDateStr = `${selectedMonth}/1`;
+										// 月初日を表示するための文字列
+										const monthStartDateStr = `${selectedMonth}/1`;
 
-									return (
-										<tr>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												{monthStartDateStr}
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-												<div className="flex items-center">
-													<span className="font-medium">月初残高</span>
-												</div>
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-												{editingAccountId === account.id ? (
-													<div className="flex justify-end items-center">
-														<span className="mr-3">¥</span>
-														<Input
-															size="sm"
-															type="number"
-															value={editingInitialBalance}
-															className="w-24 font-medium"
-															onChange={(e) =>
-																setEditingInitialBalance(e.target.value)
-															}
-															onKeyDown={(e) =>
-																handleInitialBalanceKeyDown(
-																	e,
-																	account.id,
-																	selectedYear,
-																	selectedMonth,
-																)
-															}
-															autoFocus
-															onBlur={() => {
-																// ボタン操作中でなければキャンセル
-																if (!isButtonActionRef.current) {
-																	cancelEditingInitialBalance();
-																}
-																// フラグをリセット
-																isButtonActionRef.current = false;
-															}}
-														/>
-														<div className="flex ml-2">
-															<Button
-																size="sm"
-																variant="light"
-																className="mr-1"
-																onMouseDown={() => {
-																	isButtonActionRef.current = true;
-																}}
-																onPress={() => {
-																	void saveInitialBalance(
-																		account.id,
-																		selectedYear,
-																		selectedMonth,
-																	);
-																}}
-															>
-																保存
-															</Button>
-															<Button
-																size="sm"
-																variant="light"
-																onMouseDown={() => {
-																	isButtonActionRef.current = true;
-																}}
-																onPress={() => cancelEditingInitialBalance()}
-															>
-																キャンセル
-															</Button>
-														</div>
-													</div>
-												) : (
-													<div
-														className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
-													>
-														{initialBalanceValue === undefined ? (
-															<Button
-																size="sm"
-																variant="light"
-																color="primary"
-																startContent={<IconPlus size={14} />}
-																onPress={() =>
-																	startEditingInitialBalance(
-																		account.id,
-																		initialBalanceValue,
-																	)
-																}
-																className="px-2 py-1 h-7"
-															>
-																残高を入力
-															</Button>
-														) : (
-															`¥${initialBalanceValue.toLocaleString()}`
-														)}
-													</div>
-												)}
-											</td>
-											<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
-												{!(
-													selectedYear > currentDate.getFullYear() ||
-													(selectedYear === currentDate.getFullYear() &&
-														selectedMonth > currentDate.getMonth() + 1)
-												) && (
-													<Button
-														isIconOnly
-														size="sm"
-														variant="light"
-														radius="sm"
-														aria-label="月初残高操作"
-														onPress={() =>
-															startEditingInitialBalance(
-																account.id,
-																initialBalanceValue,
-															)
-														}
-													>
-														<IconPencil size={16} />
-													</Button>
-												)}
-											</td>
-										</tr>
-									);
-								})()}
-								{(() => {
-									// トランザクションを日付が古い順にソート
-									const sortedTransactions = [...account.transactions].sort(
-										(a, b) =>
-											new Date(a.transaction_date).getTime() -
-											new Date(b.transaction_date).getTime(),
-									);
-
-									// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
-									let initialBalance = account.balance; // デフォルト値
-
-									// 月初残高テーブルにデータがあればそれを優先的に使用
-									if (
-										monthlyBalanceMap &&
-										monthlyBalanceMap[account.id] !== undefined
-									) {
-										initialBalance = monthlyBalanceMap[account.id];
-									}
-									// 月初残高テーブルにデータがなく、将来月の場合は前月計算値を使用
-									else if (
-										previousMonthBalances &&
-										previousMonthBalances[account.id] !== undefined &&
-										new Date(selectedYear, selectedMonth - 1, 1) >
-											new Date(
-												currentDate.getFullYear(),
-												currentDate.getMonth(),
-												1,
-											)
-									) {
-										initialBalance = previousMonthBalances[account.id];
-									}
-
-									// 基本残高から始めて、各トランザクション後の残高を計算
-									const balanceHistory = sortedTransactions.reduce<
-										Array<{
-											transaction: (typeof sortedTransactions)[0];
-											balance: number;
-										}>
-									>((history, transaction) => {
-										// 前回の残高を取得、もしくは初期残高を使用
-										const previousBalance =
-											history.length > 0
-												? history[history.length - 1].balance
-												: initialBalance;
-
-										// 収入ならプラス、支出ならマイナス
-										const newBalance =
-											transaction.type === "income"
-												? previousBalance + transaction.amount
-												: previousBalance - transaction.amount;
-
-										history.push({ transaction, balance: newBalance });
-										return history;
-									}, []);
-
-									return balanceHistory.map(
-										({ transaction, balance }, index, array) => (
-											<tr key={transaction.id}>
+										return (
+											<tr>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
-													{format(
-														new Date(transaction.transaction_date),
-														"M/d",
-														{
-															locale: ja,
-														},
-													)}
+													{monthStartDateStr}
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
 													<div className="flex items-center">
-														<span>{transaction.name}</span>
-														{transaction.description && (
-															<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-																{transaction.description}
-															</span>
-														)}
+														<span className="font-medium">月初残高</span>
 													</div>
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-													{editingTransactionId === transaction.id ? (
+													{editingAccountId === account.id ? (
 														<div className="flex justify-end items-center">
-															<span
-																className={`mr-3 ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-															>
-																{transaction.type === "income" ? "" : "-"}¥
-															</span>
 															<Input
 																size="sm"
 																type="number"
-																value={editingAmount}
-																min={0}
+																value={editingInitialBalance}
 																className="w-24 font-medium"
 																onChange={(e) =>
-																	setEditingAmount(e.target.value)
+																	setEditingInitialBalance(e.target.value)
 																}
 																onKeyDown={(e) =>
-																	handleKeyDown(
+																	handleInitialBalanceKeyDown(
 																		e,
-																		transaction,
+																		account.id,
 																		selectedYear,
 																		selectedMonth,
 																	)
@@ -490,7 +542,7 @@ export const AccountAccordion = ({
 																onBlur={() => {
 																	// ボタン操作中でなければキャンセル
 																	if (!isButtonActionRef.current) {
-																		cancelEditing();
+																		cancelEditingInitialBalance();
 																	}
 																	// フラグをリセット
 																	isButtonActionRef.current = false;
@@ -504,13 +556,13 @@ export const AccountAccordion = ({
 																	onMouseDown={() => {
 																		isButtonActionRef.current = true;
 																	}}
-																	onPress={() =>
-																		void saveAmount(
-																			transaction,
+																	onPress={() => {
+																		void saveInitialBalance(
+																			account.id,
 																			selectedYear,
 																			selectedMonth,
-																		)
-																	}
+																		);
+																	}}
 																>
 																	保存
 																</Button>
@@ -520,53 +572,269 @@ export const AccountAccordion = ({
 																	onMouseDown={() => {
 																		isButtonActionRef.current = true;
 																	}}
-																	onPress={() => cancelEditing()}
+																	onPress={() => cancelEditingInitialBalance()}
 																>
 																	キャンセル
 																</Button>
 															</div>
 														</div>
 													) : (
-														<>
-															<span
-																className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-															>
-																{transaction.type === "income" ? "" : "-"}¥
-																{Math.abs(transaction.amount).toLocaleString()}
-															</span>
-															<div
-																className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
-															>
-																残高: ¥{balance.toLocaleString()}
-															</div>
-														</>
+														<div
+															className={`font-medium ${initialBalanceValue !== undefined && initialBalanceValue < 0 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
+														>
+															{initialBalanceValue === undefined ? (
+																<Button
+																	size="sm"
+																	variant="light"
+																	color="primary"
+																	startContent={<IconPlus size={14} />}
+																	onPress={() =>
+																		startEditingInitialBalance(
+																			account.id,
+																			initialBalanceValue,
+																		)
+																	}
+																	className="px-2 py-1 h-7"
+																>
+																	残高を入力
+																</Button>
+															) : (
+																`${initialBalanceValue.toLocaleString()}`
+															)}
+														</div>
 													)}
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
-													<Button
-														isIconOnly
-														size="sm"
-														variant="light"
-														radius="sm"
-														aria-label="トランザクション操作"
-														onPress={() => startEditing(transaction)}
-													>
-														<IconPencil size={16} />
-													</Button>
+													{!(
+														selectedYear > currentDate.getFullYear() ||
+														(selectedYear === currentDate.getFullYear() &&
+															selectedMonth > currentDate.getMonth() + 1)
+													) && (
+														<Button
+															isIconOnly
+															size="sm"
+															variant="light"
+															radius="sm"
+															aria-label="月初残高操作"
+															onPress={() =>
+																openInitialBalanceModal(
+																	account.id,
+																	initialBalanceValue,
+																)
+															}
+														>
+															<IconPencil size={16} />
+														</Button>
+													)}
 												</td>
 											</tr>
-										),
-									);
-								})()}
-							</tbody>
-						</table>
-					) : (
-						<div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
-							この月のトランザクションはありません
-						</div>
-					)}
-				</AccordionItem>
-			))}
-		</Accordion>
+										);
+									})()}
+									{(() => {
+										// トランザクションを日付が古い順にソート
+										const sortedTransactions = [...account.transactions].sort(
+											(a, b) =>
+												new Date(a.transaction_date).getTime() -
+												new Date(b.transaction_date).getTime(),
+										);
+
+										// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
+										let initialBalance = account.balance; // デフォルト値
+
+										// 月初残高テーブルにデータがあればそれを優先的に使用
+										if (
+											monthlyBalanceMap &&
+											monthlyBalanceMap[account.id] !== undefined
+										) {
+											initialBalance = monthlyBalanceMap[account.id];
+										}
+										// 月初残高テーブルにデータがなく、将来月の場合は前月計算値を使用
+										else if (
+											previousMonthBalances &&
+											previousMonthBalances[account.id] !== undefined &&
+											new Date(selectedYear, selectedMonth - 1, 1) >
+												new Date(
+													currentDate.getFullYear(),
+													currentDate.getMonth(),
+													1,
+												)
+										) {
+											initialBalance = previousMonthBalances[account.id];
+										}
+
+										// 基本残高から始めて、各トランザクション後の残高を計算
+										const balanceHistory = sortedTransactions.reduce<
+											Array<{
+												transaction: (typeof sortedTransactions)[0];
+												balance: number;
+											}>
+										>((history, transaction) => {
+											// 前回の残高を取得、もしくは初期残高を使用
+											const previousBalance =
+												history.length > 0
+													? history[history.length - 1].balance
+													: initialBalance;
+
+											// 収入ならプラス、支出ならマイナス
+											const newBalance =
+												transaction.type === "income"
+													? previousBalance + transaction.amount
+													: previousBalance - transaction.amount;
+
+											history.push({ transaction, balance: newBalance });
+											return history;
+										}, []);
+
+										return balanceHistory.map(
+											({ transaction, balance }, index, array) => (
+												<tr key={transaction.id}>
+													<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+														{format(
+															new Date(transaction.transaction_date),
+															"M/d",
+															{
+																locale: ja,
+															},
+														)}
+													</td>
+													<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+														<div className="flex items-center">
+															<span>{transaction.name}</span>
+															{transaction.description && (
+																<span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+																	{transaction.description}
+																</span>
+															)}
+														</div>
+													</td>
+													<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+														{editingTransactionId === transaction.id ? (
+															<div className="flex justify-end items-center">
+																<span
+																	className={`mr-3 ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+																>
+																	{transaction.type === "income" ? "" : "-"}
+																</span>
+																<Input
+																	size="sm"
+																	type="number"
+																	value={editingAmount}
+																	min={0}
+																	className="w-24 font-medium"
+																	onChange={(e) =>
+																		setEditingAmount(e.target.value)
+																	}
+																	onKeyDown={(e) =>
+																		handleKeyDown(
+																			e,
+																			transaction,
+																			selectedYear,
+																			selectedMonth,
+																		)
+																	}
+																	autoFocus
+																	onBlur={() => {
+																		// ボタン操作中でなければキャンセル
+																		if (!isButtonActionRef.current) {
+																			cancelEditing();
+																		}
+																		// フラグをリセット
+																		isButtonActionRef.current = false;
+																	}}
+																/>
+																<div className="flex ml-2">
+																	<Button
+																		size="sm"
+																		variant="light"
+																		className="mr-1"
+																		onMouseDown={() => {
+																			isButtonActionRef.current = true;
+																		}}
+																		onPress={() =>
+																			void saveAmount(
+																				transaction,
+																				selectedYear,
+																				selectedMonth,
+																			)
+																		}
+																	>
+																		保存
+																	</Button>
+																	<Button
+																		size="sm"
+																		variant="light"
+																		onMouseDown={() => {
+																			isButtonActionRef.current = true;
+																		}}
+																		onPress={() => cancelEditing()}
+																	>
+																		キャンセル
+																	</Button>
+																</div>
+															</div>
+														) : (
+															<>
+																<span
+																	className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+																>
+																	{transaction.type === "income" ? "" : "-"}
+																	{Math.abs(
+																		transaction.amount,
+																	).toLocaleString()}
+																</span>
+																<div
+																	className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
+																>
+																	残高: ¥{balance.toLocaleString()}
+																</div>
+															</>
+														)}
+													</td>
+													<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
+														<Button
+															isIconOnly
+															size="sm"
+															variant="light"
+															radius="sm"
+															aria-label="トランザクション操作"
+															onPress={() => openTransactionModal(transaction)}
+														>
+															<IconPencil size={16} />
+														</Button>
+													</td>
+												</tr>
+											),
+										);
+									})()}
+								</tbody>
+							</table>
+						) : (
+							<div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+								この月のトランザクションはありません
+							</div>
+						)}
+					</AccordionItem>
+				))}
+			</Accordion>
+
+			{/* トランザクション編集モーダル */}
+			<TransactionEditModal
+				isOpen={isTransactionModalOpen}
+				onClose={closeTransactionModal}
+				transaction={modalTransaction}
+				editingAmount={editingAmount}
+				setEditingAmount={setEditingAmount}
+				onSave={handleSaveTransaction}
+			/>
+
+			{/* 月初残高編集モーダル */}
+			<InitialBalanceEditModal
+				isOpen={isInitialBalanceModalOpen}
+				onClose={closeInitialBalanceModal}
+				editingInitialBalance={editingInitialBalance}
+				setEditingInitialBalance={setEditingInitialBalance}
+				onSave={handleSaveInitialBalance}
+			/>
+		</>
 	);
 };
