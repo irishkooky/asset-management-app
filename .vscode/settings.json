@@ -18,5 +18,5 @@
 		"editor.defaultFormatter": "biomejs.biome"
 	},
 	"githubPullRequests.ignoredPullRequestBranches": ["develop", "staging"],
-	"cSpell.words": ["heroui", "knip", "qrcode", "supabase"]
+	"cSpell.words": ["heroui", "knip", "qrcode", "supabase", "tabler"]
 }
