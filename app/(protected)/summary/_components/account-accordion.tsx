@@ -14,10 +14,10 @@ import {
 import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
 import { updateInitialBalance } from "../actions";
-import Link from "next/link";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
@@ -894,7 +894,7 @@ export const AccountAccordion = ({
 						)}
 
 						{/* 収支追加ボタン */}
-						<div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+						<div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-2">
 							<Button
 								variant="light"
 								startContent={<IconPlus size={16} />}
