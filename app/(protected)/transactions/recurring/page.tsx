@@ -52,7 +52,7 @@ export default async function RecurringTransactionsPage() {
 	const { transactionsByAccount, transactions } = await getTransactionGroups();
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-bold">定期的な収支</h1>
 				<Button asChild>
@@ -63,14 +63,14 @@ export default async function RecurringTransactionsPage() {
 			{transactions.length > 0 ? (
 				<Suspense
 					fallback={
-						<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-							<div className="animate-pulse space-y-4">
-								<div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+						<div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+							<div className="animate-pulse space-y-3">
+								<div className="h-5 bg-gray-100 dark:bg-gray-800 rounded w-1/4" />
 								<div className="space-y-2">
-									{Array.from({ length: 5 }).map((_, i) => (
+									{Array.from({ length: 4 }).map((_, i) => (
 										<div
 											key={`skeleton-item-${i}-${Date.now()}`}
-											className="h-4 bg-gray-200 dark:bg-gray-700 rounded"
+											className="h-4 bg-gray-100 dark:bg-gray-800 rounded"
 										/>
 									))}
 								</div>
@@ -81,8 +81,10 @@ export default async function RecurringTransactionsPage() {
 					<TransactionGroups transactionGroups={transactionsByAccount} />
 				</Suspense>
 			) : (
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-					<p className="text-lg mb-4">定期的な収支はまだ登録されていません</p>
+				<div className="border-t border-gray-100 dark:border-gray-800 py-8 text-center">
+					<p className="text-gray-500 dark:text-gray-400 mb-4">
+						定期的な収支はまだ登録されていません
+					</p>
 					<Button asChild>
 						<Link href="/transactions/recurring/new">
 							最初の定期的な収支を追加する
