@@ -14,6 +14,7 @@ import {
 import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
 import { updateInitialBalance } from "../actions";
@@ -202,6 +203,71 @@ const InitialBalanceEditModal = ({
 	);
 };
 
+// 収支追加モーダルコンポーネント
+const AddTransactionModal = ({
+	isOpen,
+	onClose,
+	accountId,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	accountId: string;
+}) => {
+	return (
+		<Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur">
+			<ModalContent className="dark:bg-gray-900">
+				<ModalHeader className="border-b border-gray-200 dark:border-gray-700">
+					収支を追加
+				</ModalHeader>
+				<ModalBody>
+					<div className="space-y-4 py-2">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							追加する収支のタイプを選択してください
+						</p>
+						<div className="grid grid-cols-1 gap-3">
+							<Button
+								as={Link}
+								href={`/transactions/recurring/new?accountId=${accountId}`}
+								className="h-16 justify-start px-4"
+								variant="bordered"
+								color="primary"
+								onPress={onClose}
+							>
+								<div className="flex flex-col items-start">
+									<span className="text-md font-medium">定期的な収支</span>
+									<span className="text-xs text-gray-500 dark:text-gray-400">
+										毎月自動的に発生する収支
+									</span>
+								</div>
+							</Button>
+							<Button
+								as={Link}
+								href={`/transactions/one-time/new?accountId=${accountId}`}
+								className="h-16 justify-start px-4"
+								variant="bordered"
+								color="primary"
+								onPress={onClose}
+							>
+								<div className="flex flex-col items-start">
+									<span className="text-md font-medium">臨時収支</span>
+									<span className="text-xs text-gray-500 dark:text-gray-400">
+										一度限りの収支
+									</span>
+								</div>
+							</Button>
+						</div>
+					</div>
+				</ModalBody>
+				<ModalFooter>
+					<Button variant="light" onPress={onClose}>
+						キャンセル
+					</Button>
+				</ModalFooter>
+			</ModalContent>
+		</Modal>
+	);
+};
+
 export const AccountAccordion = ({
 	accounts,
 	previousMonthBalances,
@@ -222,10 +288,12 @@ export const AccountAccordion = ({
 		useState<string>("");
 
 	// モーダル状態の管理
-	const [isTransactionModalOpen, setIsTransactionModalOpen] =
-		useState<boolean>(false);
+	const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 	const [isInitialBalanceModalOpen, setIsInitialBalanceModalOpen] =
-		useState<boolean>(false);
+		useState(false);
+	const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] =
+		useState(false);
+	const [selectedAccountId, setSelectedAccountId] = useState<string>("");
 
 	// 編集中のトランザクションと口座情報
 	const [modalTransaction, setModalTransaction] = useState<{
@@ -271,6 +339,12 @@ export const AccountAccordion = ({
 		[],
 	);
 
+	// 収支追加モーダルを開く
+	const openAddTransactionModal = useCallback((accountId: string) => {
+		setSelectedAccountId(accountId);
+		setIsAddTransactionModalOpen(true);
+	}, []);
+
 	// トランザクション編集モーダルを閉じる
 	const closeTransactionModal = useCallback(() => {
 		setIsTransactionModalOpen(false);
@@ -283,6 +357,11 @@ export const AccountAccordion = ({
 		setIsInitialBalanceModalOpen(false);
 		setModalAccount(null);
 		setEditingInitialBalance("");
+	}, []);
+
+	// 収支追加モーダルを閉じる
+	const closeAddTransactionModal = useCallback(() => {
+		setIsAddTransactionModalOpen(false);
 	}, []);
 
 	// 以下は互換性のために残しておく
@@ -813,6 +892,19 @@ export const AccountAccordion = ({
 								この月のトランザクションはありません
 							</div>
 						)}
+
+						{/* 収支追加ボタン */}
+						<div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-2">
+							<Button
+								variant="light"
+								startContent={<IconPlus size={16} />}
+								className="w-full justify-center"
+								size="sm"
+								onPress={() => openAddTransactionModal(account.id)}
+							>
+								この口座の収支を追加
+							</Button>
+						</div>
 					</AccordionItem>
 				))}
 			</Accordion>
@@ -834,6 +926,13 @@ export const AccountAccordion = ({
 				editingInitialBalance={editingInitialBalance}
 				setEditingInitialBalance={setEditingInitialBalance}
 				onSave={handleSaveInitialBalance}
+			/>
+
+			{/* 収支追加モーダル */}
+			<AddTransactionModal
+				isOpen={isAddTransactionModalOpen}
+				onClose={closeAddTransactionModal}
+				accountId={selectedAccountId}
 			/>
 		</>
 	);

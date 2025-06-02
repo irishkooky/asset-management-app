@@ -27,7 +27,7 @@ export async function getMonthlySummary(year: number, month: number) {
 	const { data: accounts, error: accountsError } = await supabase
 		.from("accounts")
 		.select("*")
-		.order("name");
+		.order("sort_order", { ascending: true });
 
 	if (accountsError) {
 		console.error("Error fetching accounts:", accountsError);
