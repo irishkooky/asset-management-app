@@ -17,7 +17,10 @@ import { ja } from "date-fns/locale";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
-import { updateInitialBalance } from "../actions";
+import {
+	updateInitialBalance,
+	updateOneTimeTransactionAmount,
+} from "../actions";
 
 interface AccountAccordionProps {
 	accounts: AccountSummary[];
@@ -61,6 +64,7 @@ const TransactionEditModal = ({
 		name: string;
 		transaction_date?: string;
 		description?: string;
+		source: "recurring" | "one-time";
 	} | null;
 	editingAmount: string;
 	setEditingAmount: (value: string) => void;
@@ -303,6 +307,7 @@ export const AccountAccordion = ({
 		name: string;
 		transaction_date?: string;
 		description?: string;
+		source: "recurring" | "one-time";
 	} | null>(null);
 	const [modalAccount, setModalAccount] = useState<{
 		id: string;
@@ -319,6 +324,7 @@ export const AccountAccordion = ({
 			amount: number;
 			type: string;
 			name: string;
+			source: "recurring" | "one-time";
 		}) => {
 			setModalTransaction(transaction);
 			setEditingAmount(String(Math.abs(transaction.amount)));
@@ -372,6 +378,7 @@ export const AccountAccordion = ({
 			amount: number;
 			type: string;
 			name: string;
+			source: "recurring" | "one-time";
 		}) => {
 			openTransactionModal(transaction);
 		},
@@ -399,7 +406,11 @@ export const AccountAccordion = ({
 	// 金額を保存
 	const saveAmount = useCallback(
 		async (
-			transaction: { id: string; type: string },
+			transaction: {
+				id: string;
+				type: string;
+				source: "recurring" | "one-time";
+			},
 			year: number,
 			month: number,
 		) => {
@@ -412,8 +423,12 @@ export const AccountAccordion = ({
 			}
 
 			try {
-				// カスタム金額を保存
-				await updateTransactionAmount(transaction.id, year, month, amount);
+				// トランザクションのソースに応じて適切なアクションを呼び出す
+				if (transaction.source === "recurring") {
+					await updateTransactionAmount(transaction.id, year, month, amount);
+				} else {
+					await updateOneTimeTransactionAmount(transaction.id, amount);
+				}
 
 				// モーダルを閉じる
 				closeTransactionModal();
@@ -460,7 +475,11 @@ export const AccountAccordion = ({
 	const handleKeyDown = useCallback(
 		(
 			e: React.KeyboardEvent,
-			transaction: { id: string; type: string },
+			transaction: {
+				id: string;
+				type: string;
+				source: "recurring" | "one-time";
+			},
 			year: number,
 			month: number,
 		) => {

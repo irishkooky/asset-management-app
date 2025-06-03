@@ -134,6 +134,7 @@ function calculateMonthlySummary(
 				type: transaction.type,
 				transaction_date: transaction.transaction_date,
 				description: transaction.description || undefined,
+				source: "one-time",
 			});
 		}
 	}
@@ -177,6 +178,7 @@ function calculateMonthlySummary(
 				type: transaction.type,
 				transaction_date: formattedTransactionDate,
 				description: transaction.description || undefined,
+				source: "recurring",
 			});
 		}
 	}
@@ -338,6 +340,40 @@ export async function updateInitialBalance(
 			balance: amount,
 			user_id: user.id,
 		});
+	}
+
+	// キャッシュをクリア
+	revalidatePath("/summary");
+}
+
+/**
+ * 一時的な収支の金額を更新するアクション
+ */
+export async function updateOneTimeTransactionAmount(
+	transactionId: string,
+	amount: number,
+): Promise<void> {
+	const supabase = await createClient();
+
+	// ユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("認証が必要です");
+	}
+
+	// トランザクションを更新
+	const { error } = await supabase
+		.from("one_time_transactions")
+		.update({ amount })
+		.eq("id", transactionId)
+		.eq("user_id", user.id);
+
+	if (error) {
+		console.error("一時的な収支の更新に失敗しました:", error);
+		throw new Error("一時的な収支の更新に失敗しました");
 	}
 
 	// キャッシュをクリア
