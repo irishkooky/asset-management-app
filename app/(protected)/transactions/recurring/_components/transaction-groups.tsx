@@ -19,7 +19,7 @@ export const TransactionGroups = ({
 	transactionGroups,
 }: TransactionGroupsProps) => {
 	return (
-		<div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+		<div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
 			<Accordion
 				defaultExpandedKeys={transactionGroups.map((group) => group.accountId)}
 			>
@@ -38,44 +38,41 @@ export const TransactionGroups = ({
 						}
 					>
 						<div>
-							{/* モバイル対応のカードベースレイアウト */}
-							<div className="grid gap-4 px-4 pb-4">
-								{group.transactions.map((transaction) => (
-									<div
-										key={transaction.id}
-										className="bg-white dark:bg-gray-700 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-600"
-									>
-										<div className="flex justify-between items-start mb-2">
-											<div className="flex-1">
-												<h3 className="font-medium">{transaction.name}</h3>
-												{transaction.description && (
-													<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-														{transaction.description}
-													</p>
-												)}
+							{/* シンプルなリスト形式レイアウト */}
+							<div className="px-4 pb-4">
+								<ul className="divide-y divide-gray-100 dark:divide-gray-700">
+									{group.transactions.map((transaction) => (
+										<li
+											key={transaction.id}
+											className="py-3 flex items-center justify-between"
+										>
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium truncate">
+													{transaction.name}
+												</p>
+												<p className="text-xs text-gray-500 dark:text-gray-400">
+													毎月{transaction.day_of_month}日
+												</p>
 											</div>
-											<span
-												className={
-													transaction.type === "income"
-														? "text-green-600 dark:text-green-400 font-medium"
-														: "text-red-600 dark:text-red-400 font-medium"
-												}
-											>
-												{transaction.type === "income" ? "" : "-"}¥
-												{transaction.amount.toLocaleString()}
-											</span>
-										</div>
-										<div className="flex justify-between items-center text-sm">
-											<span className="text-gray-600 dark:text-gray-300">
-												毎月{transaction.day_of_month}日
-											</span>
-											<div className="flex space-x-2">
-												<RefreshHandler transaction={transaction} />
+											<div className="flex items-center">
+												<span
+													className={`text-sm font-medium ${
+														transaction.type === "income"
+															? "text-green-600 dark:text-green-400"
+															: "text-red-600 dark:text-red-400"
+													}`}
+												>
+													{transaction.type === "income" ? "" : "-"}¥
+													{transaction.amount.toLocaleString()}
+												</span>
+												<div className="ml-4">
+													<RefreshHandler transaction={transaction} />
+												</div>
 											</div>
-										</div>
-									</div>
-								))}
-								<div className="flex justify-center py-3 px-4 mt-2">
+										</li>
+									))}
+								</ul>
+								<div className="mt-4">
 									<Button
 										size="sm"
 										variant="outline"

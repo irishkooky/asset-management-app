@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/button";
 import type { RecurringTransaction } from "@/types/database";
+import { IconPencil } from "@tabler/icons-react";
 import { useState } from "react";
 import { EditModal } from "./edit-modal";
 
@@ -38,8 +39,8 @@ export const TransactionEditButton = ({
 
 	return (
 		<>
-			<Button variant="outline" size="sm" onClick={handleClick}>
-				編集
+			<Button variant="ghost" size="sm" onClick={handleClick}>
+				<IconPencil size={16} />
 			</Button>
 
 			{isModalOpen && (
