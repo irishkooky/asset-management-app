@@ -5,6 +5,7 @@ export interface Transaction {
 	type: "income" | "expense";
 	transaction_date: string;
 	description?: string;
+	source: "recurring" | "one-time";
 }
 
 export interface AccountSummary {

@@ -146,6 +146,7 @@ function calculateMonthlySummary(
 				type: transaction.type,
 				transaction_date: transaction.transaction_date,
 				description: transaction.description || undefined,
+				source: "one-time",
 			});
 		}
 	}
@@ -179,6 +180,7 @@ function calculateMonthlySummary(
 				type: transaction.type,
 				transaction_date: formattedTransactionDate,
 				description: transaction.description || undefined,
+				source: "recurring",
 			});
 		}
 	}
