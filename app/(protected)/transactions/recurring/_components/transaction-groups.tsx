@@ -47,18 +47,20 @@ export const TransactionGroups = ({
 											className="py-3 flex items-center justify-between"
 										>
 											<div className="flex-1 min-w-0">
-												<p className="text-sm font-medium truncate">{transaction.name}</p>
+												<p className="text-sm font-medium truncate">
+													{transaction.name}
+												</p>
 												<p className="text-xs text-gray-500 dark:text-gray-400">
 													毎月{transaction.day_of_month}日
 												</p>
 											</div>
 											<div className="flex items-center">
 												<span
-													className={
-														`text-sm font-medium ${transaction.type === "income"
+													className={`text-sm font-medium ${
+														transaction.type === "income"
 															? "text-green-600 dark:text-green-400"
-															: "text-red-600 dark:text-red-400"}`
-													}
+															: "text-red-600 dark:text-red-400"
+													}`}
 												>
 													{transaction.type === "income" ? "" : "-"}¥
 													{transaction.amount.toLocaleString()}
