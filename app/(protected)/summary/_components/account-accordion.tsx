@@ -901,21 +901,11 @@ export const AccountAccordion = ({
 										),
 									);
 								})()}
-								{account.transactions.length === 0 && (
-									<tr>
-										<td
-											colSpan={4}
-											className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
-										>
-											この月のトランザクションはありません
-										</td>
-									</tr>
-								)}
 							</tbody>
 						</table>
 
 						{/* 収支追加ボタン */}
-						<div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-2">
+						<div className="border-t border-gray-200 dark:border-gray-700 pt-2">
 							<Button
 								variant="light"
 								startContent={<IconPlus size={16} />}
