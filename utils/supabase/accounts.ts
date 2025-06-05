@@ -80,6 +80,28 @@ export async function createAccount(
 		throw new Error("口座の作成に失敗しました");
 	}
 
+	// 初期残高を月初残高として記録
+	if (initialBalance !== 0) {
+		const now = new Date();
+		const currentYear = now.getFullYear();
+		const currentMonth = now.getMonth() + 1;
+
+		const { error: balanceError } = await supabase
+			.from("monthly_account_balances")
+			.insert({
+				account_id: data.id,
+				user_id: user.id,
+				year: currentYear,
+				month: currentMonth,
+				balance: initialBalance,
+			});
+
+		if (balanceError) {
+			console.error("Error recording initial balance:", balanceError);
+			// 月初残高の記録に失敗しても口座作成は成功とする
+		}
+	}
+
 	return data as Account;
 }
 

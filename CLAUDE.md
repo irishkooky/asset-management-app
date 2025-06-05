@@ -22,11 +22,15 @@ pnpm check        # Run both lint and format
 pnpm typecheck    # Run TypeScript type checking
 ```
 
+**IMPORTANT**: Always run `pnpm check` after making code changes to ensure code quality.
+
 ### Testing
 ```bash
 pnpm test         # Run Vitest tests once
 pnpm test:watch   # Run tests in watch mode
 ```
+
+**IMPORTANT**: Always run both `pnpm typecheck` and `pnpm check` when testing to ensure type safety and code quality.
 
 ### Build & Production
 ```bash
