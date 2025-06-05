@@ -290,6 +290,25 @@ async function SummaryContent({
 		totalEndOfMonthBalance += finalBalance;
 	}
 
+	// 口座が登録されていない場合の空状態を表示
+	if (summary.accounts.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center py-12 space-y-4">
+				<div className="text-center space-y-2">
+					<h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+						口座が登録されていません
+					</h3>
+					<p className="text-sm text-gray-500 dark:text-gray-400">
+						まずは口座を登録して資産管理を始めましょう
+					</p>
+				</div>
+				<Button color="primary" asChild>
+					<Link href="/accounts/new">口座を登録する</Link>
+				</Button>
+			</div>
+		);
+	}
+
 	return (
 		<>
 			{/* 全体サマリー */}

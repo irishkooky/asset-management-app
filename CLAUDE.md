@@ -17,6 +17,8 @@ pnpm check        # Run both lint and format
 pnpm typecheck    # Run TypeScript type checking
 ```
 
+**IMPORTANT**: Always run `pnpm check` after making code changes to ensure code quality.
+
 ### Testing
 ```bash
 pnpm test         # Run Vitest tests once
