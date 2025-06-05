@@ -366,7 +366,7 @@ async function SummaryContent({
 					selectedMonth={month}
 					monthlyBalanceMap={monthlyBalanceMap}
 				/>
-				<div className="flex justify-center pt-4">
+				<div className="flex justify-center">
 					<Button variant="outline" size="sm" asChild>
 						<Link href="/accounts/new">口座を追加</Link>
 					</Button>
