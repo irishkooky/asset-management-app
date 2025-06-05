@@ -9,6 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pnpm dev          # Start Next.js development server (http://localhost:3000)
 ```
 
+### Setup
+Environment variables are required for Supabase connection:
+- Copy `.env.example` to `.env.local` and fill in Supabase credentials
+- Or use `npx vercel link` and `npx vercel pull` to sync from Vercel
+
 ### Code Quality
 ```bash
 pnpm lint         # Run Biome linter with auto-fix
