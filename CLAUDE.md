@@ -25,6 +25,8 @@ pnpm test         # Run Vitest tests once
 pnpm test:watch   # Run tests in watch mode
 ```
 
+**IMPORTANT**: Always run both `pnpm typecheck` and `pnpm check` when testing to ensure type safety and code quality.
+
 ### Build & Production
 ```bash
 pnpm build        # Build for production
