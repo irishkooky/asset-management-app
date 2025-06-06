@@ -1,17 +1,15 @@
 "use client";
 
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import {
+	Button,
 	Card,
 	CardBody,
 	CardHeader,
+	Chip,
 	Divider,
-	Table,
-	TableBody,
-	TableCell,
-	TableColumn,
-	TableHeader,
-	TableRow,
 } from "@heroui/react";
+import { useState } from "react";
 import {
 	Area,
 	AreaChart,
@@ -29,33 +27,36 @@ interface Prediction {
 }
 
 interface DashboardProps {
-	totalBalance: number;
 	monthlyPredictions?: Prediction[];
 }
 
-export function Dashboard({
-	totalBalance,
-	monthlyPredictions,
-}: DashboardProps) {
+export function Dashboard({ monthlyPredictions }: DashboardProps) {
+	const [showAllMonths, setShowAllMonths] = useState(false);
+
 	// グラフ用のデータを準備
 	const chartData = monthlyPredictions?.map((prediction) => {
-		// 期間ラベルを生成
-		let periodLabel = "1ヶ月後";
-		if (prediction.period === "1month") {
-			periodLabel = "1ヶ月後";
-		} else {
-			const match = prediction.period.match(/^(\d+)months$/);
-			if (match?.[1]) {
-				periodLabel = `${match[1]}ヶ月後`;
-			}
-		}
+		// 日付から月を取得
+		const date = new Date(prediction.date);
+		const month = date.getMonth() + 1;
+		const year = date.getFullYear();
+		const monthLabel = `${year}年${month}月`;
 
 		return {
-			name: periodLabel,
+			name: `${month}月`,
+			fullName: monthLabel,
 			date: prediction.date,
 			amount: prediction.amount,
 		};
 	});
+
+	// 最新の予測値と成長率を計算
+	const latestPrediction = monthlyPredictions?.[monthlyPredictions.length - 1];
+	const currentAmount = monthlyPredictions?.[0]?.amount || 0;
+	const growthAmount = latestPrediction
+		? latestPrediction.amount - currentAmount
+		: 0;
+	const growthRate =
+		currentAmount > 0 ? (growthAmount / currentAmount) * 100 : 0;
 
 	// 金額のフォーマット
 	const formatCurrency = (value: number) => {
@@ -78,6 +79,7 @@ export function Dashboard({
 			value: number;
 			payload: {
 				name: string;
+				fullName: string;
 				date: string;
 				amount: number;
 			};
@@ -87,11 +89,10 @@ export function Dashboard({
 	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 		if (active && payload && payload[0]) {
 			return (
-				<Card className="shadow-lg">
+				<Card className="shadow-xl border border-default-200">
 					<CardBody className="p-3">
-						<p className="text-sm font-medium">{payload[0].payload.name}</p>
-						<p className="text-xs text-default-500">
-							{payload[0].payload.date}
+						<p className="text-sm font-medium text-default-600">
+							{payload[0].payload.fullName}
 						</p>
 						<p className="text-lg font-bold text-primary">
 							¥{payload[0].value.toLocaleString()}
@@ -106,19 +107,22 @@ export function Dashboard({
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-7xl">
 			<div className="space-y-8">
-				<h1 className="text-3xl font-bold">ダッシュボード</h1>
-
-				{/* 現在の総残高 */}
-				<Card className="bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900 dark:to-primary-800">
-					<CardBody className="p-8">
-						<h2 className="text-xl font-medium mb-4 text-default-700 dark:text-default-300">
-							現在の総残高
-						</h2>
-						<p className="text-5xl font-bold text-primary">
-							¥{totalBalance.toLocaleString()}
-						</p>
-					</CardBody>
-				</Card>
+				<div className="flex items-center justify-between">
+					<h1 className="text-3xl font-bold">ダッシュボード</h1>
+					{latestPrediction && (
+						<div className="text-right">
+							<p className="text-sm text-default-500">12ヶ月後の予想</p>
+							<p className="text-2xl font-bold text-primary">
+								{formatCurrency(latestPrediction.amount)}
+							</p>
+							{growthRate > 0 && (
+								<Chip color="success" size="sm" variant="flat">
+									+{growthRate.toFixed(1)}%
+								</Chip>
+							)}
+						</div>
+					)}
+				</div>
 
 				{/* 貯蓄予測グラフ */}
 				<Card>
@@ -131,7 +135,7 @@ export function Dashboard({
 							<ResponsiveContainer width="100%" height="100%">
 								<AreaChart
 									data={chartData}
-									margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+									margin={{ top: 20, right: 10, left: -20, bottom: 30 }}
 								>
 									<defs>
 										<linearGradient
@@ -142,19 +146,35 @@ export function Dashboard({
 											y2="1"
 										>
 											<stop offset="5%" stopColor="#006FEE" stopOpacity={0.8} />
-											<stop offset="95%" stopColor="#006FEE" stopOpacity={0} />
+											<stop
+												offset="95%"
+												stopColor="#006FEE"
+												stopOpacity={0.05}
+											/>
 										</linearGradient>
 									</defs>
-									<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+									<CartesianGrid
+										strokeDasharray="3 3"
+										stroke="#e5e7eb"
+										opacity={0.5}
+										vertical={false}
+									/>
 									<XAxis
 										dataKey="name"
-										tick={{ fontSize: 12 }}
+										tick={{ fontSize: 12, fontWeight: 500 }}
 										stroke="#6b7280"
+										axisLine={{ stroke: "#e5e7eb" }}
+										tickLine={false}
+										dy={10}
 									/>
 									<YAxis
 										tickFormatter={formatCurrency}
-										tick={{ fontSize: 12 }}
+										tick={{ fontSize: 11 }}
 										stroke="#6b7280"
+										axisLine={false}
+										tickLine={false}
+										width={80}
+										dx={10}
 									/>
 									<Tooltip content={<CustomTooltip />} />
 									<Area
@@ -163,7 +183,9 @@ export function Dashboard({
 										stroke="#006FEE"
 										fillOpacity={1}
 										fill="url(#colorAmount)"
-										strokeWidth={3}
+										strokeWidth={2.5}
+										dot={{ fill: "#006FEE", strokeWidth: 2, r: 5 }}
+										activeDot={{ r: 7, strokeWidth: 0 }}
 									/>
 								</AreaChart>
 							</ResponsiveContainer>
@@ -171,57 +193,88 @@ export function Dashboard({
 					</CardBody>
 				</Card>
 
-				{/* 貯蓄予測テーブル */}
+				{/* 月別予測詳細 */}
 				<Card>
-					<CardHeader className="pb-0 pt-6 px-6">
+					<CardHeader className="pb-0 pt-6 px-6 flex justify-between items-center">
 						<h2 className="text-2xl font-bold">月別予測詳細</h2>
+						<p className="text-sm text-default-500">各月1日時点の予測残高</p>
 					</CardHeader>
 					<Divider className="my-4" />
 					<CardBody className="pt-0">
-						<Table aria-label="貯蓄予測テーブル">
-							<TableHeader>
-								<TableColumn>期間</TableColumn>
-								<TableColumn>予測日</TableColumn>
-								<TableColumn align="end">予測残高</TableColumn>
-							</TableHeader>
-							<TableBody>
-								{monthlyPredictions && monthlyPredictions.length > 0 ? (
-									monthlyPredictions.map((prediction) => {
-										// 期間ラベルを生成
-										let periodLabel = "1ヶ月後";
-										if (prediction.period === "1month") {
-											periodLabel = "1ヶ月後";
-										} else {
-											const match = prediction.period.match(/^(\d+)months$/);
-											if (match?.[1]) {
-												periodLabel = `${match[1]}ヶ月後`;
-											}
-										}
+						<div className="grid gap-3">
+							{monthlyPredictions && monthlyPredictions.length > 0 ? (
+								<>
+									{/* 最初の6ヶ月分または全て表示 */}
+									{monthlyPredictions
+										.slice(0, showAllMonths ? undefined : 6)
+										.map((prediction, index) => {
+											const date = new Date(prediction.date);
+											const month = date.getMonth() + 1;
+											const year = date.getFullYear();
+											const prevAmount =
+												index > 0
+													? monthlyPredictions[index - 1].amount
+													: currentAmount;
+											const monthlyIncrease = prediction.amount - prevAmount;
 
-										return (
-											<TableRow key={prediction.period}>
-												<TableCell className="font-medium">
-													{periodLabel}
-												</TableCell>
-												<TableCell>{prediction.date}</TableCell>
-												<TableCell className="text-right font-semibold">
-													¥{prediction.amount.toLocaleString()}
-												</TableCell>
-											</TableRow>
-										);
-									})
-								) : (
-									<TableRow>
-										<TableCell
-											colSpan={3}
-											className="text-center text-default-500"
-										>
-											予測データがありません
-										</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
+											return (
+												<div
+													key={prediction.period}
+													className="flex justify-between items-center p-4 rounded-lg bg-default-50 dark:bg-default-100/50 hover:bg-default-100 dark:hover:bg-default-200/50 transition-colors"
+												>
+													<div className="flex items-center gap-3">
+														<div className="text-center">
+															<div className="text-2xl font-bold text-primary">
+																{month}
+															</div>
+															<div className="text-xs text-default-500">月</div>
+														</div>
+														<div className="text-xs text-default-500">
+															{year}年
+														</div>
+													</div>
+													<div className="text-right">
+														<div className="text-lg font-semibold">
+															¥{prediction.amount.toLocaleString()}
+														</div>
+														<div className="text-xs text-default-500">
+															{monthlyIncrease >= 0 ? "+" : ""}
+															{formatCurrency(monthlyIncrease)}
+														</div>
+													</div>
+												</div>
+											);
+										})}
+
+									{/* もっと見る/閉じるボタン */}
+									{monthlyPredictions.length > 6 && (
+										<div className="mt-4 text-center">
+											<Button
+												variant="flat"
+												color="primary"
+												size="sm"
+												startContent={
+													showAllMonths ? (
+														<ChevronUpIcon className="w-4 h-4" />
+													) : (
+														<ChevronDownIcon className="w-4 h-4" />
+													)
+												}
+												onPress={() => setShowAllMonths(!showAllMonths)}
+											>
+												{showAllMonths
+													? "閉じる"
+													: `さらに${monthlyPredictions.length - 6}ヶ月分を表示`}
+											</Button>
+										</div>
+									)}
+								</>
+							) : (
+								<div className="text-center text-default-500 py-8">
+									予測データがありません
+								</div>
+							)}
+						</div>
 					</CardBody>
 				</Card>
 			</div>
