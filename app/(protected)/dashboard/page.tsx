@@ -1,9 +1,11 @@
 import { Dashboard } from "@/components/dashboard";
 import { getMonthlyPredictions } from "@/utils/predictions";
 import { getTotalBalance } from "@/utils/supabase/accounts";
+import { Suspense } from "react";
 import { updateAccountBalancesAction } from "./actions";
+import DashboardLoading from "./loading";
 
-export default async function DashboardPage() {
+async function DashboardData() {
 	await updateAccountBalancesAction();
 
 	const [totalBalance, monthlyPredictions] = await Promise.all([
@@ -16,5 +18,13 @@ export default async function DashboardPage() {
 			totalBalance={totalBalance}
 			monthlyPredictions={monthlyPredictions}
 		/>
+	);
+}
+
+export default function DashboardPage() {
+	return (
+		<Suspense fallback={<DashboardLoading />}>
+			<DashboardData />
+		</Suspense>
 	);
 }
