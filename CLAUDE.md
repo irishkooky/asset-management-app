@@ -9,6 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pnpm dev          # Start Next.js development server (http://localhost:3000)
 ```
 
+### Setup
+Environment variables are required for Supabase connection:
+- Copy `.env.example` to `.env.local` and fill in Supabase credentials
+- Or use `npx vercel link` and `npx vercel pull` to sync from Vercel
+
 ### Code Quality
 ```bash
 pnpm lint         # Run Biome linter with auto-fix
@@ -17,11 +22,15 @@ pnpm check        # Run both lint and format
 pnpm typecheck    # Run TypeScript type checking
 ```
 
+**IMPORTANT**: Always run `pnpm check` after making code changes to ensure code quality.
+
 ### Testing
 ```bash
 pnpm test         # Run Vitest tests once
 pnpm test:watch   # Run tests in watch mode
 ```
+
+**IMPORTANT**: Always run both `pnpm typecheck` and `pnpm check` when testing to ensure type safety and code quality.
 
 ### Build & Production
 ```bash
