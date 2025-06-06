@@ -123,44 +123,55 @@ export async function getAllPredictions(): Promise<SavingsPrediction[]> {
 }
 
 /**
- * 1か月ごとの貯蓄額を予測する（1ヶ月後から12ヶ月後まで）
+ * 1か月ごとの貯蓄額を予測する（翌月から12ヶ月先まで）
+ * 各月の1日時点での残高を予測
  */
 export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
-	// 1から12までの月数の配列を作成
-	const months = Array.from({ length: 12 }, (_, i) => i + 1);
+	const today = new Date();
+	const currentMonth = today.getMonth();
+	const currentYear = today.getFullYear();
 
-	// 各月の予測を計算
+	// 現在の総残高を取得
+	const currentBalance = await getTotalBalance();
+
+	// 月間の定期的な収支を取得
+	const monthlyRecurring = await getMonthlyRecurringTotal();
+	const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
+
+	// 翌月から12ヶ月先までの予測を計算
 	const predictions = await Promise.all(
-		months.map(async (month) => {
-			const futureDate = getFutureDate(month);
+		Array.from({ length: 12 }, (_, i) => i + 1).map(async (monthOffset) => {
+			// 各月の1日を取得
+			const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
 
-			// 現在の総残高を取得
-			const currentBalance = await getTotalBalance();
-
-			// 月間の定期的な収支を取得
-			const monthlyRecurring = await getMonthlyRecurringTotal();
-			const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
+			// 現在から対象月初までの完全な月数を計算
+			const monthsBetween = Math.floor(
+				(targetDate.getTime() - today.getTime()) /
+					(1000 * 60 * 60 * 24 * 30.44),
+			);
 
 			// 予測期間内の臨時収支を取得
-			const today = new Date();
 			const oneTimeTransactions = await getOneTimeTransactionsTotal(
 				today,
-				futureDate,
+				targetDate,
 			);
 			const oneTimeNet =
 				oneTimeTransactions.income - oneTimeTransactions.expense;
 
 			// 将来の貯蓄額を計算
-			const predictedAmount = currentBalance + monthlyNet * month + oneTimeNet;
+			const predictedAmount =
+				currentBalance + monthlyNet * monthsBetween + oneTimeNet;
 
 			// 期間を文字列に変換（例: "1month", "2months"）
 			const periodStr =
-				month === 1 ? "1month" : (`${month}months` as PredictionPeriod);
+				monthOffset === 1
+					? "1month"
+					: (`${monthOffset}months` as PredictionPeriod);
 
 			return {
 				period: periodStr,
 				amount: predictedAmount,
-				date: futureDate.toISOString().split("T")[0],
+				date: targetDate.toISOString().split("T")[0],
 			};
 		}),
 	);
