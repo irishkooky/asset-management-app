@@ -34,11 +34,8 @@ export function OneTimeTransactionEditForm({
 	// 成功時にリダイレクト
 	useEffect(() => {
 		if (updateState.success || deleteState.success) {
-			// 少し遅延させてメッセージを表示する時間を確保
-			const timer = setTimeout(() => {
-				router.push("/transactions/one-time");
-			}, 1000);
-			return () => clearTimeout(timer);
+			// メッセージを少し表示してからリダイレクト
+			router.push("/transactions/one-time");
 		}
 	}, [updateState.success, deleteState.success, router]);
 
