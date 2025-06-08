@@ -36,11 +36,8 @@ export function MonthNavigationButtons({
 		// Use router.push for faster navigation
 		router.push(href);
 
-		// Reset loading state after a delay (fallback)
-		setTimeout(() => {
-			setIsNavigating(false);
-			setNavigatingDirection(null);
-		}, 2000);
+		// Reset loading state after navigation - the loading state will be cleared when the component unmounts
+		// or when a new navigation occurs
 	};
 
 	return (
