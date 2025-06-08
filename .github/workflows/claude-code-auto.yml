@@ -1,0 +1,62 @@
+name: Claude Code Auto Issue Handler
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  claude-code:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+        
+      - name: Run Claude Code with Issue content
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_body="${{ github.event.issue.body }}"
+          issue_title="${{ github.event.issue.title }}"
+          
+          # Create a temporary file with the issue content
+          echo "Issue: $issue_title" > /tmp/issue_request.txt
+          echo "Description: $issue_body" >> /tmp/issue_request.txt
+          
+          # Run Claude Code with the issue content
+          claude-code "$issue_title: $issue_body"
+          
+      - name: Commit changes if any
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "Claude Code Bot"
+          
+          if git diff --exit-code; then
+            echo "No changes to commit"
+          else
+            git add .
+            git commit -m "feat: implement ${{ github.event.issue.title }} (#${{ github.event.issue.number }})"
+            git push
+          fi
