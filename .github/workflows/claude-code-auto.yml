@@ -30,9 +30,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
-        
       - name: Run Claude Code with Issue content
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -45,8 +42,8 @@ jobs:
           echo "Issue: $issue_title" > /tmp/issue_request.txt
           echo "Description: $issue_body" >> /tmp/issue_request.txt
           
-          # Run Claude Code with the issue content
-          claude-code "$issue_title: $issue_body"
+          # Run Claude Code with the issue content using npx
+          npx @anthropic-ai/claude-code "$issue_title: $issue_body"
           
       - name: Commit changes if any
         run: |
