@@ -15,6 +15,7 @@ import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
 import {
@@ -280,6 +281,7 @@ export const AccountAccordion = ({
 	selectedMonth,
 	monthlyBalanceMap,
 }: AccountAccordionProps) => {
+	const router = useRouter();
 	// 編集中のトランザクションを管理するstate
 	const [editingTransactionId, setEditingTransactionId] = useState<
 		string | null
@@ -433,14 +435,14 @@ export const AccountAccordion = ({
 				// モーダルを閉じる
 				closeTransactionModal();
 
-				// 更新を反映するためにページをリロード
-				window.location.reload();
+				// 更新を反映するためにページを再描画
+				router.refresh();
 			} catch (error) {
 				console.error("金額の更新に失敗しました:", error);
 				alert("金額の更新に失敗しました");
 			}
 		},
-		[editingAmount, closeTransactionModal],
+		[editingAmount, closeTransactionModal, router],
 	);
 
 	// 月初残高を保存
@@ -461,14 +463,14 @@ export const AccountAccordion = ({
 				// モーダルを閉じる
 				closeInitialBalanceModal();
 
-				// 更新を反映するためにページをリロード
-				window.location.reload();
+				// 更新を反映するためにページを再描画
+				router.refresh();
 			} catch (error) {
 				console.error("月初残高の更新に失敗しました:", error);
 				alert("月初残高の更新に失敗しました");
 			}
 		},
-		[editingInitialBalance, closeInitialBalanceModal],
+		[editingInitialBalance, closeInitialBalanceModal, router],
 	);
 
 	// Enterキーで保存、Escキーでキャンセル
