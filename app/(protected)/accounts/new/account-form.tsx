@@ -15,11 +15,8 @@ export function AccountForm() {
 	// 成功時にリダイレクト
 	useEffect(() => {
 		if (state.success) {
-			// 少し遅延させてメッセージを表示する時間を確保
-			const timer = setTimeout(() => {
-				router.push("/accounts");
-			}, 1000);
-			return () => clearTimeout(timer);
+			// メッセージを少し表示してからリダイレクト
+			router.push("/accounts");
 		}
 	}, [state.success, router]);
 
