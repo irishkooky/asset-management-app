@@ -1,5 +1,4 @@
 import { Button } from "@/components/button";
-import type { Database } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 import { Card, CardBody } from "@heroui/react";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -97,7 +96,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 
 // 月初残高の記録とデータ取得を処理
 async function handleMonthlyBalances(
-	supabase: SupabaseClient<Database>,
+	supabase: SupabaseClient,
 	currentYear: number,
 	currentMonth: number,
 	year: number,
