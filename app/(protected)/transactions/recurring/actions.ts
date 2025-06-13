@@ -32,9 +32,9 @@ export async function getRecurringTransactions(): Promise<
 export async function getMonthlyAmounts(
 	recurringTransactionId: string,
 	startYear: number,
-	startMonth: number,
+	_startMonth: number,
 	endYear: number,
-	endMonth: number,
+	_endMonth: number,
 ): Promise<MonthlyAmount[]> {
 	const supabase = await createClient();
 	const { data, error } = await supabase

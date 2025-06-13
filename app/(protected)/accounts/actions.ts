@@ -10,7 +10,7 @@ import {
 type ActionState = { error?: string; success?: string };
 
 export async function createAccountAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const name = formData.get("name") as string;
@@ -31,7 +31,7 @@ export async function createAccountAction(
 }
 
 export async function updateAccountAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const accountId = formData.get("accountId") as string;
@@ -62,7 +62,7 @@ export async function updateAccountAction(
 }
 
 export async function deleteAccountAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const accountId = formData.get("accountId") as string;

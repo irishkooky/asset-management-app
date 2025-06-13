@@ -11,7 +11,7 @@ type RefreshHandlerProps = {
 
 export const RefreshHandler = ({ transaction }: RefreshHandlerProps) => {
 	const router = useRouter();
-	const [isPending, startTransition] = useTransition();
+	const [_isPending, startTransition] = useTransition();
 
 	const handleUpdate = () => {
 		startTransition(() => {

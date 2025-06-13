@@ -9,7 +9,7 @@ import {
 type ActionState = { error?: string; success?: string };
 
 export async function deleteOneTimeTransactionAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const transactionId = formData.get("transactionId") as string;
@@ -28,7 +28,7 @@ export async function deleteOneTimeTransactionAction(
 }
 
 export async function updateOneTimeTransactionAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const transactionId = formData.get("transactionId") as string;
