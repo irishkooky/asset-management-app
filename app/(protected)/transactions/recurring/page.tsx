@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/button";
-import type { RecurringTransaction } from "@/types/database";
+import type { RecurringTransaction, Account } from "@/types/database";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import { TransactionGroups } from "./_components/transaction-groups";
@@ -17,6 +17,7 @@ interface TransactionsByAccount {
 interface TransactionGroupsResult {
 	transactionsByAccount: TransactionsByAccount[];
 	transactions: RecurringTransaction[];
+	accounts: Account[];
 }
 
 async function getTransactionGroups(): Promise<TransactionGroupsResult> {
@@ -44,12 +45,13 @@ async function getTransactionGroups(): Promise<TransactionGroupsResult> {
 		}
 	}
 
-	return { transactionsByAccount, transactions };
+	return { transactionsByAccount, transactions, accounts };
 }
 
 export default async function RecurringTransactionsPage() {
 	// データ取得
-	const { transactionsByAccount, transactions } = await getTransactionGroups();
+	const { transactionsByAccount, transactions, accounts } =
+		await getTransactionGroups();
 
 	return (
 		<div className="space-y-6">
@@ -78,7 +80,10 @@ export default async function RecurringTransactionsPage() {
 						</div>
 					}
 				>
-					<TransactionGroups transactionGroups={transactionsByAccount} />
+					<TransactionGroups
+						transactionGroups={transactionsByAccount}
+						accounts={accounts}
+					/>
 				</Suspense>
 			) : (
 				<div className="border-t border-gray-100 dark:border-gray-800 py-8 text-center">
