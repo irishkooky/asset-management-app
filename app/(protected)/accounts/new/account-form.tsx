@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useId } from "react";
 import { Button } from "@/components/button";
 import { createAccountAction } from "../actions";
 
 export function AccountForm() {
 	const router = useRouter();
+	const nameId = useId();
+	const initialBalanceId = useId();
 	const initialState = { error: "", success: "" };
 	const [state, formAction] = useActionState(createAccountAction, initialState);
 
@@ -43,11 +45,11 @@ export function AccountForm() {
 
 				<form action={formAction} className="space-y-6">
 					<div className="space-y-2">
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor={nameId} className="text-sm font-medium">
 							口座名
 						</label>
 						<input
-							id="name"
+							id={nameId}
 							name="name"
 							type="text"
 							required
@@ -57,11 +59,11 @@ export function AccountForm() {
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="initialBalance" className="text-sm font-medium">
+						<label htmlFor={initialBalanceId} className="text-sm font-medium">
 							初期残高
 						</label>
 						<input
-							id="initialBalance"
+							id={initialBalanceId}
 							name="initialBalance"
 							type="number"
 							step="1"
