@@ -1,7 +1,10 @@
 "use server";
 
 import type { TransactionType } from "@/types/database";
-import { createRecurringTransaction } from "@/utils/supabase/recurring-transactions";
+import {
+	createRecurringTransaction,
+	createRecurringTransfer,
+} from "@/utils/supabase/recurring-transactions";
 
 type ActionState = { error?: string; success?: string };
 
@@ -11,6 +14,8 @@ export async function createRecurringTransactionAction(
 	formData: FormData,
 ): Promise<ActionState> {
 	const accountId = formData.get("accountId") as string;
+	const destinationAccountId = formData.get("destinationAccountId") as string;
+	const isTransfer = formData.get("isTransfer") === "true";
 	const name = formData.get("name") as string;
 	const amount = Number.parseFloat(formData.get("amount") as string);
 	const type = formData.get("type") as TransactionType;
@@ -31,7 +36,7 @@ export async function createRecurringTransactionAction(
 		return { error: "金額は数値で入力してください" };
 	}
 
-	if (type !== "income" && type !== "expense") {
+	if (!isTransfer && type !== "income" && type !== "expense") {
 		return { error: "種別は収入または支出を選択してください" };
 	}
 
@@ -39,7 +44,29 @@ export async function createRecurringTransactionAction(
 		return { error: "日付は1から31の間で入力してください" };
 	}
 
+	// 送金の場合の追加バリデーション
+	if (isTransfer) {
+		if (!destinationAccountId) {
+			return { error: "送金先口座を選択してください" };
+		}
+		if (accountId === destinationAccountId) {
+			return { error: "送金元と送金先は異なる口座である必要があります" };
+		}
+	}
+
 	try {
+		if (isTransfer) {
+			await createRecurringTransfer(
+				accountId,
+				destinationAccountId,
+				name,
+				amount,
+				defaultAmount,
+				dayOfMonth,
+				description,
+			);
+			return { success: "定期送金が正常に作成されました" };
+		}
 		await createRecurringTransaction(
 			accountId,
 			name,

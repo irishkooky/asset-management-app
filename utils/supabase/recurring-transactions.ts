@@ -103,6 +103,9 @@ export async function createRecurringTransaction(
 				day_of_month: validatedData.dayOfMonth, // バリデーション済みの整数値
 				description: validatedData.description || null,
 				user_id: user.id, // ユーザーIDを設定
+				is_transfer: false,
+				destination_account_id: null,
+				transfer_pair_id: null,
 			},
 		])
 		.select()
@@ -114,6 +117,68 @@ export async function createRecurringTransaction(
 	}
 
 	return data as RecurringTransaction;
+}
+
+/**
+ * 口座間送金を作成する（定期取引）
+ */
+export async function createRecurringTransfer(
+	sourceAccountId: string,
+	destinationAccountId: string,
+	name: string,
+	amount: number,
+	defaultAmount: number,
+	dayOfMonth: number,
+	description?: string,
+): Promise<{
+	sourceTransaction: RecurringTransaction;
+	destinationTransaction: RecurringTransaction;
+}> {
+	const supabase = await createClient();
+
+	// 現在のユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
+	}
+
+	// 送金元と送金先が同じ口座でないことを確認
+	if (sourceAccountId === destinationAccountId) {
+		throw new Error("送金元と送金先は異なる口座である必要があります");
+	}
+
+	// 送金ペアIDを生成
+	const transferPairId = crypto.randomUUID();
+
+	// トランザクションを使用して両方の取引を同時に作成
+	const { data, error } = await supabase.rpc("create_recurring_transfer", {
+		p_user_id: user.id,
+		p_source_account_id: sourceAccountId,
+		p_destination_account_id: destinationAccountId,
+		p_name: name,
+		p_amount: amount,
+		p_default_amount: defaultAmount,
+		p_day_of_month: dayOfMonth,
+		p_description: description || null,
+		p_transfer_pair_id: transferPairId,
+	});
+
+	if (error) {
+		console.error("Error creating recurring transfer:", error);
+		throw new Error("定期送金の作成に失敗しました");
+	}
+
+	if (!data) {
+		throw new Error("定期送金データの作成に失敗しました");
+	}
+
+	const sourceTransaction = data.source_transaction as RecurringTransaction;
+	const destinationTransaction =
+		data.destination_transaction as RecurringTransaction;
+
+	return { sourceTransaction, destinationTransaction };
 }
 
 /**
