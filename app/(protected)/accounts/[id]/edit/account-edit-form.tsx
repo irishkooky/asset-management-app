@@ -1,18 +1,20 @@
 "use client";
 
-import { Button } from "@/components/button";
-import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState } from "react";
-import { useEffect } from "react";
+import { useActionState, useEffect, useId } from "react";
+import { Button } from "@/components/button";
+import type { Account } from "@/types/database";
 import { deleteAccountAction, updateAccountAction } from "../../actions";
+
 interface AccountEditFormProps {
 	account: Account;
 }
 
 export function AccountEditForm({ account }: AccountEditFormProps) {
 	const router = useRouter();
+	const nameId = useId();
+	const currentBalanceId = useId();
 	const initialState = { error: "", success: "" };
 	const [updateState, updateFormAction] = useActionState(
 		updateAccountAction,
@@ -57,11 +59,11 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 					<input type="hidden" name="accountId" value={account.id} />
 
 					<div className="space-y-2">
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor={nameId} className="text-sm font-medium">
 							口座名
 						</label>
 						<input
-							id="name"
+							id={nameId}
 							name="name"
 							type="text"
 							required
@@ -71,11 +73,11 @@ export function AccountEditForm({ account }: AccountEditFormProps) {
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="currentBalance" className="text-sm font-medium">
+						<label htmlFor={currentBalanceId} className="text-sm font-medium">
 							現在の残高
 						</label>
 						<input
-							id="currentBalance"
+							id={currentBalanceId}
 							name="currentBalance"
 							type="number"
 							step="1"

@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionById } from "@/utils/supabase/one-time-transactions";
-import { notFound } from "next/navigation";
 import { OneTimeTransactionEditForm } from "./one-time-transaction-edit-form";
 
 export default async function EditOneTimeTransactionPage(props: {

@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { Button } from "@/components/button";
 import { getUserAccounts } from "@/utils/supabase/accounts";
-import Link from "next/link";
 import SortableAccountList from "./_components/sortable-account-list";
 
 export default async function AccountsPage() {

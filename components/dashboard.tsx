@@ -9,7 +9,7 @@ import {
 	Chip,
 	Divider,
 } from "@heroui/react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
 	Area,
 	AreaChart,
@@ -30,8 +30,40 @@ interface DashboardProps {
 	monthlyPredictions?: Prediction[];
 }
 
+interface CustomTooltipProps {
+	active?: boolean;
+	payload?: Array<{
+		value: number;
+		payload: {
+			name: string;
+			fullName: string;
+			date: string;
+			amount: number;
+		};
+	}>;
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+	if (active && payload && payload[0]) {
+		return (
+			<Card className="shadow-xl border border-default-200">
+				<CardBody className="p-3">
+					<p className="text-sm font-medium text-default-600">
+						{payload[0].payload.fullName}
+					</p>
+					<p className="text-lg font-bold text-primary">
+						¥{payload[0].value.toLocaleString()}
+					</p>
+				</CardBody>
+			</Card>
+		);
+	}
+	return null;
+};
+
 export function Dashboard({ monthlyPredictions }: DashboardProps) {
 	const [showAllMonths, setShowAllMonths] = useState(false);
+	const gradientId = useId();
 
 	// グラフ用のデータを準備
 	const chartData = monthlyPredictions?.map((prediction) => {
@@ -72,38 +104,6 @@ export function Dashboard({ monthlyPredictions }: DashboardProps) {
 		return `¥${value.toLocaleString()}`;
 	};
 
-	// Tooltipのカスタマイズ
-	interface CustomTooltipProps {
-		active?: boolean;
-		payload?: Array<{
-			value: number;
-			payload: {
-				name: string;
-				fullName: string;
-				date: string;
-				amount: number;
-			};
-		}>;
-	}
-
-	const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-		if (active && payload && payload[0]) {
-			return (
-				<Card className="shadow-xl border border-default-200">
-					<CardBody className="p-3">
-						<p className="text-sm font-medium text-default-600">
-							{payload[0].payload.fullName}
-						</p>
-						<p className="text-lg font-bold text-primary">
-							¥{payload[0].value.toLocaleString()}
-						</p>
-					</CardBody>
-				</Card>
-			);
-		}
-		return null;
-	};
-
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-7xl">
 			<div className="space-y-8">
@@ -138,13 +138,7 @@ export function Dashboard({ monthlyPredictions }: DashboardProps) {
 									margin={{ top: 20, right: 10, left: -20, bottom: 30 }}
 								>
 									<defs>
-										<linearGradient
-											id="colorAmount"
-											x1="0"
-											y1="0"
-											x2="0"
-											y2="1"
-										>
+										<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
 											<stop offset="5%" stopColor="#006FEE" stopOpacity={0.8} />
 											<stop
 												offset="95%"
@@ -182,7 +176,7 @@ export function Dashboard({ monthlyPredictions }: DashboardProps) {
 										dataKey="amount"
 										stroke="#006FEE"
 										fillOpacity={1}
-										fill="url(#colorAmount)"
+										fill={`url(#${gradientId})`}
 										strokeWidth={2.5}
 										dot={{ fill: "#006FEE", strokeWidth: 2, r: 5 }}
 										activeDot={{ r: 7, strokeWidth: 0 }}

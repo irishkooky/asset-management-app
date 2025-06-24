@@ -1,5 +1,5 @@
-import { getAccountById } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
+import { getAccountById } from "@/utils/supabase/accounts";
 import { AccountEditForm } from "./account-edit-form";
 
 export default async function EditAccountPage(props: {

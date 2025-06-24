@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import type {
 	Account,
 	OneTimeTransaction,
@@ -8,8 +10,6 @@ import type {
 import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export const signOutAction = async () => {
 	const supabase = await createClient();

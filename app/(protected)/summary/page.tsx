@@ -1,9 +1,9 @@
-import { Button } from "@/components/button";
-import { createClient } from "@/utils/supabase/server";
 import { Card, CardBody } from "@heroui/react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Button } from "@/components/button";
+import { createClient } from "@/utils/supabase/server";
 import { AccountAccordion } from "./_components/account-accordion";
 import { MonthNavigationButtons } from "./_components/month-navigation-buttons";
 import {
@@ -168,7 +168,10 @@ function calculateAccountFinalBalance(
 async function SummaryContent({
 	year,
 	month,
-}: { year: number; month: number }) {
+}: {
+	year: number;
+	month: number;
+}) {
 	const now = new Date();
 	const supabase = await createClient();
 	const currentYear = now.getFullYear();

@@ -7,7 +7,7 @@ type ActionState = { error?: string; success?: string };
 
 // 臨時収支のアクション
 export async function createOneTimeTransactionAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const accountId = formData.get("accountId") as string;

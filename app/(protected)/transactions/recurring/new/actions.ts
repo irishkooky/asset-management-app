@@ -7,7 +7,7 @@ type ActionState = { error?: string; success?: string };
 
 // 定期的な収支のアクション
 export async function createRecurringTransactionAction(
-	prevState: ActionState,
+	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
 	const accountId = formData.get("accountId") as string;

@@ -1,8 +1,8 @@
 "use client";
 
-import type { RecurringTransaction } from "@/types/database";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import type { RecurringTransaction } from "@/types/database";
 import { TransactionEditButton } from "./transaction-edit-button";
 
 type RefreshHandlerProps = {
@@ -11,7 +11,7 @@ type RefreshHandlerProps = {
 
 export const RefreshHandler = ({ transaction }: RefreshHandlerProps) => {
 	const router = useRouter();
-	const [isPending, startTransition] = useTransition();
+	const [_isPending, startTransition] = useTransition();
 
 	const handleUpdate = () => {
 		startTransition(() => {

@@ -1,11 +1,10 @@
 "use client";
 
-import { Button } from "@/components/button";
-import type { Account } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState } from "react";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
+import { Button } from "@/components/button";
+import type { Account } from "@/types/database";
 import { createRecurringTransactionAction } from "./actions";
 
 interface RecurringTransactionFormProps {
@@ -18,6 +17,13 @@ export function RecurringTransactionForm({
 	defaultAccountId,
 }: RecurringTransactionFormProps) {
 	const router = useRouter();
+	const accountFormId = useId();
+	const nameId = useId();
+	const amountId = useId();
+	const typeIncomeId = useId();
+	const typeExpenseId = useId();
+	const dayOfMonthId = useId();
+	const descriptionId = useId();
 	const initialState = { error: "", success: "" };
 	const [state, formAction] = useActionState(
 		createRecurringTransactionAction,
@@ -68,11 +74,11 @@ export function RecurringTransactionForm({
 
 				<form action={formAction} className="space-y-6">
 					<div className="space-y-2">
-						<label htmlFor="accountId" className="text-sm font-medium">
+						<label htmlFor={accountFormId} className="text-sm font-medium">
 							口座
 						</label>
 						<select
-							id="accountId"
+							id={accountFormId}
 							name="accountId"
 							required
 							value={accountId}
@@ -89,11 +95,11 @@ export function RecurringTransactionForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor={nameId} className="text-sm font-medium">
 							名前
 						</label>
 						<input
-							id="name"
+							id={nameId}
 							name="name"
 							type="text"
 							required
@@ -103,11 +109,11 @@ export function RecurringTransactionForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="amount" className="text-sm font-medium">
+						<label htmlFor={amountId} className="text-sm font-medium">
 							金額
 						</label>
 						<input
-							id="amount"
+							id={amountId}
 							name="amount"
 							type="number"
 							step="1"
@@ -122,34 +128,34 @@ export function RecurringTransactionForm({
 						<div className="flex space-x-4">
 							<div className="flex items-center">
 								<input
-									id="type-income"
+									id={typeIncomeId}
 									type="radio"
 									name="type"
 									value="income"
 									defaultChecked
 									className="mr-2"
 								/>
-								<label htmlFor="type-income">収入</label>
+								<label htmlFor={typeIncomeId}>収入</label>
 							</div>
 							<div className="flex items-center">
 								<input
-									id="type-expense"
+									id={typeExpenseId}
 									type="radio"
 									name="type"
 									value="expense"
 									className="mr-2"
 								/>
-								<label htmlFor="type-expense">支出</label>
+								<label htmlFor={typeExpenseId}>支出</label>
 							</div>
 						</div>
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="dayOfMonth" className="text-sm font-medium">
+						<label htmlFor={dayOfMonthId} className="text-sm font-medium">
 							日付（毎月）
 						</label>
 						<input
-							id="dayOfMonth"
+							id={dayOfMonthId}
 							name="dayOfMonth"
 							type="number"
 							min="1"
@@ -161,11 +167,11 @@ export function RecurringTransactionForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="description" className="text-sm font-medium">
+						<label htmlFor={descriptionId} className="text-sm font-medium">
 							説明（任意）
 						</label>
 						<textarea
-							id="description"
+							id={descriptionId}
 							name="description"
 							className="w-full p-2 border rounded-md"
 							rows={3}

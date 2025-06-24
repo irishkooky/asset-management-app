@@ -1,10 +1,10 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Button } from "@/components/button";
 import { getAccountPredictions } from "@/utils/predictions";
 import { getAccountById } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 
 export default async function AccountDetailPage(props: {
 	params: Promise<{ id: string }>;

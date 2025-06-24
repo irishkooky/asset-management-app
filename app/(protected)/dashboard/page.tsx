@@ -1,6 +1,6 @@
+import { Suspense } from "react";
 import { Dashboard } from "@/components/dashboard";
 import { getMonthlyPredictions } from "@/utils/predictions";
-import { Suspense } from "react";
 import { updateAccountBalancesAction } from "./actions";
 import DashboardLoading from "./loading";
 

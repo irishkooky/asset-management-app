@@ -1,8 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { Account } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
 import type {
 	MonthlyAmount,
 	RecurringTransaction,
@@ -32,9 +32,9 @@ export async function getRecurringTransactions(): Promise<
 export async function getMonthlyAmounts(
 	recurringTransactionId: string,
 	startYear: number,
-	startMonth: number,
+	_startMonth: number,
 	endYear: number,
-	endMonth: number,
+	_endMonth: number,
 ): Promise<MonthlyAmount[]> {
 	const supabase = await createClient();
 	const { data, error } = await supabase

@@ -1,8 +1,8 @@
 "use client";
-import { Button } from "@/components/button";
-import type { RecurringTransaction } from "@/types/database";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import Link from "next/link";
+import { Button } from "@/components/button";
+import type { RecurringTransaction } from "@/types/database";
 import { RefreshHandler } from "./refresh-handler";
 
 interface AccountGroup {

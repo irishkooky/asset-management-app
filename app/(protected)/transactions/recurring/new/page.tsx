@@ -1,5 +1,5 @@
-import { getUserAccounts } from "@/utils/supabase/accounts";
 import { notFound } from "next/navigation";
+import { getUserAccounts } from "@/utils/supabase/accounts";
 import { RecurringTransactionForm } from "./recurring-transaction-form";
 
 export default async function NewRecurringTransactionPage(props: {
