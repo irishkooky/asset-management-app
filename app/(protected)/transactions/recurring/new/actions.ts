@@ -5,6 +5,10 @@ import {
 	createRecurringTransaction,
 	createRecurringTransfer,
 } from "@/utils/supabase/recurring-transactions";
+import {
+	safeValidateCreateTransaction,
+	safeValidateCreateTransfer,
+} from "@/utils/validators/recurring-transaction";
 
 type ActionState = { error?: string; success?: string };
 
@@ -13,72 +17,80 @@ export async function createRecurringTransactionAction(
 	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
-	const accountId = formData.get("accountId") as string;
-	const destinationAccountId = formData.get("destinationAccountId") as string;
 	const isTransfer = formData.get("isTransfer") === "true";
-	const name = formData.get("name") as string;
-	const amount = Number.parseFloat(formData.get("amount") as string);
-	const type = formData.get("type") as TransactionType;
-	const dayOfMonth = Number.parseInt(formData.get("dayOfMonth") as string, 10);
-	const description = formData.get("description") as string;
+	const rawData = {
+		accountId: formData.get("accountId") as string,
+		destinationAccountId: formData.get("destinationAccountId") as string,
+		name: formData.get("name") as string,
+		amount: Number.parseFloat(formData.get("amount") as string),
+		type: formData.get("type") as TransactionType,
+		dayOfMonth: formData.get("dayOfMonth") as string,
+		description: formData.get("description") as string,
+	};
 	// default_amountはamountと同じ値で初期化
-	const defaultAmount = amount;
+	const defaultAmount = rawData.amount;
 
-	if (!accountId) {
-		return { error: "口座を選択してください" };
-	}
-
-	if (!name) {
-		return { error: "名前は必須です" };
-	}
-
-	if (Number.isNaN(amount)) {
-		return { error: "金額は数値で入力してください" };
-	}
-
-	if (!isTransfer && type !== "income" && type !== "expense") {
-		return { error: "種別は収入または支出を選択してください" };
-	}
-
-	if (Number.isNaN(dayOfMonth) || dayOfMonth < 1 || dayOfMonth > 31) {
-		return { error: "日付は1から31の間で入力してください" };
-	}
-
-	// 送金の場合の追加バリデーション
+	// 入力データのバリデーション
 	if (isTransfer) {
-		if (!destinationAccountId) {
-			return { error: "送金先口座を選択してください" };
+		const validation = safeValidateCreateTransfer({
+			sourceAccountId: rawData.accountId,
+			destinationAccountId: rawData.destinationAccountId,
+			name: rawData.name,
+			amount: rawData.amount,
+			defaultAmount: defaultAmount,
+			dayOfMonth: rawData.dayOfMonth,
+			description: rawData.description,
+		});
+
+		if (!validation.success) {
+			const firstError = validation.issues?.[0];
+			return { error: firstError?.message || "入力データが無効です" };
 		}
-		if (accountId === destinationAccountId) {
-			return { error: "送金元と送金先は異なる口座である必要があります" };
+	} else {
+		const validation = safeValidateCreateTransaction({
+			accountId: rawData.accountId,
+			name: rawData.name,
+			amount: rawData.amount,
+			defaultAmount: defaultAmount,
+			type: rawData.type,
+			dayOfMonth: rawData.dayOfMonth,
+			description: rawData.description,
+		});
+
+		if (!validation.success) {
+			const firstError = validation.issues?.[0];
+			return { error: firstError?.message || "入力データが無効です" };
 		}
 	}
 
 	try {
 		if (isTransfer) {
 			await createRecurringTransfer(
-				accountId,
-				destinationAccountId,
-				name,
-				amount,
+				rawData.accountId,
+				rawData.destinationAccountId,
+				rawData.name,
+				rawData.amount,
 				defaultAmount,
-				dayOfMonth,
-				description,
+				Number.parseInt(rawData.dayOfMonth, 10),
+				rawData.description,
 			);
 			return { success: "定期送金が正常に作成されました" };
 		}
 		await createRecurringTransaction(
-			accountId,
-			name,
-			amount,
+			rawData.accountId,
+			rawData.name,
+			rawData.amount,
 			defaultAmount,
-			type,
-			dayOfMonth,
-			description,
+			rawData.type,
+			rawData.dayOfMonth,
+			rawData.description,
 		);
 		return { success: "定期的な収支が正常に作成されました" };
 	} catch (error) {
 		console.error("Error creating recurring transaction:", error);
+		if (error instanceof Error) {
+			return { error: error.message };
+		}
 		return { error: "定期的な収支の作成に失敗しました" };
 	}
 }

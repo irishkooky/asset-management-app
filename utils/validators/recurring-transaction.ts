@@ -1,4 +1,5 @@
 import {
+	custom,
 	literal,
 	maxValue,
 	minValue,
@@ -39,6 +40,27 @@ export const createTransactionSchema = object({
 	dayOfMonth: dayOfMonthSchema,
 	description: optional(string()),
 });
+
+// 送金作成のバリデーションスキーマ
+export const createTransferSchema = pipe(
+	object({
+		sourceAccountId: string("送金元口座IDは必須です"),
+		destinationAccountId: string("送金先口座IDは必須です"),
+		name: string("名前は必須です"),
+		amount: pipe(number(), minValue(0, "金額は正の数値で入力してください")),
+		defaultAmount: pipe(
+			number(),
+			minValue(0, "初期金額は正の数値で入力してください"),
+		),
+		dayOfMonth: dayOfMonthSchema,
+		description: optional(string()),
+	}),
+	custom((input) => {
+		// 送金元と送金先が異なることを確認
+		const data = input as { sourceAccountId: string; destinationAccountId: string };
+		return data.sourceAccountId !== data.destinationAccountId;
+	}, "送金元と送金先は異なる口座である必要があります"),
+);
 
 // 取引更新のバリデーションスキーマ
 export const updateTransactionSchema = object({
@@ -93,6 +115,28 @@ export type UpdateTransactionOutput = {
 	defaultAmount?: number;
 	type?: TransactionType;
 	dayOfMonth?: number;
+	description?: string;
+};
+
+// 送金用入力型
+export type CreateTransferInput = {
+	sourceAccountId: string;
+	destinationAccountId: string;
+	name: string;
+	amount: number;
+	defaultAmount: number;
+	dayOfMonth: number | string;
+	description?: string;
+};
+
+// 送金用出力型
+export type CreateTransferOutput = {
+	sourceAccountId: string;
+	destinationAccountId: string;
+	name: string;
+	amount: number;
+	defaultAmount: number;
+	dayOfMonth: number;
 	description?: string;
 };
 
@@ -165,4 +209,35 @@ export function safeValidateUpdateTransaction(input: UpdateTransactionInput) {
 	}
 
 	return safeParse(updateTransactionSchema, sanitizedInput);
+}
+
+// 送金データのバリデーション
+export function validateCreateTransfer(
+	input: CreateTransferInput,
+): CreateTransferOutput {
+	// 日付が文字列の場合は数値に変換
+	const sanitizedInput = {
+		...input,
+		dayOfMonth:
+			typeof input.dayOfMonth === "string"
+				? Number.parseInt(input.dayOfMonth, 10)
+				: input.dayOfMonth,
+	};
+
+	// バリデーション実行
+	return parse(createTransferSchema, sanitizedInput);
+}
+
+// 安全な送金データのバリデーション
+export function safeValidateCreateTransfer(input: CreateTransferInput) {
+	// 日付が文字列の場合は数値に変換
+	const sanitizedInput = {
+		...input,
+		dayOfMonth:
+			typeof input.dayOfMonth === "string"
+				? Number.parseInt(input.dayOfMonth, 10)
+				: input.dayOfMonth,
+	};
+
+	return safeParse(createTransferSchema, sanitizedInput);
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/button";
-import type { RecurringTransaction, Account } from "@/types/database";
+import type { Account, RecurringTransaction } from "@/types/database";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
 import { TransactionGroups } from "./_components/transaction-groups";

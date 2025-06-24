@@ -5,6 +5,10 @@ import {
 	createOneTimeTransaction,
 	createOneTimeTransfer,
 } from "@/utils/supabase/one-time-transactions";
+import {
+	safeValidateCreateOneTimeTransaction,
+	safeValidateCreateOneTimeTransfer,
+} from "@/utils/validators/one-time-transaction";
 
 type ActionState = { error?: string; success?: string };
 
@@ -13,68 +17,74 @@ export async function createOneTimeTransactionAction(
 	_prevState: ActionState,
 	formData: FormData,
 ): Promise<ActionState> {
-	const accountId = formData.get("accountId") as string;
-	const destinationAccountId = formData.get("destinationAccountId") as string;
 	const isTransfer = formData.get("isTransfer") === "true";
-	const name = formData.get("name") as string;
-	const amount = Number.parseFloat(formData.get("amount") as string);
-	const type = formData.get("type") as TransactionType;
-	const transactionDate = new Date(formData.get("transactionDate") as string);
-	const description = formData.get("description") as string;
+	const rawData = {
+		accountId: formData.get("accountId") as string,
+		destinationAccountId: formData.get("destinationAccountId") as string,
+		name: formData.get("name") as string,
+		amount: Number.parseFloat(formData.get("amount") as string),
+		type: formData.get("type") as TransactionType,
+		transactionDate: new Date(formData.get("transactionDate") as string),
+		description: formData.get("description") as string,
+	};
 
-	if (!accountId) {
-		return { error: "口座を選択してください" };
-	}
-
-	if (!name) {
-		return { error: "名前は必須です" };
-	}
-
-	if (Number.isNaN(amount) || amount <= 0) {
-		return { error: "金額は正の数値で入力してください" };
-	}
-
-	if (!isTransfer && type !== "income" && type !== "expense") {
-		return { error: "種別は収入または支出を選択してください" };
-	}
-
-	if (Number.isNaN(transactionDate.getTime())) {
-		return { error: "有効な日付を入力してください" };
-	}
-
-	// 送金の場合の追加バリデーション
+	// 入力データのバリデーション
 	if (isTransfer) {
-		if (!destinationAccountId) {
-			return { error: "送金先口座を選択してください" };
+		const validation = safeValidateCreateOneTimeTransfer({
+			sourceAccountId: rawData.accountId,
+			destinationAccountId: rawData.destinationAccountId,
+			name: rawData.name,
+			amount: rawData.amount,
+			transactionDate: rawData.transactionDate,
+			description: rawData.description,
+		});
+
+		if (!validation.success) {
+			const firstError = validation.issues?.[0];
+			return { error: firstError?.message || "入力データが無効です" };
 		}
-		if (accountId === destinationAccountId) {
-			return { error: "送金元と送金先は異なる口座である必要があります" };
+	} else {
+		const validation = safeValidateCreateOneTimeTransaction({
+			accountId: rawData.accountId,
+			name: rawData.name,
+			amount: rawData.amount,
+			type: rawData.type,
+			transactionDate: rawData.transactionDate,
+			description: rawData.description,
+		});
+
+		if (!validation.success) {
+			const firstError = validation.issues?.[0];
+			return { error: firstError?.message || "入力データが無効です" };
 		}
 	}
 
 	try {
 		if (isTransfer) {
 			await createOneTimeTransfer(
-				accountId,
-				destinationAccountId,
-				name,
-				amount,
-				transactionDate,
-				description,
+				rawData.accountId,
+				rawData.destinationAccountId,
+				rawData.name,
+				rawData.amount,
+				rawData.transactionDate,
+				rawData.description,
 			);
 			return { success: "口座間送金が正常に作成されました" };
 		}
 		await createOneTimeTransaction(
-			accountId,
-			name,
-			amount,
-			type,
-			transactionDate,
-			description,
+			rawData.accountId,
+			rawData.name,
+			rawData.amount,
+			rawData.type,
+			rawData.transactionDate,
+			rawData.description,
 		);
 		return { success: "臨時収支が正常に作成されました" };
 	} catch (error) {
 		console.error("Error creating one-time transaction:", error);
+		if (error instanceof Error) {
+			return { error: error.message };
+		}
 		return { error: "取引の作成に失敗しました" };
 	}
 }
