@@ -1,4 +1,3 @@
-import type { TransactionType } from "@/types/database";
 import {
 	literal,
 	maxValue,
@@ -12,6 +11,7 @@ import {
 	string,
 	union,
 } from "valibot";
+import type { TransactionType } from "@/types/database";
 
 // 取引タイプのバリデーションスキーマ
 export const transactionTypeSchema = union([

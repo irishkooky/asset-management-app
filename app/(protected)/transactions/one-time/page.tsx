@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { Button } from "@/components/button";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
-import Link from "next/link";
 
 export default async function OneTimeTransactionsPage() {
 	// 臨時収支データ取得（過去3ヶ月と将来のデータ）

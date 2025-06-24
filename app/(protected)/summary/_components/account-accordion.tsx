@@ -1,6 +1,5 @@
 "use client";
 
-import type { AccountSummary } from "@/types/summary";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -17,6 +16,7 @@ import { ja } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import type { AccountSummary } from "@/types/summary";
 import { setAmountForMonth } from "../../transactions/recurring/actions";
 import {
 	updateInitialBalance,

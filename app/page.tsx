@@ -1,8 +1,8 @@
+import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/button";
 import { LoginButton } from "@/components/login-button";
 import { createClient } from "@/utils/supabase/server";
-import Link from "next/link";
-import { QRCodeSVG } from "qrcode.react";
 
 export const metadata = {
 	title: "資産管理アプリ - シンプルで使いやすい家計簿・資産管理ツール",
