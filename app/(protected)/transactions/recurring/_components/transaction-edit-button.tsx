@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/button";
-import type { RecurringTransaction } from "@/types/database";
 import { IconPencil } from "@tabler/icons-react";
 import { useState } from "react";
+import { Button } from "@/components/button";
+import type { RecurringTransaction } from "@/types/database";
 import { EditModal } from "./edit-modal";
 
 type TransactionEditButtonProps = {

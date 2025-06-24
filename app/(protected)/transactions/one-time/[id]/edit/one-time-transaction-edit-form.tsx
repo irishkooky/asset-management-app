@@ -1,11 +1,10 @@
 "use client";
 
-import { Button } from "@/components/button";
-import type { Account, OneTimeTransaction } from "@/types/database";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState } from "react";
-import { useEffect } from "react";
+import { useActionState, useEffect, useId } from "react";
+import { Button } from "@/components/button";
+import type { Account, OneTimeTransaction } from "@/types/database";
 import {
 	deleteOneTimeTransactionAction,
 	updateOneTimeTransactionAction,
@@ -21,6 +20,13 @@ export function OneTimeTransactionEditForm({
 	accounts,
 }: OneTimeTransactionEditFormProps) {
 	const router = useRouter();
+	const accountId = useId();
+	const nameId = useId();
+	const amountId = useId();
+	const typeIncomeId = useId();
+	const typeExpenseId = useId();
+	const transactionDateId = useId();
+	const descriptionId = useId();
 	const initialState = { error: "", success: "" };
 	const [updateState, updateFormAction] = useActionState(
 		updateOneTimeTransactionAction,
@@ -34,11 +40,8 @@ export function OneTimeTransactionEditForm({
 	// 成功時にリダイレクト
 	useEffect(() => {
 		if (updateState.success || deleteState.success) {
-			// 少し遅延させてメッセージを表示する時間を確保
-			const timer = setTimeout(() => {
-				router.push("/transactions/one-time");
-			}, 1000);
-			return () => clearTimeout(timer);
+			// メッセージを少し表示してからリダイレクト
+			router.push("/transactions/one-time");
 		}
 	}, [updateState.success, deleteState.success, router]);
 
@@ -71,11 +74,11 @@ export function OneTimeTransactionEditForm({
 					<input type="hidden" name="transactionId" value={transaction.id} />
 
 					<div className="space-y-2">
-						<label htmlFor="accountId" className="text-sm font-medium">
+						<label htmlFor={accountId} className="text-sm font-medium">
 							口座
 						</label>
 						<select
-							id="accountId"
+							id={accountId}
 							name="accountId"
 							required
 							defaultValue={transaction.account_id}
@@ -91,11 +94,11 @@ export function OneTimeTransactionEditForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor={nameId} className="text-sm font-medium">
 							名前
 						</label>
 						<input
-							id="name"
+							id={nameId}
 							name="name"
 							type="text"
 							required
@@ -105,11 +108,11 @@ export function OneTimeTransactionEditForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="amount" className="text-sm font-medium">
+						<label htmlFor={amountId} className="text-sm font-medium">
 							金額
 						</label>
 						<input
-							id="amount"
+							id={amountId}
 							name="amount"
 							type="number"
 							step="1"
@@ -124,35 +127,35 @@ export function OneTimeTransactionEditForm({
 						<div className="flex space-x-4">
 							<div className="flex items-center">
 								<input
-									id="type-income"
+									id={typeIncomeId}
 									type="radio"
 									name="type"
 									value="income"
 									defaultChecked={transaction.type === "income"}
 									className="mr-2"
 								/>
-								<label htmlFor="type-income">収入</label>
+								<label htmlFor={typeIncomeId}>収入</label>
 							</div>
 							<div className="flex items-center">
 								<input
-									id="type-expense"
+									id={typeExpenseId}
 									type="radio"
 									name="type"
 									value="expense"
 									defaultChecked={transaction.type === "expense"}
 									className="mr-2"
 								/>
-								<label htmlFor="type-expense">支出</label>
+								<label htmlFor={typeExpenseId}>支出</label>
 							</div>
 						</div>
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="transactionDate" className="text-sm font-medium">
+						<label htmlFor={transactionDateId} className="text-sm font-medium">
 							日付
 						</label>
 						<input
-							id="transactionDate"
+							id={transactionDateId}
 							name="transactionDate"
 							type="date"
 							required
@@ -162,11 +165,11 @@ export function OneTimeTransactionEditForm({
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="description" className="text-sm font-medium">
+						<label htmlFor={descriptionId} className="text-sm font-medium">
 							説明（任意）
 						</label>
 						<textarea
-							id="description"
+							id={descriptionId}
 							name="description"
 							className="w-full p-2 border rounded-md"
 							rows={3}

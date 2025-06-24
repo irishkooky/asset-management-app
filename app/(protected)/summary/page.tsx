@@ -1,10 +1,16 @@
-import { Button } from "@/components/button";
-import { createClient } from "@/utils/supabase/server";
 import { Card, CardBody } from "@heroui/react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Button } from "@/components/button";
+import { createClient } from "@/utils/supabase/server";
 import { AccountAccordion } from "./_components/account-accordion";
-import { getMonthlySummary, recordMonthlyBalances } from "./actions";
+import { MonthNavigationButtons } from "./_components/month-navigation-buttons";
+import {
+	calculatePreviousMonthBalances,
+	getMonthlySummary,
+	recordMonthlyBalances,
+} from "./actions";
 
 interface PageProps {
 	searchParams: Promise<{
@@ -13,18 +19,23 @@ interface PageProps {
 	}>;
 }
 
-export default async function MonthlySummaryPage({ searchParams }: PageProps) {
-	// 現在の年月を取得
+// ユーティリティ関数
+function getDateParams(searchParams: { year?: string; month?: string }) {
 	const now = new Date();
 	const currentYear = now.getFullYear();
-	const currentMonth = now.getMonth() + 1; // JavaScriptの月は0から始まるため+1
+	const currentMonth = now.getMonth() + 1;
 
-	// URLパラメータから年月を取得（指定がない場合は現在の年月を使用）
-	const params = await searchParams;
-	const year = params.year ? Number.parseInt(params.year) : currentYear;
-	const month = params.month ? Number.parseInt(params.month) : currentMonth;
+	const year = searchParams.year
+		? Number.parseInt(searchParams.year)
+		: currentYear;
+	const month = searchParams.month
+		? Number.parseInt(searchParams.month)
+		: currentMonth;
 
-	// 前月と翌月のリンク用のパラメータを計算
+	return { year, month, currentYear, currentMonth };
+}
+
+function getNavigationParams(year: number, month: number) {
 	let prevYear = year;
 	let prevMonth = month - 1;
 	if (prevMonth < 1) {
@@ -39,39 +50,43 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 		nextMonth = 1;
 	}
 
-	// 日本語の月名
-	const monthNames = [
-		"1月",
-		"2月",
-		"3月",
-		"4月",
-		"5月",
-		"6月",
-		"7月",
-		"8月",
-		"9月",
-		"10月",
-		"11月",
-		"12月",
-	];
+	return { prevYear, prevMonth, nextYear, nextMonth };
+}
+
+const MONTH_NAMES = [
+	"1月",
+	"2月",
+	"3月",
+	"4月",
+	"5月",
+	"6月",
+	"7月",
+	"8月",
+	"9月",
+	"10月",
+	"11月",
+	"12月",
+];
+
+export default async function MonthlySummaryPage({ searchParams }: PageProps) {
+	const params = await searchParams;
+	const { year, month } = getDateParams(params);
+	const { prevYear, prevMonth, nextYear, nextMonth } = getNavigationParams(
+		year,
+		month,
+	);
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-between items-center mb-6">
-				<Button variant="outline" size="sm" asChild>
-					<Link href={`/summary?year=${prevYear}&month=${prevMonth}`}>
-						前月
-					</Link>
-				</Button>
-				<h2 className="text-xl font-semibold">
-					{year}年 {monthNames[month - 1]}
-				</h2>
-				<Button variant="outline" size="sm" asChild>
-					<Link href={`/summary?year=${nextYear}&month=${nextMonth}`}>
-						翌月
-					</Link>
-				</Button>
-			</div>
+			<MonthNavigationButtons
+				currentYear={year}
+				currentMonth={month}
+				prevYear={prevYear}
+				prevMonth={prevMonth}
+				nextYear={nextYear}
+				nextMonth={nextMonth}
+				monthNames={MONTH_NAMES}
+			/>
 			<Suspense fallback={<SummaryLoading />}>
 				<SummaryContent year={year} month={month} />
 			</Suspense>
@@ -79,28 +94,18 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 	);
 }
 
-// サマリーデータを表示するコンポーネント
-async function SummaryContent({
-	year,
-	month,
-}: { year: number; month: number }) {
-	// 現在の日付を取得
-	const now = new Date();
-
-	// ユーザー情報とSupabaseクライアントを取得
-	const supabase = await createClient();
-
-	// 現在の年月の最初の日
-	const currentDate = new Date();
-	const currentYear = currentDate.getFullYear();
-	const currentMonth = currentDate.getMonth() + 1;
-	const firstDayOfCurrentMonth = new Date(currentYear, currentMonth - 1, 1);
-	const firstDayOfSelectedMonth = new Date(year, month - 1, 1);
+// 月初残高の記録とデータ取得を処理
+async function handleMonthlyBalances(
+	supabase: SupabaseClient,
+	currentYear: number,
+	currentMonth: number,
+	year: number,
+	month: number,
+) {
+	const today = new Date();
 
 	// 現在の月の1日から3日までであれば、月初残高を記録
-	const today = new Date();
 	if (today.getDate() <= 3) {
-		// 既に今月分の残高記録があるか確認
 		const { data: existingRecords } = await supabase
 			.from("monthly_account_balances")
 			.select("id")
@@ -108,9 +113,7 @@ async function SummaryContent({
 			.eq("month", currentMonth)
 			.limit(1);
 
-		// 記録がなければ新規記録
 		if (!existingRecords || existingRecords.length === 0) {
-			// 月初残高を記録
 			await recordMonthlyBalances(currentYear, currentMonth);
 		}
 	}
@@ -122,7 +125,7 @@ async function SummaryContent({
 		.eq("year", year)
 		.eq("month", month);
 
-	// 月初残高をアカウントIDをキーとしたオブジェクトに変換
+	// 月初残高をマップに変換
 	const monthlyBalanceMap: Record<string, number> = {};
 	if (monthlyBalances) {
 		for (const balance of monthlyBalances) {
@@ -130,165 +133,89 @@ async function SummaryContent({
 		}
 	}
 
+	return monthlyBalanceMap;
+}
+
+// 口座の最終残高を計算
+function calculateAccountFinalBalance(
+	account: {
+		transactions: Array<{
+			transaction_date: string;
+			type: "income" | "expense";
+			amount: number;
+		}>;
+	},
+	initialBalance: number,
+): number {
+	const sortedTransactions = [...account.transactions].sort(
+		(a, b) =>
+			new Date(a.transaction_date).getTime() -
+			new Date(b.transaction_date).getTime(),
+	);
+
+	let finalBalance = initialBalance;
+	for (const transaction of sortedTransactions) {
+		finalBalance =
+			transaction.type === "income"
+				? finalBalance + transaction.amount
+				: finalBalance - transaction.amount;
+	}
+
+	return finalBalance;
+}
+
+// サマリーデータを表示するコンポーネント
+async function SummaryContent({
+	year,
+	month,
+}: {
+	year: number;
+	month: number;
+}) {
+	const now = new Date();
+	const supabase = await createClient();
+	const currentYear = now.getFullYear();
+	const currentMonth = now.getMonth() + 1;
+
+	// 月初残高の処理
+	const monthlyBalanceMap = await handleMonthlyBalances(
+		supabase,
+		currentYear,
+		currentMonth,
+		year,
+		month,
+	);
+
 	// 月次収支データを取得
 	const summary = await getMonthlySummary(year, month);
 
-	// 選択した年月が現在より後か判定
+	// 日付関連の計算
 	const selectedDate = new Date(year, month - 1, 1);
 	const currentYearMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 	const isSelectedDateAfterCurrent = selectedDate > currentYearMonth;
 
-	// 月末残高の合計を格納する変数
-	let totalEndOfMonthBalance = 0;
+	// 前月残高の取得
+	const previousMonthBalances = isSelectedDateAfterCurrent
+		? await calculatePreviousMonthBalances(supabase, now, year, month)
+		: undefined;
 
-	// 翌月以降のビューを表示している場合は、前月の残高情報も取得
-	let previousMonthBalances: Record<string, number> | undefined;
-	if (isSelectedDateAfterCurrent) {
-		// 月別残高情報を格納するオブジェクトを初期化
-		previousMonthBalances = {} as Record<string, number>;
+	// 月末残高の合計を計算
+	const totalEndOfMonthBalance = summary.accounts.reduce((total, account) => {
+		// 初期残高を決定（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
+		let initialBalance = account.balance;
 
-		// 現在の月を順次処理するための月範囲を計算
-		const currentMonth = now.getMonth() + 1; // 0-basedから1-basedに変換
-		const currentYear = now.getFullYear();
-
-		// 以前の月の収支データを取得しながら残高を計算する
-
-		// 適用すべき月を計算する
-		const monthsToProcess = [];
-
-		// 現在の月から選択した月の前月までのすべての月をリスト化
-		let processYear = currentYear;
-		let processMonth = currentMonth;
-
-		while (
-			processYear < year ||
-			(processYear === year && processMonth < month)
-		) {
-			monthsToProcess.push({ year: processYear, month: processMonth });
-
-			// 次の月に進む
-			processMonth++;
-			if (processMonth > 12) {
-				processYear++;
-				processMonth = 1;
-			}
-		}
-
-		// 口座ごとの最新の残高を追跡するオブジェクト
-		const latestBalances: Record<string, number> = {};
-
-		// 各月を順番に処理
-		for (const { year: processYear, month: processMonth } of monthsToProcess) {
-			// 現在処理している月のデータを取得
-			const monthSummary = await getMonthlySummary(processYear, processMonth);
-
-			// この月の月初残高データを取得
-			const { data: processMonthBalances } = await supabase
-				.from("monthly_account_balances")
-				.select("*")
-				.eq("year", processYear)
-				.eq("month", processMonth);
-
-			// 月初残高マップを作成
-			const processMonthBalanceMap: Record<string, number> = {};
-			if (processMonthBalances) {
-				for (const balance of processMonthBalances) {
-					processMonthBalanceMap[balance.account_id] = balance.balance;
-				}
-			}
-
-			// 各口座を処理
-			for (const account of monthSummary.accounts) {
-				// 初期残高を決定（月初残高テーブル > 前月計算値 > 現在残高）
-				let processInitialBalance: number;
-
-				// 月初残高テーブルにデータがあればそれを使用
-				if (
-					processMonthBalanceMap &&
-					processMonthBalanceMap[account.id] !== undefined
-				) {
-					processInitialBalance = processMonthBalanceMap[account.id];
-				}
-				// 最初の月でない場合は、前月の最終残高を使用
-				else if (latestBalances[account.id] !== undefined) {
-					processInitialBalance = latestBalances[account.id];
-				}
-				// 初回の処理なら現在の残高を使用
-				else {
-					processInitialBalance = account.balance;
-				}
-
-				// 取引を日付順にソート
-				const sortedTransactions = [...account.transactions].sort(
-					(a, b) =>
-						new Date(a.transaction_date).getTime() -
-						new Date(b.transaction_date).getTime(),
-				);
-
-				// 残高計算
-				let finalBalance = processInitialBalance;
-				for (const transaction of sortedTransactions) {
-					finalBalance =
-						transaction.type === "income"
-							? finalBalance + transaction.amount
-							: finalBalance - transaction.amount;
-				}
-
-				// 全ての取引を適用した後の最終残高を次の月の初期残高として保存
-				latestBalances[account.id] = finalBalance;
-
-				// 選択した月の前月の最終残高を記録
-				if (processYear === year && processMonth === month - 1) {
-					previousMonthBalances[account.id] = finalBalance;
-				} else if (
-					processYear === year - 1 &&
-					processMonth === 12 &&
-					month === 1
-				) {
-					// 1月の場合は前年の12月の残高を使用
-					previousMonthBalances[account.id] = finalBalance;
-				}
-			}
-		}
-	}
-
-	// 各口座の月末残高を計算して合計を求める
-	for (const account of summary.accounts) {
-		// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
-		let initialBalance = account.balance; // デフォルト値
-
-		// 月初残高テーブルにデータがあればそれを使用
-		if (monthlyBalanceMap && monthlyBalanceMap[account.id] !== undefined) {
+		if (monthlyBalanceMap[account.id] !== undefined) {
 			initialBalance = monthlyBalanceMap[account.id];
-		}
-		// 将来月の場合は前月残高を使用
-		else if (
+		} else if (
 			isSelectedDateAfterCurrent &&
-			previousMonthBalances &&
-			previousMonthBalances[account.id] !== undefined
+			previousMonthBalances?.[account.id] !== undefined
 		) {
 			initialBalance = previousMonthBalances[account.id];
 		}
 
-		// 取引を日付順にソート
-		const sortedTransactions = [...account.transactions].sort(
-			(a, b) =>
-				new Date(a.transaction_date).getTime() -
-				new Date(b.transaction_date).getTime(),
-		);
-
-		// 全取引を適用した後の最終残高を計算
-		let finalBalance = initialBalance;
-		for (const transaction of sortedTransactions) {
-			finalBalance =
-				transaction.type === "income"
-					? finalBalance + transaction.amount
-					: finalBalance - transaction.amount;
-		}
-
-		// 月末残高を合計に加算
-		totalEndOfMonthBalance += finalBalance;
-	}
+		const finalBalance = calculateAccountFinalBalance(account, initialBalance);
+		return total + finalBalance;
+	}, 0);
 
 	// 口座が登録されていない場合の空状態を表示
 	if (summary.accounts.length === 0) {

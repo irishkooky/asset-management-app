@@ -1,9 +1,9 @@
+import Link from "next/link";
+import { Suspense } from "react";
 import { Button } from "@/components/button";
 import type { RecurringTransaction } from "@/types/database";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserRecurringTransactions } from "@/utils/supabase/recurring-transactions";
-import Link from "next/link";
-import { Suspense } from "react";
 import { TransactionGroups } from "./_components/transaction-groups";
 
 // 定期取引ページのインターフェース

@@ -1,25 +1,23 @@
 "use client";
 
-import { Button } from "@/components/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState } from "react";
-import { useEffect } from "react";
+import { useActionState, useEffect, useId } from "react";
+import { Button } from "@/components/button";
 import { createAccountAction } from "../actions";
 
 export function AccountForm() {
 	const router = useRouter();
+	const nameId = useId();
+	const initialBalanceId = useId();
 	const initialState = { error: "", success: "" };
 	const [state, formAction] = useActionState(createAccountAction, initialState);
 
 	// 成功時にリダイレクト
 	useEffect(() => {
 		if (state.success) {
-			// 少し遅延させてメッセージを表示する時間を確保
-			const timer = setTimeout(() => {
-				router.push("/accounts");
-			}, 1000);
-			return () => clearTimeout(timer);
+			// メッセージを少し表示してからリダイレクト
+			router.push("/accounts");
 		}
 	}, [state.success, router]);
 
@@ -47,11 +45,11 @@ export function AccountForm() {
 
 				<form action={formAction} className="space-y-6">
 					<div className="space-y-2">
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor={nameId} className="text-sm font-medium">
 							口座名
 						</label>
 						<input
-							id="name"
+							id={nameId}
 							name="name"
 							type="text"
 							required
@@ -61,11 +59,11 @@ export function AccountForm() {
 					</div>
 
 					<div className="space-y-2">
-						<label htmlFor="initialBalance" className="text-sm font-medium">
+						<label htmlFor={initialBalanceId} className="text-sm font-medium">
 							初期残高
 						</label>
 						<input
-							id="initialBalance"
+							id={initialBalanceId}
 							name="initialBalance"
 							type="number"
 							step="1"
