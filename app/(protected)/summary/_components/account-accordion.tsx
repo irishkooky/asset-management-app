@@ -670,19 +670,17 @@ export const AccountAccordion = ({
 													</div>
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
-													<>
-														<span
-															className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
-														>
-															{transaction.type === "income" ? "" : "-"}
-															{Math.abs(transaction.amount).toLocaleString()}
-														</span>
-														<div
-															className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
-														>
-															残高: ¥{balance.toLocaleString()}
-														</div>
-													</>
+													<span
+														className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+													>
+														{transaction.type === "income" ? "" : "-"}
+														{Math.abs(transaction.amount).toLocaleString()}
+													</span>
+													<div
+														className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
+													>
+														残高: ¥{balance.toLocaleString()}
+													</div>
 												</td>
 												<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
 													<Button
