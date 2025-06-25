@@ -20,6 +20,9 @@ export type RecurringTransaction = {
 	name: string;
 	description: string | null;
 	day_of_month: number;
+	is_transfer: boolean;
+	destination_account_id: string | null;
+	transfer_pair_id: string | null;
 	created_at: string;
 	updated_at: string;
 };
@@ -43,6 +46,9 @@ export type OneTimeTransaction = {
 	name: string;
 	description: string | null;
 	transaction_date: string;
+	is_transfer: boolean;
+	destination_account_id: string | null;
+	transfer_pair_id: string | null;
 	created_at: string;
 	updated_at: string;
 };
@@ -53,4 +59,10 @@ export type SavingsPrediction = {
 	period: PredictionPeriod;
 	amount: number;
 	date: string;
+};
+
+// 送金ペア用の型定義
+export type TransferPair = {
+	sourceTransaction: OneTimeTransaction | RecurringTransaction;
+	destinationTransaction: OneTimeTransaction | RecurringTransaction;
 };
