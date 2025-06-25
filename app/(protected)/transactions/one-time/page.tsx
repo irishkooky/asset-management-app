@@ -1,15 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/button";
+import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 
 export default async function OneTimeTransactionsPage() {
 	// 臨時収支データ取得（過去3ヶ月と将来のデータ）
 	const threeMonthsAgo = new Date();
 	threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-	const transactions = await getUserOneTimeTransactions(
-		undefined,
-		threeMonthsAgo,
-	);
+	const [transactions, accounts] = await Promise.all([
+		getUserOneTimeTransactions(undefined, threeMonthsAgo),
+		getUserAccounts(),
+	]);
+
+	// 口座IDから口座名を取得するヘルパー関数
+	const getAccountName = (accountId: string) => {
+		const account = accounts.find((acc) => acc.id === accountId);
+		return account?.name || "不明な口座";
+	};
 
 	return (
 		<div className="space-y-8">
@@ -37,26 +44,46 @@ export default async function OneTimeTransactionsPage() {
 							<tbody>
 								{transactions.map((transaction) => (
 									<tr key={transaction.id} className="border-b">
-										<td className="py-3 px-4">{transaction.name}</td>
+										<td className="py-3 px-4">
+											<div className="flex items-center gap-2">
+												{transaction.is_transfer && (
+													<span className="text-blue-600 text-sm">⟷</span>
+												)}
+												{transaction.name}
+											</div>
+										</td>
 										<td className="py-3 px-4">
 											<span
 												className={
-													transaction.type === "income"
-														? "text-green-600"
-														: "text-red-600"
+													transaction.is_transfer
+														? "text-blue-600"
+														: transaction.type === "income"
+															? "text-green-600"
+															: "text-red-600"
 												}
 											>
-												{transaction.type === "income" ? "収入" : "支出"}
+												{transaction.is_transfer
+													? "送金"
+													: transaction.type === "income"
+														? "収入"
+														: "支出"}
 											</span>
 										</td>
 										<td className="py-3 px-4">
-											{/* 口座名は後で実装 */}
-											<Link
-												href={`/accounts/${transaction.account_id}`}
-												className="text-blue-600 hover:underline"
-											>
-												口座詳細
-											</Link>
+											<div className="text-sm">
+												<div className="font-medium">
+													{getAccountName(transaction.account_id)}
+												</div>
+												{transaction.is_transfer &&
+													transaction.destination_account_id && (
+														<div className="text-gray-500 text-xs">
+															→{" "}
+															{getAccountName(
+																transaction.destination_account_id,
+															)}
+														</div>
+													)}
+											</div>
 										</td>
 										<td className="py-3 px-4">
 											{transaction.transaction_date}
