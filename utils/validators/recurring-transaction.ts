@@ -57,7 +57,10 @@ export const createTransferSchema = pipe(
 	}),
 	custom((input) => {
 		// 送金元と送金先が異なることを確認
-		const data = input as { sourceAccountId: string; destinationAccountId: string };
+		const data = input as {
+			sourceAccountId: string;
+			destinationAccountId: string;
+		};
 		return data.sourceAccountId !== data.destinationAccountId;
 	}, "送金元と送金先は異なる口座である必要があります"),
 );
