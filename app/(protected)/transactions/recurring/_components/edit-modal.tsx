@@ -128,8 +128,8 @@ export const EditModal = ({
 
 	if (showMonthlyEditor) {
 		return (
-			<Modal 
-				isOpen 
+			<Modal
+				isOpen
 				onClose={() => setShowMonthlyEditor(false)}
 				scrollBehavior="inside"
 				placement="center"
@@ -150,8 +150,8 @@ export const EditModal = ({
 	}
 
 	return (
-		<Modal 
-			isOpen={isOpen} 
+		<Modal
+			isOpen={isOpen}
 			onClose={onClose}
 			scrollBehavior="inside"
 			placement="center"
