@@ -128,7 +128,13 @@ export const EditModal = ({
 
 	if (showMonthlyEditor) {
 		return (
-			<Modal isOpen onClose={() => setShowMonthlyEditor(false)}>
+			<Modal 
+				isOpen 
+				onClose={() => setShowMonthlyEditor(false)}
+				scrollBehavior="inside"
+				placement="center"
+				backdrop="blur"
+			>
 				<ModalContent>
 					<MonthlyAmountEditor
 						recurringTransaction={recurringTransaction}
@@ -144,7 +150,13 @@ export const EditModal = ({
 	}
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose}>
+		<Modal 
+			isOpen={isOpen} 
+			onClose={onClose}
+			scrollBehavior="inside"
+			placement="center"
+			backdrop="blur"
+		>
 			<ModalContent className="max-w-md">
 				<ModalHeader className="border-b pb-4">
 					<h2 className="text-xl font-bold">定期的な収支の編集</h2>
