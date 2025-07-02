@@ -96,9 +96,6 @@ export async function getMonthlySummary(year: number, month: number) {
 	return summary;
 }
 
-/**
- * 月次収支サマリーデータを計算する
- */
 function calculateMonthlySummary(
 	accounts: Account[],
 	oneTimeTransactions: OneTimeTransaction[],
