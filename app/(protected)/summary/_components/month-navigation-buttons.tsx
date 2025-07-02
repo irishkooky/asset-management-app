@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 
 interface MonthNavigationButtonsProps {
@@ -29,6 +29,13 @@ export function MonthNavigationButtons({
 		"prev" | "next" | null
 	>(null);
 
+	// Reset navigation state when year/month changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to reset state when props change
+	useEffect(() => {
+		setIsNavigating(false);
+		setNavigatingDirection(null);
+	}, [currentYear, currentMonth]);
+
 	const handleNavigation = async (href: string, direction: "prev" | "next") => {
 		setIsNavigating(true);
 		setNavigatingDirection(direction);
@@ -36,8 +43,11 @@ export function MonthNavigationButtons({
 		// Use router.push for faster navigation
 		router.push(href);
 
-		// Reset loading state after navigation - the loading state will be cleared when the component unmounts
-		// or when a new navigation occurs
+		// Also set a timeout to reset state in case the navigation doesn't update props
+		setTimeout(() => {
+			setIsNavigating(false);
+			setNavigatingDirection(null);
+		}, 3000);
 	};
 
 	return (
