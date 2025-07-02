@@ -47,11 +47,37 @@ export const TransactionGroups = ({
 											className="py-3 flex items-center justify-between"
 										>
 											<div className="flex-1 min-w-0">
-												<p className="text-sm font-medium truncate">
-													{transaction.name}
-												</p>
+												<div className="flex items-center gap-2">
+													<p className="text-sm font-medium truncate">
+														{transaction.name}
+													</p>
+													{transaction.is_transfer && (
+														<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+															送金
+														</span>
+													)}
+												</div>
 												<p className="text-xs text-gray-500 dark:text-gray-400">
 													毎月{transaction.day_of_month}日
+													{transaction.is_transfer &&
+														transaction.destination_account_id && (
+															<span className="ml-1">
+																（送金先: {(() => {
+																	const destAccount = transactionGroups.find(
+																		(g) =>
+																			g.transactions.some(
+																				(t) =>
+																					t.account_id ===
+																						transaction.destination_account_id &&
+																					t.transfer_pair_id ===
+																						transaction.transfer_pair_id &&
+																					t.type === "income",
+																			),
+																	);
+																	return destAccount?.accountName || "不明";
+																})()}）
+															</span>
+														)}
 												</p>
 											</div>
 											<div className="flex items-center">
