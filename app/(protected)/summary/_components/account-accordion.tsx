@@ -647,10 +647,51 @@ export const AccountAccordion = ({
 										return history;
 									}, []);
 
+									// 現在の残高を表示すべきトランザクションのインデックスを決定
+									const getCurrentBalanceIndex = () => {
+										const today = new Date();
+										today.setHours(0, 0, 0, 0);
+
+										let lastPastIndex = -1;
+										let lastTodayIndex = -1;
+
+										balanceHistory.forEach((item, idx) => {
+											const transactionDate = new Date(
+												item.transaction.transaction_date,
+											);
+											transactionDate.setHours(0, 0, 0, 0);
+
+											if (transactionDate <= today) {
+												lastPastIndex = idx;
+											}
+											if (transactionDate.getTime() === today.getTime()) {
+												lastTodayIndex = idx;
+											}
+										});
+
+										return lastTodayIndex !== -1
+											? lastTodayIndex
+											: lastPastIndex;
+									};
+
+									const currentBalanceIndex = getCurrentBalanceIndex();
+
 									return balanceHistory.map(
-										({ transaction, balance }, index, array) => (
-											<tr key={transaction.id}>
-												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+										({ transaction, balance }, index, _array) => (
+											<tr
+												key={transaction.id}
+												className={`
+													transition-all duration-200
+													${
+														index === currentBalanceIndex
+															? "bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500"
+															: ""
+													}
+												`}
+											>
+												<td
+													className={`py-2 border-t border-gray-200 dark:border-gray-700 ${index === currentBalanceIndex ? "pl-4" : ""}`}
+												>
 													{format(
 														new Date(transaction.transaction_date),
 														"M/d",
@@ -659,7 +700,11 @@ export const AccountAccordion = ({
 														},
 													)}
 												</td>
-												<td className="py-2 border-t border-gray-200 dark:border-gray-700">
+												<td
+													className={
+														"py-2 border-t border-gray-200 dark:border-gray-700"
+													}
+												>
 													<div className="flex items-center">
 														<span>{transaction.name}</span>
 														{transaction.description && (
@@ -669,20 +714,38 @@ export const AccountAccordion = ({
 														)}
 													</div>
 												</td>
-												<td className="py-2 border-t border-gray-200 dark:border-gray-700 text-right">
+												<td
+													className={
+														"py-2 border-t border-gray-200 dark:border-gray-700 text-right"
+													}
+												>
 													<span
-														className={`font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
+														className={`text-sm font-medium ${transaction.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}
 													>
 														{transaction.type === "income" ? "" : "-"}
 														{Math.abs(transaction.amount).toLocaleString()}
 													</span>
-													<div
-														className={`text-xs mt-1 ${balance < 0 ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"} ${index === array.length - 1 ? "font-bold" : ""}`}
-													>
-														残高: ¥{balance.toLocaleString()}
+													<div className="mt-1">
+														{index === currentBalanceIndex && (
+															<span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium mb-1 inline-block">
+																現在の残高
+															</span>
+														)}
+														<div
+															className={`
+																${balance < 0 ? "text-red-600 dark:text-red-400" : ""} 
+																${index === currentBalanceIndex ? "font-extrabold text-lg" : "font-medium"}
+															`}
+														>
+															¥{balance.toLocaleString()}
+														</div>
 													</div>
 												</td>
-												<td className="py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10">
+												<td
+													className={
+														"py-2 border-t border-gray-200 dark:border-gray-700 pl-2 w-10"
+													}
+												>
 													<Button
 														isIconOnly
 														size="sm"
