@@ -32,7 +32,6 @@ interface AccountAccordionProps {
 	monthlyBalanceMap?: Record<string, number>;
 }
 
-// サーバーアクションをラップしたクライアント側の関数
 const updateTransactionAmount = async (
 	transactionId: string,
 	year: number,
