@@ -108,41 +108,80 @@ export async function setAmountForMonth(
 ): Promise<void> {
 	const supabase = await createClient();
 
-	// すでに設定されているか確認
-	const { data, error } = await supabase
-		.from("recurring_transaction_amounts")
-		.select("id")
-		.eq("recurring_transaction_id", recurringTransactionId)
-		.eq("year", year)
-		.eq("month", month)
+	// まず対象の取引情報を取得して送金かどうか確認
+	const { data: transaction, error: transactionError } = await supabase
+		.from("recurring_transactions")
+		.select("is_transfer, transfer_pair_id")
+		.eq("id", recurringTransactionId)
 		.single();
 
-	if (error && error.code !== "PGRST116") {
-		throw new Error(`月別金額の確認に失敗しました: ${error.message}`);
+	if (transactionError) {
+		throw new Error(
+			`取引情報の取得に失敗しました: ${transactionError.message}`,
+		);
 	}
 
-	if (data) {
-		// 既存のレコードを更新
-		const { error: updateError } = await supabase
-			.from("recurring_transaction_amounts")
-			.update({ amount, updated_at: new Date().toISOString() })
-			.eq("id", data.id);
+	// 送金の場合はペアの取引IDも取得
+	let pairTransactionId: string | null = null;
+	if (transaction.is_transfer && transaction.transfer_pair_id) {
+		const { data: pairTransaction, error: pairError } = await supabase
+			.from("recurring_transactions")
+			.select("id")
+			.eq("transfer_pair_id", transaction.transfer_pair_id)
+			.neq("id", recurringTransactionId)
+			.single();
 
-		if (updateError)
-			throw new Error(`月別金額の更新に失敗しました: ${updateError.message}`);
-	} else {
-		// 新しいレコードを作成
-		const { error: insertError } = await supabase
-			.from("recurring_transaction_amounts")
-			.insert({
-				recurring_transaction_id: recurringTransactionId,
-				year,
-				month,
-				amount,
-			});
+		if (pairError) {
+			console.error("送金ペアの取得に失敗しました:", pairError);
+		} else {
+			pairTransactionId = pairTransaction.id;
+		}
+	}
 
-		if (insertError)
-			throw new Error(`月別金額の作成に失敗しました: ${insertError.message}`);
+	// 対象の取引IDリスト（送金の場合は両方）
+	const transactionIds = [recurringTransactionId];
+	if (pairTransactionId) {
+		transactionIds.push(pairTransactionId);
+	}
+
+	// 各取引IDに対して月別金額を設定
+	for (const transactionId of transactionIds) {
+		// すでに設定されているか確認
+		const { data, error } = await supabase
+			.from("recurring_transaction_amounts")
+			.select("id")
+			.eq("recurring_transaction_id", transactionId)
+			.eq("year", year)
+			.eq("month", month)
+			.single();
+
+		if (error && error.code !== "PGRST116") {
+			throw new Error(`月別金額の確認に失敗しました: ${error.message}`);
+		}
+
+		if (data) {
+			// 既存のレコードを更新
+			const { error: updateError } = await supabase
+				.from("recurring_transaction_amounts")
+				.update({ amount, updated_at: new Date().toISOString() })
+				.eq("id", data.id);
+
+			if (updateError)
+				throw new Error(`月別金額の更新に失敗しました: ${updateError.message}`);
+		} else {
+			// 新しいレコードを作成
+			const { error: insertError } = await supabase
+				.from("recurring_transaction_amounts")
+				.insert({
+					recurring_transaction_id: transactionId,
+					year,
+					month,
+					amount,
+				});
+
+			if (insertError)
+				throw new Error(`月別金額の作成に失敗しました: ${insertError.message}`);
+		}
 	}
 }
 
@@ -175,7 +214,7 @@ export async function setBulkAmounts(
 		}
 	}
 
-	// 各月ごとに金額を設定
+	// 各月ごとに金額を設定（setAmountForMonthが送金ペアも処理するようになったため、そのまま利用）
 	for (const { year, month } of months) {
 		await setAmountForMonth(recurringTransactionId, year, month, amount);
 	}
