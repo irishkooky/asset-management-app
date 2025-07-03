@@ -99,7 +99,7 @@ export function MonthNavigationButtons({
 						<Button
 							variant="light"
 							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold"
+							className="text-xl font-semibold px-2"
 						>
 							{currentYear}年
 						</Button>
@@ -126,7 +126,7 @@ export function MonthNavigationButtons({
 						<Button
 							variant="light"
 							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold"
+							className="text-xl font-semibold px-2"
 						>
 							{monthNames[currentMonth - 1]}
 						</Button>
