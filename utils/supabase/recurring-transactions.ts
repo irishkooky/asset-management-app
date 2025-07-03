@@ -196,6 +196,52 @@ export async function updateRecurringTransaction(
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
 
+	// まずトランザクションを取得して送金かどうか確認
+	const { data: transaction, error: fetchError } = await supabase
+		.from("recurring_transactions")
+		.select("*")
+		.eq("id", transactionId)
+		.single();
+
+	if (fetchError || !transaction) {
+		console.error("Error fetching recurring transaction:", fetchError);
+		throw new Error("定期的な収支情報の取得に失敗しました");
+	}
+
+	// 送金の場合は特別な処理
+	if (transaction.is_transfer) {
+		// Valibotを使用して入力値をバリデーション
+		const validatedData = validateUpdateTransaction(updates);
+
+		// ストアドプロシージャを使用してペアも更新
+		const { error } = await supabase.rpc("update_recurring_transfer_pair", {
+			p_transaction_id: transactionId,
+			p_amount: validatedData.amount,
+			p_name: validatedData.name,
+			p_day_of_month: validatedData.dayOfMonth,
+			p_description: validatedData.description,
+		});
+
+		if (error) {
+			console.error("Error updating recurring transfer pair:", error);
+			throw new Error("定期送金の更新に失敗しました");
+		}
+
+		// 更新後のデータを取得して返す
+		const { data: updatedTransaction, error: fetchError } = await supabase
+			.from("recurring_transactions")
+			.select("*")
+			.eq("id", transactionId)
+			.single();
+
+		if (fetchError || !updatedTransaction) {
+			throw new Error("更新後の定期送金情報の取得に失敗しました");
+		}
+
+		return updatedTransaction as RecurringTransaction;
+	}
+
+	// 通常の取引の場合は従来通りの処理
 	// Valibotを使用して入力値をバリデーション
 	const validatedData = validateUpdateTransaction(updates);
 
@@ -248,6 +294,34 @@ export async function deleteRecurringTransaction(
 ): Promise<void> {
 	const supabase = await createClient();
 
+	// まずトランザクションを取得して送金かどうか確認
+	const { data: transaction, error: fetchError } = await supabase
+		.from("recurring_transactions")
+		.select("*")
+		.eq("id", transactionId)
+		.single();
+
+	if (fetchError || !transaction) {
+		console.error("Error fetching recurring transaction:", fetchError);
+		throw new Error("定期的な収支情報の取得に失敗しました");
+	}
+
+	// 送金の場合は特別な処理
+	if (transaction.is_transfer) {
+		// ストアドプロシージャを使用してペアも削除
+		const { error } = await supabase.rpc("delete_recurring_transfer_pair", {
+			p_transaction_id: transactionId,
+		});
+
+		if (error) {
+			console.error("Error deleting recurring transfer pair:", error);
+			throw new Error("定期送金の削除に失敗しました");
+		}
+
+		return;
+	}
+
+	// 通常の取引の場合は従来通りの処理
 	const { error } = await supabase
 		.from("recurring_transactions")
 		.delete()

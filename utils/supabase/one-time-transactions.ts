@@ -190,6 +190,59 @@ export async function updateOneTimeTransaction(
 ): Promise<OneTimeTransaction> {
 	const supabase = await createClient();
 
+	// まずトランザクションを取得して送金かどうか確認
+	const { data: transaction, error: fetchError } = await supabase
+		.from("one_time_transactions")
+		.select("*")
+		.eq("id", transactionId)
+		.single();
+
+	if (fetchError || !transaction) {
+		console.error("Error fetching one-time transaction:", fetchError);
+		throw new Error("臨時収支情報の取得に失敗しました");
+	}
+
+	// 送金の場合は特別な処理
+	if (transaction.is_transfer) {
+		// 日付形式を変換
+		let transactionDate: string | undefined;
+		if (updates.transaction_date) {
+			if (updates.transaction_date instanceof Date) {
+				transactionDate = updates.transaction_date.toISOString().split("T")[0];
+			} else {
+				transactionDate = updates.transaction_date;
+			}
+		}
+
+		// ストアドプロシージャを使用してペアも更新
+		const { error } = await supabase.rpc("update_one_time_transfer_pair", {
+			p_transaction_id: transactionId,
+			p_amount: updates.amount,
+			p_name: updates.name,
+			p_transaction_date: transactionDate,
+			p_description: updates.description,
+		});
+
+		if (error) {
+			console.error("Error updating one-time transfer pair:", error);
+			throw new Error("一時送金の更新に失敗しました");
+		}
+
+		// 更新後のデータを取得して返す
+		const { data: updatedTransaction, error: fetchError } = await supabase
+			.from("one_time_transactions")
+			.select("*")
+			.eq("id", transactionId)
+			.single();
+
+		if (fetchError || !updatedTransaction) {
+			throw new Error("更新後の一時送金情報の取得に失敗しました");
+		}
+
+		return updatedTransaction as OneTimeTransaction;
+	}
+
+	// 通常の取引の場合は従来通りの処理
 	const updatedData = { ...updates };
 
 	// 日付形式を変換
@@ -230,6 +283,34 @@ export async function deleteOneTimeTransaction(
 ): Promise<void> {
 	const supabase = await createClient();
 
+	// まずトランザクションを取得して送金かどうか確認
+	const { data: transaction, error: fetchError } = await supabase
+		.from("one_time_transactions")
+		.select("*")
+		.eq("id", transactionId)
+		.single();
+
+	if (fetchError || !transaction) {
+		console.error("Error fetching one-time transaction:", fetchError);
+		throw new Error("臨時収支情報の取得に失敗しました");
+	}
+
+	// 送金の場合は特別な処理
+	if (transaction.is_transfer) {
+		// ストアドプロシージャを使用してペアも削除
+		const { error } = await supabase.rpc("delete_one_time_transfer_pair", {
+			p_transaction_id: transactionId,
+		});
+
+		if (error) {
+			console.error("Error deleting one-time transfer pair:", error);
+			throw new Error("一時送金の削除に失敗しました");
+		}
+
+		return;
+	}
+
+	// 通常の取引の場合は従来通りの処理
 	const { error } = await supabase
 		.from("one_time_transactions")
 		.delete()
