@@ -92,7 +92,7 @@ export function MonthNavigationButtons({
 				{isNavigating && navigatingDirection === "prev" ? "読込中..." : "前月"}
 			</Button>
 
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-1">
 				{/* 年選択 */}
 				<Dropdown>
 					<DropdownTrigger>
