@@ -24,6 +24,8 @@ export function RecurringTransactionForm({
 	const typeExpenseId = useId();
 	const dayOfMonthId = useId();
 	const descriptionId = useId();
+	const isTransferCheckboxId = useId();
+	const destinationAccountId = useId();
 	const initialState = { error: "", success: "" };
 	const [state, formAction] = useActionState(
 		createRecurringTransactionAction,
@@ -32,6 +34,8 @@ export function RecurringTransactionForm({
 
 	// URLからaccountIdを取得
 	const [accountId, setAccountId] = useState(defaultAccountId || "");
+	const [isTransfer, setIsTransfer] = useState(false);
+	const [destinationAccount, setDestinationAccount] = useState("");
 
 	useEffect(() => {
 		// URLからクエリパラメータを取得
@@ -75,7 +79,7 @@ export function RecurringTransactionForm({
 				<form action={formAction} className="space-y-6">
 					<div className="space-y-2">
 						<label htmlFor={accountFormId} className="text-sm font-medium">
-							口座
+							{isTransfer ? "送金元口座" : "口座"}
 						</label>
 						<select
 							id={accountFormId}
@@ -93,6 +97,59 @@ export function RecurringTransactionForm({
 							))}
 						</select>
 					</div>
+
+					<div className="space-y-2">
+						<div className="flex items-center">
+							<input
+								id={isTransferCheckboxId}
+								type="checkbox"
+								name="isTransfer"
+								value="true"
+								checked={isTransfer}
+								onChange={(e) => setIsTransfer(e.target.checked)}
+								className="mr-2"
+							/>
+							<label
+								htmlFor={isTransferCheckboxId}
+								className="text-sm font-medium"
+							>
+								口座間送金
+							</label>
+						</div>
+						{isTransfer && (
+							<p className="text-sm text-gray-600">
+								送金先口座に同じ金額が収入として自動記録されます
+							</p>
+						)}
+					</div>
+
+					{isTransfer && (
+						<div className="space-y-2">
+							<label
+								htmlFor={destinationAccountId}
+								className="text-sm font-medium"
+							>
+								送金先口座
+							</label>
+							<select
+								id={destinationAccountId}
+								name="destinationAccountId"
+								required={isTransfer}
+								value={destinationAccount}
+								onChange={(e) => setDestinationAccount(e.target.value)}
+								className="w-full p-2 border rounded-md"
+							>
+								<option value="">送金先口座を選択してください</option>
+								{accounts
+									.filter((account) => account.id !== accountId)
+									.map((account) => (
+										<option key={account.id} value={account.id}>
+											{account.name}
+										</option>
+									))}
+							</select>
+						</div>
+					)}
 
 					<div className="space-y-2">
 						<label htmlFor={nameId} className="text-sm font-medium">
@@ -123,32 +180,36 @@ export function RecurringTransactionForm({
 						/>
 					</div>
 
-					<div className="space-y-2">
-						<p className="text-sm font-medium">種別</p>
-						<div className="flex space-x-4">
-							<div className="flex items-center">
-								<input
-									id={typeIncomeId}
-									type="radio"
-									name="type"
-									value="income"
-									defaultChecked
-									className="mr-2"
-								/>
-								<label htmlFor={typeIncomeId}>収入</label>
-							</div>
-							<div className="flex items-center">
-								<input
-									id={typeExpenseId}
-									type="radio"
-									name="type"
-									value="expense"
-									className="mr-2"
-								/>
-								<label htmlFor={typeExpenseId}>支出</label>
+					{!isTransfer && (
+						<div className="space-y-2">
+							<p className="text-sm font-medium">種別</p>
+							<div className="flex space-x-4">
+								<div className="flex items-center">
+									<input
+										id={typeIncomeId}
+										type="radio"
+										name="type"
+										value="income"
+										defaultChecked
+										className="mr-2"
+									/>
+									<label htmlFor={typeIncomeId}>収入</label>
+								</div>
+								<div className="flex items-center">
+									<input
+										id={typeExpenseId}
+										type="radio"
+										name="type"
+										value="expense"
+										className="mr-2"
+									/>
+									<label htmlFor={typeExpenseId}>支出</label>
+								</div>
 							</div>
 						</div>
-					</div>
+					)}
+
+					{isTransfer && <input type="hidden" name="type" value="expense" />}
 
 					<div className="space-y-2">
 						<label htmlFor={dayOfMonthId} className="text-sm font-medium">
@@ -180,7 +241,7 @@ export function RecurringTransactionForm({
 					</div>
 
 					<Button type="submit" className="w-full">
-						登録する
+						{isTransfer ? "送金を作成" : "登録する"}
 					</Button>
 				</form>
 			</div>
