@@ -92,14 +92,14 @@ export function MonthNavigationButtons({
 				{isNavigating && navigatingDirection === "prev" ? "読込中..." : "前月"}
 			</Button>
 
-			<div className="flex items-center gap-1">
+			<div className="flex items-center">
 				{/* 年選択 */}
 				<Dropdown>
 					<DropdownTrigger>
 						<Button
 							variant="light"
 							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold px-2"
+							className="text-xl font-semibold px-0"
 						>
 							{currentYear}年
 						</Button>
@@ -126,7 +126,7 @@ export function MonthNavigationButtons({
 						<Button
 							variant="light"
 							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold px-2"
+							className="text-xl font-semibold px-0"
 						>
 							{monthNames[currentMonth - 1]}
 						</Button>
