@@ -102,3 +102,21 @@ Note: Page-specific components are stored in `_components/` directories within e
 - `monthly_account_balances` - Monthly balance snapshots
 
 All tables use Row Level Security (RLS) scoped to authenticated users.
+
+## Git Workflow & Branch Management
+
+**IMPORTANT**: Before implementing any feature:
+1. **Check current branch**: Always verify you're on the correct branch using `git branch --show-current`
+2. **Check branch purpose**: Review recent commits with `git log --oneline -5` to ensure the branch name matches the intended work
+3. **Create new branch if needed**: If the current branch name doesn't match the feature you're about to implement, create a new branch:
+   ```bash
+   git checkout -b feature/[descriptive-name]
+   ```
+   
+**Branch Naming Convention**:
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `chore/` - Maintenance tasks
+- `refactor/` - Code refactoring
+
+**Example**: If on `feature/recurring-transfers` but implementing month selection, create `feature/month-selector` instead.
