@@ -76,7 +76,7 @@ function SortableAccountItem({ account, isSorting }: SortableAccountItemProps) {
 			<CardBody>
 				<div className="space-y-3">
 					<Chip
-						color={account.current_balance >= 0 ? "success" : "danger"}
+						color={account.current_balance < 0 ? "danger" : "default"}
 						variant="flat"
 						size="lg"
 						className="text-2xl font-bold px-4 py-2"
