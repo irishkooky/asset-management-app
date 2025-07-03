@@ -1,8 +1,16 @@
 "use client";
 
+import { Button } from "@heroui/button";
+import {
+	Dropdown,
+	DropdownItem,
+	DropdownMenu,
+	DropdownSection,
+	DropdownTrigger,
+} from "@heroui/dropdown";
+import { IconChevronDown } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/button";
 
 interface MonthNavigationButtonsProps {
 	currentYear: number;
@@ -29,6 +37,17 @@ export function MonthNavigationButtons({
 		"prev" | "next" | null
 	>(null);
 
+	// Generate year options (3 years back, 1 year forward)
+	const currentActualYear = new Date().getFullYear();
+	const yearOptions = [];
+	for (
+		let year = currentActualYear - 3;
+		year <= currentActualYear + 1;
+		year++
+	) {
+		yearOptions.push(year);
+	}
+
 	// Reset navigation state when year/month changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to reset state when props change
 	useEffect(() => {
@@ -50,13 +69,17 @@ export function MonthNavigationButtons({
 		}, 3000);
 	};
 
+	const handleMonthYearSelect = (year: number, month: number) => {
+		router.push(`/summary?year=${year}&month=${month}`);
+	};
+
 	return (
 		<div className="flex justify-between items-center mb-6">
 			<Button
-				variant="outline"
+				variant="bordered"
 				size="sm"
-				disabled={isNavigating}
-				onClick={() =>
+				isDisabled={isNavigating}
+				onPress={() =>
 					handleNavigation(
 						`/summary?year=${prevYear}&month=${prevMonth}`,
 						"prev",
@@ -65,14 +88,51 @@ export function MonthNavigationButtons({
 			>
 				{isNavigating && navigatingDirection === "prev" ? "読込中..." : "前月"}
 			</Button>
-			<h2 className="text-xl font-semibold">
-				{currentYear}年 {monthNames[currentMonth - 1]}
-			</h2>
+
+			<Dropdown>
+				<DropdownTrigger>
+					<Button
+						variant="light"
+						endContent={<IconChevronDown size={16} />}
+						className="text-xl font-semibold"
+					>
+						{currentYear}年 {monthNames[currentMonth - 1]}
+					</Button>
+				</DropdownTrigger>
+				<DropdownMenu
+					aria-label="年月の選択"
+					className="max-h-[400px] overflow-y-auto"
+				>
+					<DropdownSection title="年を選択">
+						{yearOptions.map((year) => (
+							<DropdownItem
+								key={`year-${year}`}
+								onPress={() => handleMonthYearSelect(year, currentMonth)}
+								className={year === currentYear ? "bg-primary-50" : ""}
+							>
+								{year}年 {year === currentYear && "✓"}
+							</DropdownItem>
+						))}
+					</DropdownSection>
+					<DropdownSection title="月を選択">
+						{monthNames.map((monthName, index) => (
+							<DropdownItem
+								key={`month-${index + 1}`}
+								onPress={() => handleMonthYearSelect(currentYear, index + 1)}
+								className={index + 1 === currentMonth ? "bg-primary-50" : ""}
+							>
+								{monthName} {index + 1 === currentMonth && "✓"}
+							</DropdownItem>
+						))}
+					</DropdownSection>
+				</DropdownMenu>
+			</Dropdown>
+
 			<Button
-				variant="outline"
+				variant="bordered"
 				size="sm"
-				disabled={isNavigating}
-				onClick={() =>
+				isDisabled={isNavigating}
+				onPress={() =>
 					handleNavigation(
 						`/summary?year=${nextYear}&month=${nextMonth}`,
 						"next",
