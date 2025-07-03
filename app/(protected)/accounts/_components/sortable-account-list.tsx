@@ -17,9 +17,12 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Chip } from "@heroui/chip";
+import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/button";
 import type { Account } from "@/types/database";
 import { updateAccountOrderAction } from "../actions";
 
@@ -39,32 +42,54 @@ function SortableAccountItem({ account, isSorting }: SortableAccountItemProps) {
 	};
 
 	return (
-		<div
+		<Card
 			ref={setNodeRef}
 			style={style}
 			{...(isSorting ? { ...attributes, ...listeners } : {})}
-			className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 ${isSorting ? "cursor-move" : ""}`}
+			className={isSorting ? "cursor-move" : ""}
 		>
-			<div className="flex justify-between items-start mb-4">
-				<h2 className="text-xl font-semibold">{account.name}</h2>
-				{!isSorting && (
-					<div className="flex space-x-2">
-						<Button variant="outline" size="sm" asChild>
-							<Link href={`/accounts/${account.id}`}>詳細</Link>
-						</Button>
-						<Button variant="outline" size="sm" asChild>
-							<Link href={`/accounts/${account.id}/edit`}>編集</Link>
-						</Button>
-					</div>
-				)}
-			</div>
-			<p className="text-2xl font-bold mb-2">
-				¥{account.current_balance.toLocaleString()}
-			</p>
-			<p className="text-sm text-gray-500">
-				最終更新: {new Date(account.updated_at).toLocaleDateString()}
-			</p>
-		</div>
+			<CardHeader>
+				<div className="flex justify-between items-start w-full">
+					<h2 className="text-xl font-semibold">{account.name}</h2>
+					{!isSorting && (
+						<div className="flex space-x-2">
+							<Button
+								variant="bordered"
+								size="sm"
+								as={Link}
+								href={`/accounts/${account.id}`}
+							>
+								詳細
+							</Button>
+							<Button
+								variant="bordered"
+								size="sm"
+								as={Link}
+								href={`/accounts/${account.id}/edit`}
+							>
+								編集
+							</Button>
+						</div>
+					)}
+				</div>
+			</CardHeader>
+			<CardBody>
+				<div className="space-y-3">
+					<Chip
+						color={account.current_balance >= 0 ? "success" : "danger"}
+						variant="flat"
+						size="lg"
+						className="text-2xl font-bold px-4 py-2"
+					>
+						¥{account.current_balance.toLocaleString()}
+					</Chip>
+					<Divider />
+					<p className="text-sm text-default-500">
+						最終更新: {new Date(account.updated_at).toLocaleDateString()}
+					</p>
+				</div>
+			</CardBody>
+		</Card>
 	);
 }
 
@@ -132,7 +157,8 @@ export default function SortableAccountList({
 						<Button
 							onClick={saveSortOrder}
 							disabled={isSubmitting}
-							variant="default"
+							color="primary"
+							isLoading={isSubmitting}
 						>
 							{isSubmitting ? "保存中..." : "並び順を保存"}
 						</Button>
@@ -141,14 +167,14 @@ export default function SortableAccountList({
 								setIsSorting(false);
 								setAccounts(initialAccounts);
 							}}
-							variant="outline"
+							variant="bordered"
 							disabled={isSubmitting}
 						>
 							キャンセル
 						</Button>
 					</div>
 				) : (
-					<Button onClick={() => setIsSorting(true)} variant="outline">
+					<Button onClick={() => setIsSorting(true)} variant="bordered">
 						並び替え
 					</Button>
 				)}
@@ -186,12 +212,14 @@ export default function SortableAccountList({
 					)}
 				</div>
 			) : (
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-					<p className="text-lg mb-4">口座がまだ登録されていません</p>
-					<Button asChild>
-						<Link href="/accounts/new">最初の口座を追加する</Link>
-					</Button>
-				</div>
+				<Card>
+					<CardBody className="text-center py-8">
+						<p className="text-lg mb-4">口座がまだ登録されていません</p>
+						<Button color="primary" as={Link} href="/accounts/new">
+							最初の口座を追加する
+						</Button>
+					</CardBody>
+				</Card>
 			)}
 		</div>
 	);

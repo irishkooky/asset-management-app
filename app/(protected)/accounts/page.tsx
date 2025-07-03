@@ -1,5 +1,6 @@
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import Link from "next/link";
-import { Button } from "@/components/button";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import SortableAccountList from "./_components/sortable-account-list";
 
@@ -9,15 +10,20 @@ export default async function AccountsPage() {
 
 	return (
 		<div className="space-y-8">
-			<div className="flex justify-between items-center">
-				<h1 className="text-2xl font-bold">口座管理</h1>
-				<Button asChild>
-					<Link href="/accounts/new">新規口座を追加</Link>
-				</Button>
-			</div>
-
-			{/* クライアントコンポーネントに口座リストを渡す */}
-			<SortableAccountList initialAccounts={accounts} />
+			<Card>
+				<CardHeader>
+					<div className="flex justify-between items-center w-full">
+						<h1 className="text-2xl font-bold">口座管理</h1>
+						<Button color="primary" as={Link} href="/accounts/new">
+							新規口座を追加
+						</Button>
+					</div>
+				</CardHeader>
+				<CardBody>
+					{/* クライアントコンポーネントに口座リストを渡す */}
+					<SortableAccountList initialAccounts={accounts} />
+				</CardBody>
+			</Card>
 		</div>
 	);
 }
