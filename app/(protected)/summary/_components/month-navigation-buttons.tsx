@@ -5,7 +5,6 @@ import {
 	Dropdown,
 	DropdownItem,
 	DropdownMenu,
-	DropdownSection,
 	DropdownTrigger,
 } from "@heroui/dropdown";
 import { IconChevronDown } from "@tabler/icons-react";
@@ -69,8 +68,12 @@ export function MonthNavigationButtons({
 		}, 3000);
 	};
 
-	const handleMonthYearSelect = (year: number, month: number) => {
-		router.push(`/summary?year=${year}&month=${month}`);
+	const handleYearSelect = (year: number) => {
+		router.push(`/summary?year=${year}&month=${currentMonth}`);
+	};
+
+	const handleMonthSelect = (month: number) => {
+		router.push(`/summary?year=${currentYear}&month=${month}`);
 	};
 
 	return (
@@ -89,44 +92,61 @@ export function MonthNavigationButtons({
 				{isNavigating && navigatingDirection === "prev" ? "読込中..." : "前月"}
 			</Button>
 
-			<Dropdown>
-				<DropdownTrigger>
-					<Button
-						variant="light"
-						endContent={<IconChevronDown size={16} />}
-						className="text-xl font-semibold"
+			<div className="flex items-center gap-2">
+				{/* 年選択 */}
+				<Dropdown>
+					<DropdownTrigger>
+						<Button
+							variant="light"
+							endContent={<IconChevronDown size={16} />}
+							className="text-xl font-semibold"
+						>
+							{currentYear}年
+						</Button>
+					</DropdownTrigger>
+					<DropdownMenu
+						aria-label="年の選択"
+						className="max-h-[300px] overflow-y-auto"
 					>
-						{currentYear}年 {monthNames[currentMonth - 1]}
-					</Button>
-				</DropdownTrigger>
-				<DropdownMenu
-					aria-label="年月の選択"
-					className="max-h-[400px] overflow-y-auto"
-				>
-					<DropdownSection title="年を選択">
 						{yearOptions.map((year) => (
 							<DropdownItem
 								key={`year-${year}`}
-								onPress={() => handleMonthYearSelect(year, currentMonth)}
+								onPress={() => handleYearSelect(year)}
 								className={year === currentYear ? "bg-primary-50" : ""}
 							>
 								{year}年 {year === currentYear && "✓"}
 							</DropdownItem>
 						))}
-					</DropdownSection>
-					<DropdownSection title="月を選択">
+					</DropdownMenu>
+				</Dropdown>
+
+				{/* 月選択 */}
+				<Dropdown>
+					<DropdownTrigger>
+						<Button
+							variant="light"
+							endContent={<IconChevronDown size={16} />}
+							className="text-xl font-semibold"
+						>
+							{monthNames[currentMonth - 1]}
+						</Button>
+					</DropdownTrigger>
+					<DropdownMenu
+						aria-label="月の選択"
+						className="max-h-[300px] overflow-y-auto"
+					>
 						{monthNames.map((monthName, index) => (
 							<DropdownItem
 								key={`month-${index + 1}`}
-								onPress={() => handleMonthYearSelect(currentYear, index + 1)}
+								onPress={() => handleMonthSelect(index + 1)}
 								className={index + 1 === currentMonth ? "bg-primary-50" : ""}
 							>
 								{monthName} {index + 1 === currentMonth && "✓"}
 							</DropdownItem>
 						))}
-					</DropdownSection>
-				</DropdownMenu>
-			</Dropdown>
+					</DropdownMenu>
+				</Dropdown>
+			</div>
 
 			<Button
 				variant="bordered"
