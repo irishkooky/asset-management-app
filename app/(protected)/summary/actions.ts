@@ -11,6 +11,13 @@ import type {
 } from "@/types/database";
 import type { AccountSummary, Transaction } from "@/types/summary";
 import { createClient } from "@/utils/supabase/server";
+import {
+	calculateMonthlyBalanceChange,
+	fetchCurrentAccountBalances,
+	getPreviousYearMonth,
+	incrementMonth,
+	isCurrentMonth,
+} from "./balance-utils";
 
 /**
  * 月次収支サマリーデータを取得する
@@ -391,56 +398,79 @@ export async function calculatePreviousMonthBalances(
 	targetYear: number,
 	targetMonth: number,
 ): Promise<Record<string, number>> {
-	const previousMonthBalances: Record<string, number> = {};
+	const { year: prevYear, month: prevMonth } = getPreviousYearMonth(
+		targetYear,
+		targetMonth,
+	);
 
-	// 前月の年月を計算
-	let prevYear = targetYear;
-	let prevMonth = targetMonth - 1;
-	if (prevMonth < 1) {
-		prevYear--;
-		prevMonth = 12;
-	}
+	// 前月の月初残高データを取得
+	const monthlyBalances = await fetchMonthlyBalances(
+		supabase,
+		prevYear,
+		prevMonth,
+	);
 
-	// 現在の年月は関数内で使用されていないため削除
-
-	// 前月の月初残高データをチェック
-	const { data: prevMonthBalances } = await supabase
-		.from("monthly_account_balances")
-		.select("*")
-		.eq("year", prevYear)
-		.eq("month", prevMonth);
-
-	if (prevMonthBalances && prevMonthBalances.length > 0) {
-		// 前月の月初残高データがある場合、前月末残高を計算
-		const prevMonthSummary = await getMonthlySummary(prevYear, prevMonth);
-
-		for (const balance of prevMonthBalances) {
-			const account = prevMonthSummary.accounts.find(
-				(a) => a.id === balance.account_id,
-			);
-			if (account) {
-				// 月初残高 + 前月の収支 = 前月末残高
-				const monthlyBalance = account.transactions.reduce((total, t) => {
-					return t.type === "income" ? total + t.amount : total - t.amount;
-				}, 0);
-				previousMonthBalances[balance.account_id] =
-					balance.balance + monthlyBalance;
-			}
-		}
-	} else {
-		// 前月の月初残高データがない場合、遡って計算
-		const calculatedBalances = await calculateEndOfMonthBalances(
-			supabase,
+	// 月初残高データがある場合は前月末残高を計算
+	if (monthlyBalances.length > 0) {
+		return await calculateEndBalancesFromMonthlyData(
+			monthlyBalances,
 			prevYear,
 			prevMonth,
-			currentDate,
 		);
-		for (const [accountId, balance] of Object.entries(calculatedBalances)) {
-			previousMonthBalances[accountId] = balance;
-		}
 	}
 
-	return previousMonthBalances;
+	// 月初残高データがない場合は遡って計算
+	return await calculateEndOfMonthBalances(
+		supabase,
+		prevYear,
+		prevMonth,
+		currentDate,
+	);
+}
+
+/**
+ * 指定月の月初残高データを取得
+ */
+async function fetchMonthlyBalances(
+	supabase: SupabaseClient,
+	year: number,
+	month: number,
+): Promise<Array<{ account_id: string; balance: number }>> {
+	const { data } = await supabase
+		.from("monthly_account_balances")
+		.select("account_id, balance")
+		.eq("year", year)
+		.eq("month", month);
+
+	return data || [];
+}
+
+/**
+ * 月初残高データから月末残高を計算
+ */
+async function calculateEndBalancesFromMonthlyData(
+	monthlyBalances: Array<{ account_id: string; balance: number }>,
+	year: number,
+	month: number,
+): Promise<Record<string, number>> {
+	const endBalances: Record<string, number> = {};
+	const monthSummary = await getMonthlySummary(year, month);
+
+	for (const balance of monthlyBalances) {
+		const account = monthSummary.accounts.find(
+			(a) => a.id === balance.account_id,
+		);
+
+		if (!account) {
+			endBalances[balance.account_id] = balance.balance;
+			continue;
+		}
+
+		const monthlyChange = calculateMonthlyBalanceChange(account.transactions);
+		endBalances[balance.account_id] = balance.balance + monthlyChange;
+	}
+
+	return endBalances;
 }
 
 /**
@@ -453,83 +483,113 @@ async function calculateEndOfMonthBalances(
 	targetMonth: number,
 	currentDate: Date,
 ): Promise<Record<string, number>> {
-	const endOfMonthBalances: Record<string, number> = {};
-	const currentYear = currentDate.getFullYear();
-	const currentMonth = currentDate.getMonth() + 1;
-
-	// 現在の月と比較して処理を分岐
-	if (targetYear === currentYear && targetMonth === currentMonth) {
-		// 現在月の場合、現在残高を使用
-		const { data: accounts } = await supabase
-			.from("accounts")
-			.select("id, current_balance")
-			.order("sort_order", { ascending: true });
-
-		if (accounts) {
-			for (const account of accounts) {
-				endOfMonthBalances[account.id] = account.current_balance;
-			}
-		}
-	} else {
-		// 過去の月の場合、最も近い月初残高データから計算
-		const nearestBalances = await findNearestMonthlyBalances(
-			supabase,
-			targetYear,
-			targetMonth,
-			currentDate,
-		);
-
-		if (nearestBalances) {
-			// 最も近い月から対象月までのトランザクションを累積計算
-			for (const [accountId, baseBalance] of Object.entries(
-				nearestBalances.balances,
-			)) {
-				let calculatedBalance = baseBalance;
-
-				// 基準月の次の月から対象月まで順次計算
-				let calcYear = nearestBalances.year;
-				let calcMonth = nearestBalances.month + 1;
-
-				while (
-					calcYear < targetYear ||
-					(calcYear === targetYear && calcMonth <= targetMonth)
-				) {
-					if (calcMonth > 12) {
-						calcYear++;
-						calcMonth = 1;
-					}
-
-					const monthSummary = await getMonthlySummary(calcYear, calcMonth);
-					const account = monthSummary.accounts.find((a) => a.id === accountId);
-
-					if (account) {
-						const monthlyBalance = account.transactions.reduce((total, t) => {
-							return t.type === "income" ? total + t.amount : total - t.amount;
-						}, 0);
-						calculatedBalance += monthlyBalance;
-					}
-
-					calcMonth++;
-				}
-
-				endOfMonthBalances[accountId] = calculatedBalance;
-			}
-		} else {
-			// 月初残高データが全く存在しない場合は現在残高を使用
-			const { data: accounts } = await supabase
-				.from("accounts")
-				.select("id, current_balance")
-				.order("sort_order", { ascending: true });
-
-			if (accounts) {
-				for (const account of accounts) {
-					endOfMonthBalances[account.id] = account.current_balance;
-				}
-			}
-		}
+	// 現在月の場合は現在残高を使用
+	if (isCurrentMonth(targetYear, targetMonth, currentDate)) {
+		return await fetchCurrentAccountBalances(supabase);
 	}
 
-	return endOfMonthBalances;
+	// 過去の月の場合、最も近い月初残高データから計算
+	const nearestBalances = await findNearestMonthlyBalances(
+		supabase,
+		targetYear,
+		targetMonth,
+		currentDate,
+	);
+
+	if (!nearestBalances) {
+		// 月初残高データが全く存在しない場合は現在残高を使用
+		return await fetchCurrentAccountBalances(supabase);
+	}
+
+	// 最も近い月から対象月までの残高を計算
+	return await calculateBalancesFromNearestData(
+		nearestBalances,
+		targetYear,
+		targetMonth,
+	);
+}
+
+/**
+ * 最も近い月初残高データから対象月までの残高を計算
+ */
+async function calculateBalancesFromNearestData(
+	nearestBalances: {
+		year: number;
+		month: number;
+		balances: Record<string, number>;
+	},
+	targetYear: number,
+	targetMonth: number,
+): Promise<Record<string, number>> {
+	const endBalances: Record<string, number> = {};
+
+	for (const [accountId, baseBalance] of Object.entries(
+		nearestBalances.balances,
+	)) {
+		const finalBalance = await calculateAccountBalanceToTarget(
+			accountId,
+			baseBalance,
+			nearestBalances.year,
+			nearestBalances.month,
+			targetYear,
+			targetMonth,
+		);
+		endBalances[accountId] = finalBalance;
+	}
+
+	return endBalances;
+}
+
+/**
+ * 特定の口座について基準月から対象月までの残高を計算
+ */
+async function calculateAccountBalanceToTarget(
+	accountId: string,
+	startBalance: number,
+	startYear: number,
+	startMonth: number,
+	targetYear: number,
+	targetMonth: number,
+): Promise<number> {
+	let balance = startBalance;
+	let { year: calcYear, month: calcMonth } = incrementMonth(
+		startYear,
+		startMonth,
+	);
+
+	while (
+		calcYear < targetYear ||
+		(calcYear === targetYear && calcMonth <= targetMonth)
+	) {
+		const monthlyChange = await getAccountMonthlyChange(
+			accountId,
+			calcYear,
+			calcMonth,
+		);
+		balance += monthlyChange;
+
+		const next = incrementMonth(calcYear, calcMonth);
+		calcYear = next.year;
+		calcMonth = next.month;
+	}
+
+	return balance;
+}
+
+/**
+ * 特定の口座の月次収支を取得
+ */
+async function getAccountMonthlyChange(
+	accountId: string,
+	year: number,
+	month: number,
+): Promise<number> {
+	const monthSummary = await getMonthlySummary(year, month);
+	const account = monthSummary.accounts.find((a) => a.id === accountId);
+
+	if (!account) return 0;
+
+	return calculateMonthlyBalanceChange(account.transactions);
 }
 
 /**
@@ -546,9 +606,36 @@ async function findNearestMonthlyBalances(
 	balances: Record<string, number>;
 } | null> {
 	// 対象月より前の月初残高データを検索
-	const { data: monthlyBalances } = await supabase
+	const monthlyBalances = await fetchPreviousMonthlyBalances(
+		supabase,
+		targetYear,
+		targetMonth,
+	);
+
+	if (!monthlyBalances || monthlyBalances.length === 0) {
+		return null;
+	}
+
+	// 最も新しい年月のデータを抽出
+	return extractLatestMonthData(monthlyBalances);
+}
+
+/**
+ * 対象月より前の月初残高データを取得
+ */
+async function fetchPreviousMonthlyBalances(
+	supabase: SupabaseClient,
+	targetYear: number,
+	targetMonth: number,
+): Promise<Array<{
+	year: number;
+	month: number;
+	account_id: string;
+	balance: number;
+}> | null> {
+	const { data } = await supabase
 		.from("monthly_account_balances")
-		.select("*")
+		.select("year, month, account_id, balance")
 		.or(
 			`year.lt.${targetYear},and(year.eq.${targetYear},month.lt.${targetMonth})`,
 		)
@@ -556,29 +643,43 @@ async function findNearestMonthlyBalances(
 		.order("month", { ascending: false })
 		.limit(100);
 
-	if (monthlyBalances && monthlyBalances.length > 0) {
-		// 最も新しい年月を特定
-		const latestYear = monthlyBalances[0].year;
-		const latestMonth = monthlyBalances[0].month;
+	return data;
+}
 
-		// その年月のすべての口座残高を取得
-		const latestBalances = monthlyBalances.filter(
-			(b) => b.year === latestYear && b.month === latestMonth,
-		);
+/**
+ * 月初残高データから最新月のデータを抽出
+ */
+function extractLatestMonthData(
+	monthlyBalances: Array<{
+		year: number;
+		month: number;
+		account_id: string;
+		balance: number;
+	}>,
+): {
+	year: number;
+	month: number;
+	balances: Record<string, number>;
+} {
+	const latestYear = monthlyBalances[0].year;
+	const latestMonth = monthlyBalances[0].month;
 
-		const balances: Record<string, number> = {};
-		for (const balance of latestBalances) {
-			balances[balance.account_id] = balance.balance;
-		}
+	// 最新月のデータのみフィルタリング
+	const latestBalances = monthlyBalances.filter(
+		(b) => b.year === latestYear && b.month === latestMonth,
+	);
 
-		return {
-			year: latestYear,
-			month: latestMonth,
-			balances,
-		};
+	// 口座IDをキーとしたマップに変換
+	const balances: Record<string, number> = {};
+	for (const balance of latestBalances) {
+		balances[balance.account_id] = balance.balance;
 	}
 
-	return null;
+	return {
+		year: latestYear,
+		month: latestMonth,
+		balances,
+	};
 }
 
 /**
@@ -590,48 +691,27 @@ export async function carryoverMonthlyBalances(
 	year: number,
 	month: number,
 ): Promise<{ success: boolean; error?: string }> {
+	// ユーザー認証の確認
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		return { success: false, error: "認証に失敗しました" };
+	}
+
+	// 既存の月初残高データをチェック
+	const existingRecords = await checkExistingMonthlyBalances(
+		supabase,
+		year,
+		month,
+	);
+	if (existingRecords) {
+		return { success: true };
+	}
+
+	// 前月末残高を計算して記録
 	try {
-		// ユーザー認証の確認
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		if (!user) {
-			return { success: false, error: "認証に失敗しました" };
-		}
-
-		// 既存の月初残高データをチェック
-		const { data: existingRecords } = await supabase
-			.from("monthly_account_balances")
-			.select("id")
-			.eq("year", year)
-			.eq("month", month)
-			.limit(1);
-
-		if (existingRecords && existingRecords.length > 0) {
-			// 既に月初残高データが存在する場合は何もしない
-			return { success: true };
-		}
-
-		// 前月末残高を計算
-		const currentDate = new Date();
-		const previousMonthBalances = await calculatePreviousMonthBalances(
-			supabase,
-			currentDate,
-			year,
-			month,
-		);
-
-		// 前月末残高を今月の月初残高として記録
-		for (const [accountId, balance] of Object.entries(previousMonthBalances)) {
-			await supabase.from("monthly_account_balances").insert({
-				account_id: accountId,
-				user_id: user.id,
-				year,
-				month,
-				balance,
-			});
-		}
-
+		await recordPreviousMonthBalances(supabase, user.id, year, month);
 		return { success: true };
 	} catch (error) {
 		console.error("月初残高の繰り越し中にエラーが発生しました:", error);
@@ -640,4 +720,58 @@ export async function carryoverMonthlyBalances(
 			error: "月初残高の繰り越し中にエラーが発生しました",
 		};
 	}
+}
+
+/**
+ * 既存の月初残高データが存在するかチェック
+ */
+async function checkExistingMonthlyBalances(
+	supabase: SupabaseClient,
+	year: number,
+	month: number,
+): Promise<boolean> {
+	const { data } = await supabase
+		.from("monthly_account_balances")
+		.select("id")
+		.eq("year", year)
+		.eq("month", month)
+		.limit(1);
+
+	return data !== null && data.length > 0;
+}
+
+/**
+ * 前月末残高を今月の月初残高として記録
+ */
+async function recordPreviousMonthBalances(
+	supabase: SupabaseClient,
+	userId: string,
+	year: number,
+	month: number,
+): Promise<void> {
+	const currentDate = new Date();
+	const previousMonthBalances = await calculatePreviousMonthBalances(
+		supabase,
+		currentDate,
+		year,
+		month,
+	);
+
+	const records = Object.entries(previousMonthBalances).map(
+		([accountId, balance]) => ({
+			account_id: accountId,
+			user_id: userId,
+			year,
+			month,
+			balance,
+		}),
+	);
+
+	if (records.length === 0) return;
+
+	const { error } = await supabase
+		.from("monthly_account_balances")
+		.insert(records);
+
+	if (error) throw error;
 }
