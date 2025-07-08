@@ -8,6 +8,7 @@ import { AccountAccordion } from "./_components/account-accordion";
 import { MonthNavigationButtons } from "./_components/month-navigation-buttons";
 import {
 	calculatePreviousMonthBalances,
+	carryoverMonthlyBalances,
 	getMonthlySummary,
 	recordMonthlyBalances,
 } from "./actions";
@@ -118,12 +119,30 @@ async function handleMonthlyBalances(
 		}
 	}
 
-	// 月初残高データを取得
-	const { data: monthlyBalances } = await supabase
+	// 月初残高データを取得、なければ自動で前月から繰り越し
+	let { data: monthlyBalances } = await supabase
 		.from("monthly_account_balances")
 		.select("*")
 		.eq("year", year)
 		.eq("month", month);
+
+	// 月初残高データがない場合、前月から自動繰り越し
+	if (!monthlyBalances || monthlyBalances.length === 0) {
+		const carryoverResult = await carryoverMonthlyBalances(
+			supabase,
+			year,
+			month,
+		);
+		if (carryoverResult.success) {
+			// 繰り越し後に再取得
+			const { data: newMonthlyBalances } = await supabase
+				.from("monthly_account_balances")
+				.select("*")
+				.eq("year", year)
+				.eq("month", month);
+			monthlyBalances = newMonthlyBalances;
+		}
+	}
 
 	// 月初残高をマップに変換
 	const monthlyBalanceMap: Record<string, number> = {};
