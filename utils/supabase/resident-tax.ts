@@ -24,6 +24,13 @@ export async function getUserResidentTaxSettings(): Promise<
 		.order("fiscal_year", { ascending: false });
 
 	if (settingsError) {
+		// テーブルが存在しない場合は空の配列を返す
+		if (settingsError.code === "42P01") {
+			console.warn(
+				"resident_tax_settings table does not exist. Migration may not be applied.",
+			);
+			return [];
+		}
 		throw new Error(`住民税設定の取得に失敗しました: ${settingsError.message}`);
 	}
 
@@ -41,6 +48,13 @@ export async function getUserResidentTaxSettings(): Promise<
 		.order("period");
 
 	if (periodsError) {
+		// テーブルが存在しない場合は空の配列を返す
+		if (periodsError.code === "42P01") {
+			console.warn(
+				"resident_tax_periods table does not exist. Migration may not be applied.",
+			);
+			return settings.map((setting) => ({ ...setting, periods: [] }));
+		}
 		throw new Error(
 			`住民税期間設定の取得に失敗しました: ${periodsError.message}`,
 		);
