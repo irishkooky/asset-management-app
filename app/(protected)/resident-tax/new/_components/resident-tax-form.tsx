@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Button } from "@/components/button";
 import type { RecurringTransaction, ResidentTaxPeriod } from "@/types/database";
-import { createResidentTaxSetting } from "@/utils/supabase/resident-tax";
+import { createResidentTaxSettingAction } from "../../actions";
 
 interface ResidentTaxFormProps {
 	recurringTransactions: RecurringTransaction[];
@@ -145,14 +145,17 @@ export function ResidentTaxForm({
 						: null,
 			};
 
-			await createResidentTaxSetting(
+			const result = await createResidentTaxSettingAction(
 				fiscalYear,
 				totalAmount,
 				periodAmounts,
 				targetTransactionIds,
 			);
 
-			router.push("/resident-tax");
+			if (result.error) {
+				alert(`エラー: ${result.error}`);
+			}
+			// Server Actionでredirectが実行されるため、ここではrouter.pushは不要
 		} catch (error) {
 			console.error("住民税設定の作成に失敗しました:", error);
 			alert(
