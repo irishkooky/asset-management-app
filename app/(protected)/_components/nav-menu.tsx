@@ -16,6 +16,7 @@ export function NavMenu() {
 		{ href: "/accounts", label: "口座管理" },
 		{ href: "/transactions/recurring", label: "定期的な収支" },
 		{ href: "/transactions/one-time", label: "臨時収支" },
+		{ href: "/resident-tax", label: "住民税設定" },
 	];
 
 	return (
