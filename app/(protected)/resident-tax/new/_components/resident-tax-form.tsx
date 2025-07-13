@@ -1,8 +1,20 @@
 "use client";
 
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	Chip,
+	Divider,
+	Input,
+	Radio,
+	RadioGroup,
+	Select,
+	SelectItem,
+} from "@heroui/react";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
-import { Button } from "@/components/button";
+import { useState } from "react";
 import type { RecurringTransaction, ResidentTaxPeriod } from "@/types/database";
 import { createResidentTaxSettingAction } from "../../actions";
 
@@ -23,8 +35,6 @@ export function ResidentTaxForm({
 	defaultFiscalYear,
 }: ResidentTaxFormProps) {
 	const router = useRouter();
-	const fiscalYearId = useId();
-	const totalAmountId = useId();
 	const [loading, setLoading] = useState(false);
 	const [fiscalYear, setFiscalYear] = useState(defaultFiscalYear);
 	const [totalAmount, setTotalAmount] = useState<number>(0);
@@ -48,8 +58,8 @@ export function ResidentTaxForm({
 		4: { amount: 0, paymentMode: "standalone", targetTransactionId: null },
 	});
 
-	const handleTotalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const amount = Number(e.target.value);
+	const handleTotalAmountChange = (value: string) => {
+		const amount = Number(value);
 		setTotalAmount(amount);
 
 		if (amountInputMode === "total" && amount > 0) {
@@ -83,15 +93,12 @@ export function ResidentTaxForm({
 		}
 	};
 
-	const handlePaymentModeChange = (
-		period: ResidentTaxPeriod,
-		mode: "addon" | "standalone",
-	) => {
+	const handlePaymentModeChange = (period: ResidentTaxPeriod, mode: string) => {
 		setPeriodSettings((prev) => ({
 			...prev,
 			[period]: {
 				...prev[period],
-				paymentMode: mode,
+				paymentMode: mode as "addon" | "standalone",
 				targetTransactionId:
 					mode === "standalone" ? null : prev[period].targetTransactionId,
 			},
@@ -155,7 +162,6 @@ export function ResidentTaxForm({
 			if (result.error) {
 				alert(`エラー: ${result.error}`);
 			}
-			// Server Actionでredirectが実行されるため、ここではrouter.pushは不要
 		} catch (error) {
 			console.error("住民税設定の作成に失敗しました:", error);
 			alert(
@@ -167,229 +173,189 @@ export function ResidentTaxForm({
 	};
 
 	return (
-		<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-			<form onSubmit={handleSubmit} className="space-y-6">
-				{/* 基本設定 */}
-				<div className="space-y-4">
+		<form onSubmit={handleSubmit} className="space-y-6">
+			{/* 基本設定 */}
+			<Card>
+				<CardHeader>
 					<h3 className="text-lg font-medium">基本設定</h3>
+				</CardHeader>
+				<Divider />
+				<CardBody className="space-y-4">
+					<Input
+						type="number"
+						label="年度"
+						value={fiscalYear.toString()}
+						onValueChange={(value) => setFiscalYear(Number(value))}
+						min={2020}
+						max={2030}
+						description={`${fiscalYear}年6月〜${fiscalYear + 1}年5月`}
+						isRequired
+					/>
 
-					<div className="space-y-2">
-						<label htmlFor={fiscalYearId} className="block text-sm font-medium">
-							年度
-						</label>
-						<input
-							id={fiscalYearId}
-							type="number"
-							value={fiscalYear}
-							onChange={(e) => setFiscalYear(Number(e.target.value))}
-							min={2020}
-							max={2030}
-							required
-							className="w-full p-2 border rounded-md"
-						/>
-						<p className="text-xs text-gray-600 dark:text-gray-400">
-							{fiscalYear}年6月〜{fiscalYear + 1}年5月
-						</p>
-					</div>
-
-					<div className="space-y-2">
-						<span className="block text-sm font-medium">金額入力方式</span>
-						<div className="flex space-x-4">
-							<label className="flex items-center">
-								<input
-									type="radio"
-									value="total"
-									checked={amountInputMode === "total"}
-									onChange={(e) =>
-										setAmountInputMode(e.target.value as "total")
-									}
-									className="mr-2"
-								/>
-								年間総額から4等分
-							</label>
-							<label className="flex items-center">
-								<input
-									type="radio"
-									value="individual"
-									checked={amountInputMode === "individual"}
-									onChange={(e) =>
-										setAmountInputMode(e.target.value as "individual")
-									}
-									className="mr-2"
-								/>
-								各期個別入力
-							</label>
-						</div>
-					</div>
+					<RadioGroup
+						label="金額入力方式"
+						value={amountInputMode}
+						onValueChange={(value) =>
+							setAmountInputMode(value as "total" | "individual")
+						}
+					>
+						<Radio value="total">年間総額から4等分</Radio>
+						<Radio value="individual">各期個別入力</Radio>
+					</RadioGroup>
 
 					{amountInputMode === "total" && (
-						<div className="space-y-2">
-							<label
-								htmlFor={totalAmountId}
-								className="block text-sm font-medium"
-							>
-								年間総額
-							</label>
-							<input
-								id={totalAmountId}
-								type="number"
-								value={totalAmount || ""}
-								onChange={handleTotalAmountChange}
-								placeholder="例: 120000"
-								min={0}
-								required
-								className="w-full p-2 border rounded-md"
-							/>
-						</div>
+						<Input
+							type="number"
+							label="年間総額"
+							value={totalAmount.toString() || ""}
+							onValueChange={handleTotalAmountChange}
+							placeholder="例: 120000"
+							startContent={
+								<div className="pointer-events-none flex items-center">
+									<span className="text-default-400 text-small">¥</span>
+								</div>
+							}
+							min={0}
+							isRequired
+						/>
 					)}
-				</div>
+				</CardBody>
+			</Card>
 
-				{/* 各期の設定 */}
-				<div className="space-y-4">
+			{/* 各期の設定 */}
+			<Card>
+				<CardHeader>
 					<h3 className="text-lg font-medium">各期の設定</h3>
-
+				</CardHeader>
+				<Divider />
+				<CardBody className="space-y-6">
 					{PERIODS.map(({ period, label }) => (
-						<div key={period} className="border rounded-lg p-4 space-y-4">
-							<h4 className="font-medium">{label}</h4>
-
-							{amountInputMode === "individual" && (
-								<div className="space-y-2">
-									<label
-										htmlFor={`amount-${period}`}
-										className="block text-sm font-medium"
-									>
-										支払い金額
-									</label>
-									<input
-										id={`amount-${period}`}
+						<Card key={period} className="border-small">
+							<CardHeader className="pb-3">
+								<h4 className="font-medium">{label}</h4>
+							</CardHeader>
+							<CardBody className="space-y-4">
+								{amountInputMode === "individual" ? (
+									<Input
 										type="number"
-										value={periodSettings[period].amount || ""}
-										onChange={(e) =>
-											handlePeriodAmountChange(period, Number(e.target.value))
+										label="支払い金額"
+										value={periodSettings[period].amount.toString() || ""}
+										onValueChange={(value) =>
+											handlePeriodAmountChange(period, Number(value))
 										}
 										placeholder="例: 30000"
-										min={0}
-										required
-										className="w-full p-2 border rounded-md"
-									/>
-								</div>
-							)}
-
-							{amountInputMode === "total" && (
-								<div className="space-y-2">
-									<span className="block text-sm font-medium">
-										支払い金額（自動計算）
-									</span>
-									<div className="text-lg font-semibold">
-										{periodSettings[period].amount.toLocaleString()}円
-									</div>
-								</div>
-							)}
-
-							<div className="space-y-2">
-								<span className="block text-sm font-medium">支払い方法</span>
-								<div className="flex space-x-4">
-									<label className="flex items-center">
-										<input
-											type="radio"
-											value="standalone"
-											checked={
-												periodSettings[period].paymentMode === "standalone"
-											}
-											onChange={(e) =>
-												handlePaymentModeChange(
-													period,
-													e.target.value as "standalone",
-												)
-											}
-											className="mr-2"
-										/>
-										単体で登録
-									</label>
-									<label className="flex items-center">
-										<input
-											type="radio"
-											value="addon"
-											checked={periodSettings[period].paymentMode === "addon"}
-											onChange={(e) =>
-												handlePaymentModeChange(
-													period,
-													e.target.value as "addon",
-												)
-											}
-											className="mr-2"
-										/>
-										定期収支に上乗せ
-									</label>
-								</div>
-							</div>
-
-							{periodSettings[period].paymentMode === "addon" && (
-								<div className="space-y-2">
-									<label
-										htmlFor={`target-${period}`}
-										className="block text-sm font-medium"
-									>
-										上乗せ先の定期収支
-									</label>
-									<select
-										id={`target-${period}`}
-										value={periodSettings[period].targetTransactionId || ""}
-										onChange={(e) =>
-											handleTargetTransactionChange(period, e.target.value)
+										startContent={
+											<div className="pointer-events-none flex items-center">
+												<span className="text-default-400 text-small">¥</span>
+											</div>
 										}
-										className="w-full p-2 border rounded-md"
-										required
+										min={0}
+										isRequired
+									/>
+								) : (
+									<div className="space-y-2">
+										<p className="text-sm font-medium text-default-700">
+											支払い金額（自動計算）
+										</p>
+										<Chip color="primary" variant="flat" size="lg">
+											¥{periodSettings[period].amount.toLocaleString()}
+										</Chip>
+									</div>
+								)}
+
+								<RadioGroup
+									label="支払い方法"
+									value={periodSettings[period].paymentMode}
+									onValueChange={(value) =>
+										handlePaymentModeChange(period, value)
+									}
+									name={`payment-mode-${period}`}
+								>
+									<Radio value="standalone">単体で登録</Radio>
+									<Radio value="addon">定期収支に上乗せ</Radio>
+								</RadioGroup>
+
+								{periodSettings[period].paymentMode === "addon" && (
+									<Select
+										label="上乗せ先の定期収支"
+										placeholder="定期収支を選択"
+										selectedKeys={
+											periodSettings[period].targetTransactionId
+												? [periodSettings[period].targetTransactionId]
+												: []
+										}
+										onSelectionChange={(keys) => {
+											const selected = Array.from(keys)[0] as string;
+											handleTargetTransactionChange(period, selected);
+										}}
+										isRequired
 									>
-										<option value="">定期収支を選択</option>
 										{recurringTransactions.map((transaction) => (
-											<option key={transaction.id} value={transaction.id}>
+											<SelectItem key={transaction.id}>
 												{transaction.name} (
 												{transaction.amount.toLocaleString()}円)
-											</option>
+											</SelectItem>
 										))}
-									</select>
-								</div>
-							)}
-						</div>
+									</Select>
+								)}
+							</CardBody>
+						</Card>
 					))}
-				</div>
+				</CardBody>
+			</Card>
 
-				{/* 確認 */}
-				{totalAmount > 0 && (
-					<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-						<h4 className="font-medium mb-2">設定内容の確認</h4>
-						<div className="text-sm space-y-1">
-							<div>年度: {fiscalYear}年度</div>
-							<div>総額: {totalAmount.toLocaleString()}円</div>
-							<div className="mt-2">
-								{PERIODS.map(({ period, label }) => (
-									<div key={period} className="flex justify-between">
-										<span>{label}:</span>
-										<span>
-											{periodSettings[period].amount.toLocaleString()}円
-										</span>
-									</div>
-								))}
+			{/* 確認 */}
+			{totalAmount > 0 && (
+				<Card>
+					<CardHeader>
+						<h4 className="font-medium">設定内容の確認</h4>
+					</CardHeader>
+					<Divider />
+					<CardBody>
+						<div className="space-y-2">
+							<div className="flex justify-between">
+								<span className="text-default-600">年度:</span>
+								<span className="font-medium">{fiscalYear}年度</span>
 							</div>
+							<div className="flex justify-between">
+								<span className="text-default-600">総額:</span>
+								<span className="font-medium">
+									¥{totalAmount.toLocaleString()}
+								</span>
+							</div>
+							<Divider className="my-3" />
+							{PERIODS.map(({ period, label }) => (
+								<div key={period} className="flex justify-between">
+									<span className="text-default-600">{label}:</span>
+									<span className="font-medium">
+										¥{periodSettings[period].amount.toLocaleString()}
+									</span>
+								</div>
+							))}
 						</div>
-					</div>
-				)}
+					</CardBody>
+				</Card>
+			)}
 
-				<div className="flex space-x-4">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => router.back()}
-						disabled={loading}
-					>
-						キャンセル
-					</Button>
-					<Button type="submit" disabled={loading || !totalAmount}>
-						{loading ? "作成中..." : "住民税設定を作成"}
-					</Button>
-				</div>
-			</form>
-		</div>
+			<div className="flex gap-4">
+				<Button
+					type="button"
+					color="default"
+					variant="flat"
+					onPress={() => router.back()}
+					isDisabled={loading}
+				>
+					キャンセル
+				</Button>
+				<Button
+					type="submit"
+					color="primary"
+					isLoading={loading}
+					isDisabled={!totalAmount}
+				>
+					住民税設定を作成
+				</Button>
+			</div>
+		</form>
 	);
 }

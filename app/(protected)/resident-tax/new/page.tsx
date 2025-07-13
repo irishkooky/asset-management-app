@@ -14,10 +14,10 @@ export default async function NewResidentTaxPage() {
 	);
 
 	return (
-		<div className="space-y-6">
+		<div className="max-w-4xl mx-auto space-y-6">
 			<div>
 				<h1 className="text-2xl font-bold">住民税設定の新規作成</h1>
-				<p className="text-gray-600 dark:text-gray-400 mt-2">
+				<p className="text-default-600 mt-2">
 					年度と支払い方法を設定してください
 				</p>
 			</div>
