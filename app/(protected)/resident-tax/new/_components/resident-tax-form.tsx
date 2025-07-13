@@ -269,7 +269,6 @@ export function ResidentTaxForm({
 									onValueChange={(value) =>
 										handlePaymentModeChange(period, value)
 									}
-									name={`payment-mode-${period}`}
 								>
 									<Radio value="standalone">単体で登録</Radio>
 									<Radio value="addon">定期収支に上乗せ</Radio>
