@@ -195,12 +195,29 @@ export function ResidentTaxForm({
 					<RadioGroup
 						label="金額入力方式"
 						value={amountInputMode}
-						onValueChange={(value) =>
-							setAmountInputMode(value as "total" | "individual")
-						}
+						onValueChange={(value) => {
+							console.log("金額入力方式 changed:", value, typeof value);
+							setAmountInputMode(value as "total" | "individual");
+						}}
+						orientation="vertical"
+						description="選択した方式で金額を入力してください"
+						classNames={{
+							base: "max-w-md",
+							wrapper: "gap-2",
+						}}
 					>
-						<Radio value="total">年間総額から4等分</Radio>
-						<Radio value="individual">各期個別入力</Radio>
+						<Radio
+							value="total"
+							description="年間総額を4等分して各期に自動配分します"
+						>
+							年間総額から4等分
+						</Radio>
+						<Radio
+							value="individual"
+							description="各期ごとに個別の金額を入力します"
+						>
+							各期個別入力
+						</Radio>
 					</RadioGroup>
 
 					{amountInputMode === "total" && (
@@ -264,14 +281,36 @@ export function ResidentTaxForm({
 								)}
 
 								<RadioGroup
+									key={`payment-mode-${period}`}
 									label="支払い方法"
 									value={periodSettings[period].paymentMode}
-									onValueChange={(value) =>
-										handlePaymentModeChange(period, value)
-									}
+									onValueChange={(value) => {
+										console.log(
+											`Period ${period} payment mode changed:`,
+											value,
+											typeof value,
+										);
+										handlePaymentModeChange(period, value);
+									}}
+									orientation="vertical"
+									description="住民税の支払い方法を選択してください"
+									classNames={{
+										base: "max-w-md",
+										wrapper: "gap-2",
+									}}
 								>
-									<Radio value="standalone">単体で登録</Radio>
-									<Radio value="addon">定期収支に上乗せ</Radio>
+									<Radio
+										value="standalone"
+										description="単独の定期収支として新規登録します"
+									>
+										単体で登録
+									</Radio>
+									<Radio
+										value="addon"
+										description="既存の定期収支に金額を上乗せします"
+									>
+										定期収支に上乗せ
+									</Radio>
 								</RadioGroup>
 
 								{periodSettings[period].paymentMode === "addon" && (
