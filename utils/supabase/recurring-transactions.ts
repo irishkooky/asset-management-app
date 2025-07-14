@@ -1,4 +1,8 @@
-import type { RecurringTransaction, TransactionType } from "@/types/database";
+import type {
+	FrequencyType,
+	RecurringTransaction,
+	TransactionType,
+} from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 import {
 	validateCreateTransaction,
@@ -68,6 +72,8 @@ export async function createRecurringTransaction(
 	defaultAmount: number,
 	type: TransactionType,
 	dayOfMonth: number | string,
+	frequency: FrequencyType,
+	monthOfYear?: number,
 	description?: string,
 ): Promise<RecurringTransaction> {
 	const supabase = await createClient();
@@ -88,6 +94,8 @@ export async function createRecurringTransaction(
 		defaultAmount,
 		type,
 		dayOfMonth,
+		frequency,
+		monthOfYear,
 		description,
 	});
 
@@ -101,6 +109,8 @@ export async function createRecurringTransaction(
 				default_amount: validatedData.defaultAmount,
 				type: validatedData.type,
 				day_of_month: validatedData.dayOfMonth, // バリデーション済みの整数値
+				frequency: validatedData.frequency,
+				month_of_year: validatedData.monthOfYear || null,
 				description: validatedData.description || null,
 				user_id: user.id, // ユーザーIDを設定
 				is_transfer: false,
@@ -129,6 +139,8 @@ export async function createRecurringTransfer(
 	amount: number,
 	defaultAmount: number,
 	dayOfMonth: number,
+	frequency: FrequencyType,
+	monthOfYear?: number,
 	description?: string,
 ): Promise<{
 	sourceTransaction: RecurringTransaction;
@@ -161,6 +173,8 @@ export async function createRecurringTransfer(
 		p_amount: amount,
 		p_default_amount: defaultAmount,
 		p_day_of_month: dayOfMonth,
+		p_frequency: frequency,
+		p_month_of_year: monthOfYear || null,
 		p_description: description || null,
 		p_transfer_pair_id: transferPairId,
 	});
@@ -191,6 +205,8 @@ export async function updateRecurringTransaction(
 		amount?: number;
 		type?: TransactionType;
 		dayOfMonth?: number | string;
+		frequency?: FrequencyType;
+		monthOfYear?: number | string;
 		description?: string | null;
 	},
 ): Promise<RecurringTransaction> {
@@ -219,6 +235,8 @@ export async function updateRecurringTransaction(
 			p_amount: validatedData.amount,
 			p_name: validatedData.name,
 			p_day_of_month: validatedData.dayOfMonth,
+			p_frequency: validatedData.frequency,
+			p_month_of_year: validatedData.monthOfYear,
 			p_description: validatedData.description,
 		});
 
@@ -262,6 +280,14 @@ export async function updateRecurringTransaction(
 
 	if (validatedData.dayOfMonth !== undefined) {
 		dbUpdates.day_of_month = validatedData.dayOfMonth;
+	}
+
+	if (validatedData.frequency !== undefined) {
+		dbUpdates.frequency = validatedData.frequency;
+	}
+
+	if (validatedData.monthOfYear !== undefined) {
+		dbUpdates.month_of_year = validatedData.monthOfYear;
 	}
 
 	if (validatedData.description !== undefined) {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useState } from "react";
 import { Button } from "@/components/button";
-import type { Account } from "@/types/database";
+import type { Account, FrequencyType } from "@/types/database";
 import { createRecurringTransactionAction } from "./actions";
 
 interface RecurringTransactionFormProps {
@@ -23,6 +23,8 @@ export function RecurringTransactionForm({
 	const typeIncomeId = useId();
 	const typeExpenseId = useId();
 	const dayOfMonthId = useId();
+	const frequencyId = useId();
+	const monthOfYearId = useId();
 	const descriptionId = useId();
 	const isTransferCheckboxId = useId();
 	const destinationAccountId = useId();
@@ -36,6 +38,7 @@ export function RecurringTransactionForm({
 	const [accountId, setAccountId] = useState(defaultAccountId || "");
 	const [isTransfer, setIsTransfer] = useState(false);
 	const [destinationAccount, setDestinationAccount] = useState("");
+	const [frequency, setFrequency] = useState<FrequencyType>("monthly");
 
 	useEffect(() => {
 		// URLからクエリパラメータを取得
@@ -212,8 +215,54 @@ export function RecurringTransactionForm({
 					{isTransfer && <input type="hidden" name="type" value="expense" />}
 
 					<div className="space-y-2">
+						<label htmlFor={frequencyId} className="text-sm font-medium">
+							頻度
+						</label>
+						<select
+							id={frequencyId}
+							name="frequency"
+							required
+							value={frequency}
+							onChange={(e) => setFrequency(e.target.value as FrequencyType)}
+							className="w-full p-2 border rounded-md"
+						>
+							<option value="monthly">毎月</option>
+							<option value="quarterly">四半期</option>
+							<option value="yearly">年次</option>
+						</select>
+					</div>
+
+					{(frequency === "quarterly" || frequency === "yearly") && (
+						<div className="space-y-2">
+							<label htmlFor={monthOfYearId} className="text-sm font-medium">
+								月
+							</label>
+							<select
+								id={monthOfYearId}
+								name="monthOfYear"
+								required
+								className="w-full p-2 border rounded-md"
+							>
+								<option value="">月を選択してください</option>
+								<option value="1">1月</option>
+								<option value="2">2月</option>
+								<option value="3">3月</option>
+								<option value="4">4月</option>
+								<option value="5">5月</option>
+								<option value="6">6月</option>
+								<option value="7">7月</option>
+								<option value="8">8月</option>
+								<option value="9">9月</option>
+								<option value="10">10月</option>
+								<option value="11">11月</option>
+								<option value="12">12月</option>
+							</select>
+						</div>
+					)}
+
+					<div className="space-y-2">
 						<label htmlFor={dayOfMonthId} className="text-sm font-medium">
-							日付（毎月）
+							{frequency === "monthly" ? "日付（毎月）" : "日付"}
 						</label>
 						<input
 							id={dayOfMonthId}
