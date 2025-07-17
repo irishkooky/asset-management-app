@@ -1,6 +1,6 @@
 "use server";
 
-import type { TransactionType } from "@/types/database";
+import type { FrequencyType, TransactionType } from "@/types/database";
 import {
 	createRecurringTransaction,
 	createRecurringTransfer,
@@ -20,6 +20,10 @@ export async function createRecurringTransactionAction(
 	const amount = Number.parseFloat(formData.get("amount") as string);
 	const type = formData.get("type") as TransactionType;
 	const dayOfMonth = Number.parseInt(formData.get("dayOfMonth") as string, 10);
+	const frequency = formData.get("frequency") as FrequencyType;
+	const monthOfYear = formData.get("monthOfYear")
+		? Number.parseInt(formData.get("monthOfYear") as string, 10)
+		: undefined;
 	const description = formData.get("description") as string;
 	// default_amountはamountと同じ値で初期化
 	const defaultAmount = amount;
@@ -44,6 +48,17 @@ export async function createRecurringTransactionAction(
 		return { error: "日付は1から31の間で入力してください" };
 	}
 
+	if (!frequency || !["monthly", "quarterly", "yearly"].includes(frequency)) {
+		return { error: "頻度を選択してください" };
+	}
+
+	if (
+		(frequency === "quarterly" || frequency === "yearly") &&
+		(!monthOfYear || monthOfYear < 1 || monthOfYear > 12)
+	) {
+		return { error: "月を選択してください" };
+	}
+
 	// 送金の場合の追加バリデーション
 	if (isTransfer) {
 		if (!destinationAccountId) {
@@ -63,6 +78,8 @@ export async function createRecurringTransactionAction(
 				amount,
 				defaultAmount,
 				dayOfMonth,
+				frequency,
+				monthOfYear,
 				description,
 			);
 			return { success: "定期送金が正常に作成されました" };
@@ -74,6 +91,8 @@ export async function createRecurringTransactionAction(
 			defaultAmount,
 			type,
 			dayOfMonth,
+			frequency,
+			monthOfYear,
 			description,
 		);
 		return { success: "定期的な収支が正常に作成されました" };

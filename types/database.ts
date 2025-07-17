@@ -10,6 +10,8 @@ export type Account = {
 
 export type TransactionType = "income" | "expense";
 
+export type FrequencyType = "monthly" | "quarterly" | "yearly";
+
 export type RecurringTransaction = {
 	id: string;
 	user_id: string;
@@ -20,6 +22,9 @@ export type RecurringTransaction = {
 	name: string;
 	description: string | null;
 	day_of_month: number;
+	frequency: FrequencyType;
+	month_of_year: number | null;
+	day_of_year: number | null;
 	is_transfer: boolean;
 	destination_account_id: string | null;
 	transfer_pair_id: string | null;

@@ -11,7 +11,7 @@ import {
 	string,
 	union,
 } from "valibot";
-import type { TransactionType } from "@/types/database";
+import type { FrequencyType, TransactionType } from "@/types/database";
 
 // 取引タイプのバリデーションスキーマ
 export const transactionTypeSchema = union([
@@ -19,11 +19,25 @@ export const transactionTypeSchema = union([
 	literal("expense"),
 ]);
 
+// 頻度タイプのバリデーションスキーマ
+export const frequencyTypeSchema = union([
+	literal("monthly"),
+	literal("quarterly"),
+	literal("yearly"),
+]);
+
 // 日付バリデーションスキーマ
 export const dayOfMonthSchema = pipe(
 	number(),
 	minValue(1, "日付は1から31の間で入力してください"),
 	maxValue(31, "日付は1から31の間で入力してください"),
+);
+
+// 月バリデーションスキーマ
+export const monthOfYearSchema = pipe(
+	number(),
+	minValue(1, "月は1から12の間で入力してください"),
+	maxValue(12, "月は1から12の間で入力してください"),
 );
 
 // 取引作成のバリデーションスキーマ
@@ -37,6 +51,8 @@ export const createTransactionSchema = object({
 	),
 	type: transactionTypeSchema,
 	dayOfMonth: dayOfMonthSchema,
+	frequency: frequencyTypeSchema,
+	monthOfYear: optional(monthOfYearSchema),
 	description: optional(string()),
 });
 
@@ -51,6 +67,8 @@ export const updateTransactionSchema = object({
 	),
 	type: optional(transactionTypeSchema),
 	dayOfMonth: optional(dayOfMonthSchema),
+	frequency: optional(frequencyTypeSchema),
+	monthOfYear: optional(monthOfYearSchema),
 	description: optional(string()),
 });
 
@@ -62,6 +80,8 @@ export type CreateTransactionInput = {
 	defaultAmount: number;
 	type: TransactionType;
 	dayOfMonth: number | string;
+	frequency: FrequencyType;
+	monthOfYear?: number | string;
 	description?: string;
 };
 
@@ -73,6 +93,8 @@ export type CreateTransactionOutput = {
 	defaultAmount: number;
 	type: TransactionType;
 	dayOfMonth: number;
+	frequency: FrequencyType;
+	monthOfYear?: number;
 	description?: string;
 };
 
@@ -83,6 +105,8 @@ export type UpdateTransactionInput = {
 	defaultAmount?: number;
 	type?: TransactionType;
 	dayOfMonth?: number | string;
+	frequency?: FrequencyType;
+	monthOfYear?: number | string;
 	description?: string | null;
 };
 
@@ -93,6 +117,8 @@ export type UpdateTransactionOutput = {
 	defaultAmount?: number;
 	type?: TransactionType;
 	dayOfMonth?: number;
+	frequency?: FrequencyType;
+	monthOfYear?: number;
 	description?: string;
 };
 
@@ -107,6 +133,10 @@ export function validateCreateTransaction(
 			typeof input.dayOfMonth === "string"
 				? Number.parseInt(input.dayOfMonth, 10)
 				: input.dayOfMonth,
+		monthOfYear:
+			typeof input.monthOfYear === "string"
+				? Number.parseInt(input.monthOfYear, 10)
+				: input.monthOfYear,
 	};
 
 	// バリデーション実行
@@ -124,6 +154,12 @@ export function validateUpdateTransaction(
 		typeof input.dayOfMonth === "string"
 	) {
 		sanitizedInput.dayOfMonth = Number.parseInt(input.dayOfMonth, 10);
+	}
+	if (
+		typeof input.monthOfYear !== "undefined" &&
+		typeof input.monthOfYear === "string"
+	) {
+		sanitizedInput.monthOfYear = Number.parseInt(input.monthOfYear, 10);
 	}
 
 	// nullを削除（valibotはnullを許容しないため）
@@ -144,6 +180,10 @@ export function safeValidateCreateTransaction(input: CreateTransactionInput) {
 			typeof input.dayOfMonth === "string"
 				? Number.parseInt(input.dayOfMonth, 10)
 				: input.dayOfMonth,
+		monthOfYear:
+			typeof input.monthOfYear === "string"
+				? Number.parseInt(input.monthOfYear, 10)
+				: input.monthOfYear,
 	};
 
 	return safeParse(createTransactionSchema, sanitizedInput);
@@ -157,6 +197,12 @@ export function safeValidateUpdateTransaction(input: UpdateTransactionInput) {
 		typeof input.dayOfMonth === "string"
 	) {
 		sanitizedInput.dayOfMonth = Number.parseInt(input.dayOfMonth, 10);
+	}
+	if (
+		typeof input.monthOfYear !== "undefined" &&
+		typeof input.monthOfYear === "string"
+	) {
+		sanitizedInput.monthOfYear = Number.parseInt(input.monthOfYear, 10);
 	}
 
 	// nullを削除（valibotはnullを許容しないため）
