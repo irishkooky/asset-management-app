@@ -13,6 +13,31 @@ const PAYMENT_MONTHS: Record<ResidentTaxPeriod, ResidentTaxPaymentMonth> = {
 	4: 1, // 第4期: 1月（翌年）
 };
 
+/**
+ * 住民税テーブルの存在を確認する関数
+ */
+export async function checkResidentTaxTablesExist(): Promise<boolean> {
+	const supabase = await createClient();
+
+	try {
+		// resident_tax_settings テーブルの存在を確認
+		const { error } = await supabase
+			.from("resident_tax_settings")
+			.select("id")
+			.limit(1);
+
+		// テーブルが存在しない場合は42P01エラーが返される
+		if (error?.code === "42P01") {
+			return false;
+		}
+
+		return true;
+	} catch (error) {
+		console.error("Error checking resident tax tables:", error);
+		return false;
+	}
+}
+
 export async function getUserResidentTaxSettings(): Promise<
 	ResidentTaxSettingWithPeriods[]
 > {
@@ -110,46 +135,133 @@ export async function createResidentTaxSetting(
 ): Promise<ResidentTaxSettingWithPeriods> {
 	const supabase = await createClient();
 
-	const { data: setting, error: settingError } = await supabase
-		.from("resident_tax_settings")
-		.insert({
-			fiscal_year: fiscalYear,
-			total_amount: totalAmount,
-		})
-		.select()
-		.single();
-
-	if (settingError) {
-		throw new Error(`住民税設定の作成に失敗しました: ${settingError.message}`);
+	// Get the current user
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
 	}
 
-	const periodsData = Object.entries(periodAmounts).map(([period, amount]) => ({
-		setting_id: setting.id,
-		period: Number(period) as ResidentTaxPeriod,
-		amount,
-		payment_month: PAYMENT_MONTHS[Number(period) as ResidentTaxPeriod],
-		target_recurring_transaction_id:
-			targetTransactionIds[Number(period) as ResidentTaxPeriod],
-	}));
+	console.log("Creating resident tax setting with:", {
+		user_id: user.id,
+		fiscal_year: fiscalYear,
+		total_amount: totalAmount,
+	});
 
-	const { data: periods, error: periodsError } = await supabase
-		.from("resident_tax_periods")
-		.insert(periodsData)
-		.select();
+	try {
+		const { data: setting, error: settingError } = await supabase
+			.from("resident_tax_settings")
+			.insert({
+				user_id: user.id,
+				fiscal_year: fiscalYear,
+				total_amount: totalAmount,
+			})
+			.select()
+			.single();
 
-	if (periodsError) {
-		await supabase.from("resident_tax_settings").delete().eq("id", setting.id);
-		throw new Error(
-			`住民税期間設定の作成に失敗しました: ${periodsError.message}`,
+		console.log("Insert result:", { data: setting, error: settingError });
+
+		if (settingError || !setting) {
+			console.error("Error creating resident tax setting:", {
+				error: settingError,
+				errorString: JSON.stringify(settingError),
+				data: setting,
+				code: settingError?.code,
+				message: settingError?.message,
+				details: settingError?.details,
+				hint: settingError?.hint,
+			});
+
+			if (settingError?.code === "42P01") {
+				throw new Error(
+					"住民税テーブルが存在しません。管理者に以下のマイグレーションを実行してもらってください：\n" +
+						"1. Supabaseダッシュボードの SQL Editor で以下のSQLを実行\n" +
+						"2. または `supabase db push` コマンドを実行\n" +
+						"マイグレーションファイル: supabase/migrations/20250712_add_resident_tax_system.sql",
+				);
+			}
+
+			// Check for unique constraint violation
+			if (settingError?.code === "23505") {
+				throw new Error(
+					`この年度（${fiscalYear}年）の住民税設定は既に存在します。`,
+				);
+			}
+
+			const errorMessage =
+				settingError?.message ||
+				settingError?.code ||
+				(settingError ? JSON.stringify(settingError) : "不明なエラー");
+
+			throw new Error(`住民税設定の作成に失敗しました: ${errorMessage}`);
+		}
+
+		if (!setting) {
+			throw new Error(
+				"住民税設定の作成に失敗しました: データが取得できませんでした",
+			);
+		}
+
+		const periodsData = Object.entries(periodAmounts).map(
+			([period, amount]) => ({
+				setting_id: setting.id,
+				period: Number(period) as ResidentTaxPeriod,
+				amount,
+				payment_month: PAYMENT_MONTHS[Number(period) as ResidentTaxPeriod],
+				target_recurring_transaction_id:
+					targetTransactionIds[Number(period) as ResidentTaxPeriod] || null,
+			}),
 		);
+
+		console.log("Creating resident tax periods with data:", periodsData);
+
+		const { data: periods, error: periodsError } = await supabase
+			.from("resident_tax_periods")
+			.insert(periodsData)
+			.select();
+
+		if (periodsError) {
+			console.error("Error creating resident tax periods:", {
+				error: periodsError,
+				code: periodsError.code,
+				message: periodsError.message,
+				details: periodsError.details,
+				hint: periodsError.hint,
+				data: periodsData,
+			});
+
+			// Rollback the setting creation
+			await supabase
+				.from("resident_tax_settings")
+				.delete()
+				.eq("id", setting.id);
+
+			if (periodsError.code === "42P01") {
+				throw new Error(
+					"住民税期間テーブルが存在しません。データベースマイグレーションを実行してください。",
+				);
+			}
+
+			throw new Error(
+				`住民税期間設定の作成に失敗しました: ${periodsError.message || periodsError.code || JSON.stringify(periodsError)}`,
+			);
+		}
+
+		console.log("Periods created successfully:", periods);
+
+		if (periods && periods.length > 0) {
+			await createResidentTaxRecurringTransactions(setting.id, periods);
+		}
+
+		return {
+			...setting,
+			periods: periods || [],
+		};
+	} catch (error) {
+		console.error("Unexpected error in createResidentTaxSetting:", error);
+		throw error;
 	}
-
-	await createResidentTaxRecurringTransactions(setting.id, periods);
-
-	return {
-		...setting,
-		periods: periods || [],
-	};
 }
 
 async function createResidentTaxRecurringTransactions(
@@ -157,6 +269,14 @@ async function createResidentTaxRecurringTransactions(
 	periods: ResidentTaxPeriodSetting[],
 ): Promise<void> {
 	const supabase = await createClient();
+
+	// Get the current user
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) {
+		throw new Error("ユーザーが認証されていません");
+	}
 
 	for (const period of periods) {
 		if (period.target_recurring_transaction_id) {
@@ -166,6 +286,7 @@ async function createResidentTaxRecurringTransactions(
 		const { data: transaction, error } = await supabase
 			.from("recurring_transactions")
 			.insert({
+				user_id: user.id,
 				account_id: null,
 				amount: period.amount,
 				default_amount: period.amount,
@@ -180,6 +301,10 @@ async function createResidentTaxRecurringTransactions(
 			.single();
 
 		if (error) {
+			console.error(
+				"Error creating resident tax recurring transaction:",
+				error,
+			);
 			throw new Error(`住民税用定期収支の作成に失敗しました: ${error.message}`);
 		}
 
