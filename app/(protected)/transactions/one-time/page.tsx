@@ -49,8 +49,8 @@ export default async function OneTimeTransactionsPage() {
 								<TableColumn align="end">金額</TableColumn>
 								<TableColumn align="end">操作</TableColumn>
 							</TableHeader>
-							<TableBody>
-								{transactions.map((transaction) => (
+							<TableBody items={transactions}>
+								{(transaction) => (
 									<TableRow key={transaction.id}>
 										<TableCell>
 											<div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export default async function OneTimeTransactionsPage() {
 											</Button>
 										</TableCell>
 									</TableRow>
-								))}
+								)}
 							</TableBody>
 						</Table>
 					</CardBody>
