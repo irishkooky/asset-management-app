@@ -1,5 +1,15 @@
+import { Button } from "@heroui/button";
+import { Card, CardBody } from "@heroui/card";
+import { Chip } from "@heroui/chip";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableColumn,
+	TableHeader,
+	TableRow,
+} from "@heroui/table";
 import Link from "next/link";
-import { Button } from "@/components/button";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";
 
@@ -22,54 +32,54 @@ export default async function OneTimeTransactionsPage() {
 		<div className="space-y-8">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-bold">臨時収支</h1>
-				<Button asChild>
-					<Link href="/transactions/one-time/new">新規追加</Link>
+				<Button color="primary" as={Link} href="/transactions/one-time/new">
+					新規追加
 				</Button>
 			</div>
 
 			{transactions.length > 0 ? (
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-					<div className="overflow-x-auto">
-						<table className="w-full">
-							<thead>
-								<tr className="bg-gray-50 dark:bg-gray-700 border-b">
-									<th className="text-left py-3 px-4">名前</th>
-									<th className="text-left py-3 px-4">種別</th>
-									<th className="text-left py-3 px-4">口座</th>
-									<th className="text-left py-3 px-4">日付</th>
-									<th className="text-right py-3 px-4">金額</th>
-									<th className="text-right py-3 px-4">操作</th>
-								</tr>
-							</thead>
-							<tbody>
+				<Card>
+					<CardBody className="p-0">
+						<Table aria-label="取引一覧">
+							<TableHeader>
+								<TableColumn>名前</TableColumn>
+								<TableColumn>種別</TableColumn>
+								<TableColumn>口座</TableColumn>
+								<TableColumn>日付</TableColumn>
+								<TableColumn align="end">金額</TableColumn>
+								<TableColumn align="end">操作</TableColumn>
+							</TableHeader>
+							<TableBody>
 								{transactions.map((transaction) => (
-									<tr key={transaction.id} className="border-b">
-										<td className="py-3 px-4">
+									<TableRow key={transaction.id}>
+										<TableCell>
 											<div className="flex items-center gap-2">
 												{transaction.is_transfer && (
 													<span className="text-blue-600 text-sm">⟷</span>
 												)}
 												{transaction.name}
 											</div>
-										</td>
-										<td className="py-3 px-4">
-											<span
-												className={
+										</TableCell>
+										<TableCell>
+											<Chip
+												color={
 													transaction.is_transfer
-														? "text-blue-600"
+														? "primary"
 														: transaction.type === "income"
-															? "text-green-600"
-															: "text-red-600"
+															? "success"
+															: "danger"
 												}
+												variant="flat"
+												size="sm"
 											>
 												{transaction.is_transfer
 													? "送金"
 													: transaction.type === "income"
 														? "収入"
 														: "支出"}
-											</span>
-										</td>
-										<td className="py-3 px-4">
+											</Chip>
+										</TableCell>
+										<TableCell>
 											<div className="text-sm">
 												<div className="font-medium">
 													{getAccountName(transaction.account_id)}
@@ -84,39 +94,36 @@ export default async function OneTimeTransactionsPage() {
 														</div>
 													)}
 											</div>
-										</td>
-										<td className="py-3 px-4">
-											{transaction.transaction_date}
-										</td>
-										<td className="text-right py-3 px-4">
+										</TableCell>
+										<TableCell>{transaction.transaction_date}</TableCell>
+										<TableCell className="text-right">
 											¥{transaction.amount.toLocaleString()}
-										</td>
-										<td className="text-right py-3 px-4">
-											<div className="flex justify-end space-x-2">
-												<Button variant="outline" size="sm" asChild>
-													<Link
-														href={`/transactions/one-time/${transaction.id}/edit`}
-													>
-														編集
-													</Link>
-												</Button>
-											</div>
-										</td>
-									</tr>
+										</TableCell>
+										<TableCell className="text-right">
+											<Button
+												variant="bordered"
+												size="sm"
+												as={Link}
+												href={`/transactions/one-time/${transaction.id}/edit`}
+											>
+												編集
+											</Button>
+										</TableCell>
+									</TableRow>
 								))}
-							</tbody>
-						</table>
-					</div>
-				</div>
+							</TableBody>
+						</Table>
+					</CardBody>
+				</Card>
 			) : (
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-					<p className="text-lg mb-4">臨時収支はまだ登録されていません</p>
-					<Button asChild>
-						<Link href="/transactions/one-time/new">
+				<Card>
+					<CardBody className="text-center py-8">
+						<p className="text-lg mb-4">臨時収支はまだ登録されていません</p>
+						<Button color="primary" as={Link} href="/transactions/one-time/new">
 							最初の臨時収支を追加する
-						</Link>
-					</Button>
-				</div>
+						</Button>
+					</CardBody>
+				</Card>
 			)}
 		</div>
 	);
