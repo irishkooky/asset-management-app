@@ -1,9 +1,11 @@
 "use client";
 
+import { Button } from "@heroui/button";
+import { Card, CardBody } from "@heroui/card";
+import { Input, Textarea } from "@heroui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useState } from "react";
-import { Button } from "@/components/button";
 import type { Account } from "@/types/database";
 import { createOneTimeTransactionAction } from "./action";
 
@@ -61,191 +63,185 @@ export function OneTimeTransactionForm({
 		<div className="space-y-8">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-bold">新規臨時収支の追加</h1>
-				<Button variant="outline" asChild>
-					<Link href="/transactions/one-time">戻る</Link>
+				<Button variant="bordered" as={Link} href="/transactions/one-time">
+					戻る
 				</Button>
 			</div>
 
-			<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-				{state.error && (
-					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-						{state.error}
-					</div>
-				)}
-
-				{state.success && (
-					<div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-						{state.success}
-					</div>
-				)}
-
-				<form action={formAction} className="space-y-6">
-					<div className="space-y-2">
-						<label htmlFor={accountFormId} className="text-sm font-medium">
-							{isTransfer ? "送金元口座" : "口座"}
-						</label>
-						<select
-							id={accountFormId}
-							name="accountId"
-							required
-							value={accountId}
-							onChange={(e) => setAccountId(e.target.value)}
-							className="w-full p-2 border rounded-md"
-						>
-							<option value="">口座を選択してください</option>
-							{accounts.map((account) => (
-								<option key={account.id} value={account.id}>
-									{account.name}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className="space-y-2">
-						<div className="flex items-center">
-							<input
-								id={isTransferCheckboxId}
-								type="checkbox"
-								name="isTransfer"
-								value="true"
-								checked={isTransfer}
-								onChange={(e) => setIsTransfer(e.target.checked)}
-								className="mr-2"
-							/>
-							<label
-								htmlFor={isTransferCheckboxId}
-								className="text-sm font-medium"
-							>
-								口座間送金
-							</label>
+			<Card>
+				<CardBody className="p-6">
+					{state.error && (
+						<div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded mb-4">
+							{state.error}
 						</div>
-						{isTransfer && (
-							<p className="text-sm text-gray-600">
-								送金先口座に同じ金額が収入として自動記録されます
-							</p>
-						)}
-					</div>
+					)}
 
-					{isTransfer && (
+					{state.success && (
+						<div className="bg-success-50 border border-success-200 text-success-700 px-4 py-3 rounded mb-4">
+							{state.success}
+						</div>
+					)}
+
+					<form action={formAction} className="space-y-6">
 						<div className="space-y-2">
-							<label
-								htmlFor={destinationAccountId}
-								className="text-sm font-medium"
-							>
-								送金先口座
+							<label htmlFor={accountFormId} className="text-sm font-medium">
+								{isTransfer ? "送金元口座" : "口座"}
 							</label>
 							<select
-								id={destinationAccountId}
-								name="destinationAccountId"
-								required={isTransfer}
-								value={destinationAccount}
-								onChange={(e) => setDestinationAccount(e.target.value)}
+								id={accountFormId}
+								name="accountId"
+								required
+								value={accountId}
+								onChange={(e) => setAccountId(e.target.value)}
 								className="w-full p-2 border rounded-md"
 							>
-								<option value="">送金先口座を選択してください</option>
-								{accounts
-									.filter((account) => account.id !== accountId)
-									.map((account) => (
-										<option key={account.id} value={account.id}>
-											{account.name}
-										</option>
-									))}
+								<option value="">口座を選択してください</option>
+								{accounts.map((account) => (
+									<option key={account.id} value={account.id}>
+										{account.name}
+									</option>
+								))}
 							</select>
 						</div>
-					)}
 
-					<div className="space-y-2">
-						<label htmlFor={nameId} className="text-sm font-medium">
-							名前
-						</label>
-						<input
-							id={nameId}
-							name="name"
-							type="text"
-							required
-							className="w-full p-2 border rounded-md"
-							placeholder="例: 旅行費用"
-						/>
-					</div>
-
-					<div className="space-y-2">
-						<label htmlFor={amountId} className="text-sm font-medium">
-							金額
-						</label>
-						<input
-							id={amountId}
-							name="amount"
-							type="number"
-							step="1"
-							required
-							className="w-full p-2 border rounded-md"
-							placeholder="0"
-						/>
-					</div>
-
-					{!isTransfer && (
 						<div className="space-y-2">
-							<p className="text-sm font-medium">種別</p>
-							<div className="flex space-x-4">
-								<div className="flex items-center">
-									<input
-										id={typeIncomeId}
-										type="radio"
-										name="type"
-										value="income"
-										defaultChecked
-										className="mr-2"
-									/>
-									<label htmlFor={typeIncomeId}>収入</label>
-								</div>
-								<div className="flex items-center">
-									<input
-										id={typeExpenseId}
-										type="radio"
-										name="type"
-										value="expense"
-										className="mr-2"
-									/>
-									<label htmlFor={typeExpenseId}>支出</label>
+							<div className="flex items-center">
+								<input
+									id={isTransferCheckboxId}
+									type="checkbox"
+									name="isTransfer"
+									value="true"
+									checked={isTransfer}
+									onChange={(e) => setIsTransfer(e.target.checked)}
+									className="mr-2"
+								/>
+								<label
+									htmlFor={isTransferCheckboxId}
+									className="text-sm font-medium"
+								>
+									口座間送金
+								</label>
+							</div>
+							{isTransfer && (
+								<p className="text-sm text-gray-600">
+									送金先口座に同じ金額が収入として自動記録されます
+								</p>
+							)}
+						</div>
+
+						{isTransfer && (
+							<div className="space-y-2">
+								<label
+									htmlFor={destinationAccountId}
+									className="text-sm font-medium"
+								>
+									送金先口座
+								</label>
+								<select
+									id={destinationAccountId}
+									name="destinationAccountId"
+									required={isTransfer}
+									value={destinationAccount}
+									onChange={(e) => setDestinationAccount(e.target.value)}
+									className="w-full p-2 border rounded-md"
+								>
+									<option value="">送金先口座を選択してください</option>
+									{accounts
+										.filter((account) => account.id !== accountId)
+										.map((account) => (
+											<option key={account.id} value={account.id}>
+												{account.name}
+											</option>
+										))}
+								</select>
+							</div>
+						)}
+
+						<div className="space-y-2">
+							<Input
+								id={nameId}
+								name="name"
+								type="text"
+								label="名前"
+								isRequired
+								placeholder="例: 旅行費用"
+								className="w-full"
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<Input
+								id={amountId}
+								name="amount"
+								type="number"
+								step="1"
+								label="金額"
+								isRequired
+								placeholder="0"
+								className="w-full"
+							/>
+						</div>
+
+						{!isTransfer && (
+							<div className="space-y-2">
+								<p className="text-sm font-medium">種別</p>
+								<div className="flex space-x-4">
+									<div className="flex items-center">
+										<input
+											id={typeIncomeId}
+											type="radio"
+											name="type"
+											value="income"
+											defaultChecked
+											className="mr-2"
+										/>
+										<label htmlFor={typeIncomeId}>収入</label>
+									</div>
+									<div className="flex items-center">
+										<input
+											id={typeExpenseId}
+											type="radio"
+											name="type"
+											value="expense"
+											className="mr-2"
+										/>
+										<label htmlFor={typeExpenseId}>支出</label>
+									</div>
 								</div>
 							</div>
+						)}
+
+						{isTransfer && <input type="hidden" name="type" value="expense" />}
+
+						<div className="space-y-2">
+							<Input
+								id={transactionDateId}
+								name="transactionDate"
+								type="date"
+								label="日付"
+								isRequired
+								defaultValue={today}
+								className="w-full"
+							/>
 						</div>
-					)}
 
-					{isTransfer && <input type="hidden" name="type" value="expense" />}
+						<div className="space-y-2">
+							<Textarea
+								id={descriptionId}
+								name="description"
+								label="説明（任意）"
+								placeholder="説明を入力してください"
+								rows={3}
+								className="w-full"
+							/>
+						</div>
 
-					<div className="space-y-2">
-						<label htmlFor={transactionDateId} className="text-sm font-medium">
-							日付
-						</label>
-						<input
-							id={transactionDateId}
-							name="transactionDate"
-							type="date"
-							required
-							defaultValue={today}
-							className="w-full p-2 border rounded-md"
-						/>
-					</div>
-
-					<div className="space-y-2">
-						<label htmlFor={descriptionId} className="text-sm font-medium">
-							説明（任意）
-						</label>
-						<textarea
-							id={descriptionId}
-							name="description"
-							className="w-full p-2 border rounded-md"
-							rows={3}
-							placeholder="説明を入力してください"
-						/>
-					</div>
-
-					<Button type="submit" className="w-full">
-						{isTransfer ? "送金を作成" : "登録する"}
-					</Button>
-				</form>
-			</div>
+						<Button type="submit" color="primary" className="w-full">
+							{isTransfer ? "送金を作成" : "登録する"}
+						</Button>
+					</form>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }
