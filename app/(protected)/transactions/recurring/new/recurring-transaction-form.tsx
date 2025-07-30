@@ -1,9 +1,14 @@
 "use client";
 
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Checkbox } from "@heroui/checkbox";
+import { Input, Textarea } from "@heroui/input";
+import { Radio, RadioGroup } from "@heroui/radio";
+import { Select, SelectItem } from "@heroui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useId, useState } from "react";
-import { Button } from "@/components/button";
+import { useActionState, useEffect, useState } from "react";
 import type { Account, FrequencyType } from "@/types/database";
 import { createRecurringTransactionAction } from "./actions";
 
@@ -17,17 +22,6 @@ export function RecurringTransactionForm({
 	defaultAccountId,
 }: RecurringTransactionFormProps) {
 	const router = useRouter();
-	const accountFormId = useId();
-	const nameId = useId();
-	const amountId = useId();
-	const typeIncomeId = useId();
-	const typeExpenseId = useId();
-	const dayOfMonthId = useId();
-	const frequencyId = useId();
-	const monthOfYearId = useId();
-	const descriptionId = useId();
-	const isTransferCheckboxId = useId();
-	const destinationAccountId = useId();
 	const initialState = { error: "", success: "" };
 	const [state, formAction] = useActionState(
 		createRecurringTransactionAction,
@@ -58,242 +52,223 @@ export function RecurringTransactionForm({
 	}, [state.success, router]);
 
 	return (
-		<div className="space-y-8">
+		<div className="max-w-2xl mx-auto space-y-6">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-bold">新規定期的な収支の追加</h1>
-				<Button variant="outline" asChild>
-					<Link href="/transactions/recurring">戻る</Link>
+				<Button
+					as={Link}
+					href="/transactions/recurring"
+					variant="bordered"
+					color="default"
+				>
+					戻る
 				</Button>
 			</div>
 
-			<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-				{state.error && (
-					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-						{state.error}
-					</div>
-				)}
-
-				{state.success && (
-					<div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-						{state.success}
-					</div>
-				)}
-
-				<form action={formAction} className="space-y-6">
-					<div className="space-y-2">
-						<label htmlFor={accountFormId} className="text-sm font-medium">
-							{isTransfer ? "送金元口座" : "口座"}
-						</label>
-						<select
-							id={accountFormId}
-							name="accountId"
-							required
-							value={accountId}
-							onChange={(e) => setAccountId(e.target.value)}
-							className="w-full p-2 border rounded-md"
-						>
-							<option value="">口座を選択してください</option>
-							{accounts.map((account) => (
-								<option key={account.id} value={account.id}>
-									{account.name}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className="space-y-2">
-						<div className="flex items-center">
-							<input
-								id={isTransferCheckboxId}
-								type="checkbox"
-								name="isTransfer"
-								value="true"
-								checked={isTransfer}
-								onChange={(e) => setIsTransfer(e.target.checked)}
-								className="mr-2"
-							/>
-							<label
-								htmlFor={isTransferCheckboxId}
-								className="text-sm font-medium"
-							>
-								口座間送金
-							</label>
-						</div>
-						{isTransfer && (
-							<p className="text-sm text-gray-600">
-								送金先口座に同じ金額が収入として自動記録されます
-							</p>
-						)}
-					</div>
-
-					{isTransfer && (
-						<div className="space-y-2">
-							<label
-								htmlFor={destinationAccountId}
-								className="text-sm font-medium"
-							>
-								送金先口座
-							</label>
-							<select
-								id={destinationAccountId}
-								name="destinationAccountId"
-								required={isTransfer}
-								value={destinationAccount}
-								onChange={(e) => setDestinationAccount(e.target.value)}
-								className="w-full p-2 border rounded-md"
-							>
-								<option value="">送金先口座を選択してください</option>
-								{accounts
-									.filter((account) => account.id !== accountId)
-									.map((account) => (
-										<option key={account.id} value={account.id}>
-											{account.name}
-										</option>
-									))}
-							</select>
-						</div>
-					)}
-
-					<div className="space-y-2">
-						<label htmlFor={nameId} className="text-sm font-medium">
-							名前
-						</label>
-						<input
-							id={nameId}
-							name="name"
-							type="text"
-							required
-							className="w-full p-2 border rounded-md"
-							placeholder="例: 給料"
-						/>
-					</div>
-
-					<div className="space-y-2">
-						<label htmlFor={amountId} className="text-sm font-medium">
-							金額
-						</label>
-						<input
-							id={amountId}
-							name="amount"
-							type="number"
-							step="1"
-							required
-							className="w-full p-2 border rounded-md"
-							placeholder="0"
-						/>
-					</div>
-
-					{!isTransfer && (
-						<div className="space-y-2">
-							<p className="text-sm font-medium">種別</p>
-							<div className="flex space-x-4">
-								<div className="flex items-center">
-									<input
-										id={typeIncomeId}
-										type="radio"
-										name="type"
-										value="income"
-										defaultChecked
-										className="mr-2"
-									/>
-									<label htmlFor={typeIncomeId}>収入</label>
+			<Card>
+				<CardHeader>
+					<h2 className="text-lg font-semibold">取引情報</h2>
+				</CardHeader>
+				<CardBody className="space-y-6">
+					{state.error && (
+						<div className="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-800">
+							<div className="flex items-center">
+								<div className="flex-shrink-0">
+									<svg
+										className="h-5 w-5 text-danger-400"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<title>エラー</title>
+										<path
+											fillRule="evenodd"
+											d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+											clipRule="evenodd"
+										/>
+									</svg>
 								</div>
-								<div className="flex items-center">
-									<input
-										id={typeExpenseId}
-										type="radio"
-										name="type"
-										value="expense"
-										className="mr-2"
-									/>
-									<label htmlFor={typeExpenseId}>支出</label>
+								<div className="ml-3">
+									<p className="text-sm font-medium">{state.error}</p>
 								</div>
 							</div>
 						</div>
 					)}
 
-					{isTransfer && <input type="hidden" name="type" value="expense" />}
-
-					<div className="space-y-2">
-						<label htmlFor={frequencyId} className="text-sm font-medium">
-							頻度
-						</label>
-						<select
-							id={frequencyId}
-							name="frequency"
-							required
-							value={frequency}
-							onChange={(e) => setFrequency(e.target.value as FrequencyType)}
-							className="w-full p-2 border rounded-md"
-						>
-							<option value="monthly">毎月</option>
-							<option value="quarterly">四半期</option>
-							<option value="yearly">年次</option>
-						</select>
-					</div>
-
-					{(frequency === "quarterly" || frequency === "yearly") && (
-						<div className="space-y-2">
-							<label htmlFor={monthOfYearId} className="text-sm font-medium">
-								月
-							</label>
-							<select
-								id={monthOfYearId}
-								name="monthOfYear"
-								required
-								className="w-full p-2 border rounded-md"
-							>
-								<option value="">月を選択してください</option>
-								<option value="1">1月</option>
-								<option value="2">2月</option>
-								<option value="3">3月</option>
-								<option value="4">4月</option>
-								<option value="5">5月</option>
-								<option value="6">6月</option>
-								<option value="7">7月</option>
-								<option value="8">8月</option>
-								<option value="9">9月</option>
-								<option value="10">10月</option>
-								<option value="11">11月</option>
-								<option value="12">12月</option>
-							</select>
+					{state.success && (
+						<div className="p-4 rounded-lg bg-success-50 border border-success-200 text-success-800">
+							<div className="flex items-center">
+								<div className="flex-shrink-0">
+									<svg
+										className="h-5 w-5 text-success-400"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<title>成功</title>
+										<path
+											fillRule="evenodd"
+											d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<div className="ml-3">
+									<p className="text-sm font-medium">{state.success}</p>
+								</div>
+							</div>
 						</div>
 					)}
 
-					<div className="space-y-2">
-						<label htmlFor={dayOfMonthId} className="text-sm font-medium">
-							{frequency === "monthly" ? "日付（毎月）" : "日付"}
-						</label>
-						<input
-							id={dayOfMonthId}
+					<form action={formAction} className="space-y-6">
+						<Select
+							label={isTransfer ? "送金元口座" : "口座"}
+							placeholder="口座を選択してください"
+							name="accountId"
+							isRequired
+							selectedKeys={accountId ? [accountId] : []}
+							onSelectionChange={(keys) => {
+								const selected = Array.from(keys)[0];
+								setAccountId(selected ? String(selected) : "");
+							}}
+						>
+							{accounts.map((account) => (
+								<SelectItem key={account.id}>{account.name}</SelectItem>
+							))}
+						</Select>
+
+						<div className="space-y-2">
+							<Checkbox
+								name="isTransfer"
+								value="true"
+								isSelected={isTransfer}
+								onValueChange={setIsTransfer}
+							>
+								口座間送金
+							</Checkbox>
+							{isTransfer && (
+								<p className="text-sm text-gray-500">
+									送金先口座に同じ金額が収入として自動記録されます
+								</p>
+							)}
+						</div>
+
+						{isTransfer && (
+							<Select
+								label="送金先口座"
+								placeholder="送金先口座を選択してください"
+								name="destinationAccountId"
+								isRequired={isTransfer}
+								selectedKeys={destinationAccount ? [destinationAccount] : []}
+								onSelectionChange={(keys) => {
+									const selected = Array.from(keys)[0];
+									setDestinationAccount(selected ? String(selected) : "");
+								}}
+							>
+								{accounts
+									.filter((account) => account.id !== accountId)
+									.map((account) => (
+										<SelectItem key={account.id}>{account.name}</SelectItem>
+									))}
+							</Select>
+						)}
+
+						<Input
+							label="名前"
+							name="name"
+							type="text"
+							isRequired
+							placeholder="例: 給料"
+						/>
+
+						<Input
+							label="金額"
+							name="amount"
+							type="number"
+							step="1"
+							isRequired
+							placeholder="0"
+							startContent={
+								<div className="pointer-events-none flex items-center">
+									<span className="text-default-400 text-small">¥</span>
+								</div>
+							}
+						/>
+
+						{!isTransfer && (
+							<RadioGroup
+								name="type"
+								label="種別"
+								defaultValue="income"
+								orientation="horizontal"
+							>
+								<Radio value="income">収入</Radio>
+								<Radio value="expense">支出</Radio>
+							</RadioGroup>
+						)}
+
+						{isTransfer && <input type="hidden" name="type" value="expense" />}
+
+						<Select
+							label="頻度"
+							name="frequency"
+							isRequired
+							selectedKeys={frequency ? [frequency] : []}
+							onSelectionChange={(keys) => {
+								const selected = Array.from(keys)[0];
+								setFrequency(
+									selected ? (selected as FrequencyType) : "monthly",
+								);
+							}}
+						>
+							<SelectItem key="monthly">毎月</SelectItem>
+							<SelectItem key="quarterly">四半期</SelectItem>
+							<SelectItem key="yearly">年次</SelectItem>
+						</Select>
+
+						{(frequency === "quarterly" || frequency === "yearly") && (
+							<Select
+								label="月"
+								name="monthOfYear"
+								placeholder="月を選択してください"
+								isRequired
+							>
+								<SelectItem key="1">1月</SelectItem>
+								<SelectItem key="2">2月</SelectItem>
+								<SelectItem key="3">3月</SelectItem>
+								<SelectItem key="4">4月</SelectItem>
+								<SelectItem key="5">5月</SelectItem>
+								<SelectItem key="6">6月</SelectItem>
+								<SelectItem key="7">7月</SelectItem>
+								<SelectItem key="8">8月</SelectItem>
+								<SelectItem key="9">9月</SelectItem>
+								<SelectItem key="10">10月</SelectItem>
+								<SelectItem key="11">11月</SelectItem>
+								<SelectItem key="12">12月</SelectItem>
+							</Select>
+						)}
+
+						<Input
+							label={frequency === "monthly" ? "日付（毎月）" : "日付"}
 							name="dayOfMonth"
 							type="number"
 							min="1"
 							max="31"
-							required
-							className="w-full p-2 border rounded-md"
+							isRequired
 							placeholder="例: 25"
 						/>
-					</div>
 
-					<div className="space-y-2">
-						<label htmlFor={descriptionId} className="text-sm font-medium">
-							説明（任意）
-						</label>
-						<textarea
-							id={descriptionId}
+						<Textarea
+							label="説明（任意）"
 							name="description"
-							className="w-full p-2 border rounded-md"
-							rows={3}
 							placeholder="説明を入力してください"
+							minRows={3}
 						/>
-					</div>
 
-					<Button type="submit" className="w-full">
-						{isTransfer ? "送金を作成" : "登録する"}
-					</Button>
-				</form>
-			</div>
+						<Button type="submit" color="primary" size="lg" className="w-full">
+							{isTransfer ? "送金を作成" : "登録する"}
+						</Button>
+					</form>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }
