@@ -63,38 +63,61 @@ export async function getAmountForMonth(
 	recurringTransactionId: string,
 	year: number,
 	month: number,
-): Promise<number> {
-	const supabase = await createClient();
-
-	// 特定の月の金額を検索
-	const { data, error } = await supabase
-		.from("recurring_transaction_amounts")
-		.select("amount")
-		.eq("recurring_transaction_id", recurringTransactionId)
-		.eq("year", year)
-		.eq("month", month)
-		.single();
-
-	if (error && error.code !== "PGRST116") {
-		// PGRST116: 結果が見つからない
-		throw new Error(`月別金額の取得に失敗しました: ${error.message}`);
+): Promise<{ data?: number; error?: string }> {
+	if (!recurringTransactionId) {
+		return { error: "取引IDが必要です" };
 	}
 
-	// 特定の月の金額が見つかった場合はそれを返す
-	if (data) return data.amount;
+	if (
+		!year ||
+		!month ||
+		year < 2020 ||
+		year > 2030 ||
+		month < 1 ||
+		month > 12
+	) {
+		return { error: "有効な年月を入力してください" };
+	}
 
-	// 見つからない場合はデフォルト金額を返す
-	const { data: recurringData, error: recurringError } = await supabase
-		.from("recurring_transactions")
-		.select("default_amount")
-		.eq("id", recurringTransactionId)
-		.single();
+	try {
+		const supabase = await createClient();
 
-	if (recurringError)
-		throw new Error(
-			`定期的な収支の取得に失敗しました: ${recurringError.message}`,
-		);
-	return recurringData?.default_amount || 0;
+		const { data, error } = await supabase
+			.from("recurring_transaction_amounts")
+			.select("amount")
+			.eq("recurring_transaction_id", recurringTransactionId)
+			.eq("year", year)
+			.eq("month", month)
+			.single();
+
+		if (error && error.code !== "PGRST116") {
+			throw new Error(`月別金額の取得に失敗しました: ${error.message}`);
+		}
+
+		if (data) {
+			return { data: data.amount };
+		}
+
+		const { data: recurringData, error: recurringError } = await supabase
+			.from("recurring_transactions")
+			.select("default_amount")
+			.eq("id", recurringTransactionId)
+			.single();
+
+		if (recurringError) {
+			throw new Error(
+				`定期的な収支の取得に失敗しました: ${recurringError.message}`,
+			);
+		}
+
+		return { data: recurringData?.default_amount || 0 };
+	} catch (error) {
+		console.error("Error getting amount for month:", error);
+		return {
+			error:
+				error instanceof Error ? error.message : "月別金額の取得に失敗しました",
+		};
+	}
 }
 
 /**
@@ -105,83 +128,108 @@ export async function setAmountForMonth(
 	year: number,
 	month: number,
 	amount: number,
-): Promise<void> {
-	const supabase = await createClient();
-
-	// まず対象の取引情報を取得して送金かどうか確認
-	const { data: transaction, error: transactionError } = await supabase
-		.from("recurring_transactions")
-		.select("is_transfer, transfer_pair_id")
-		.eq("id", recurringTransactionId)
-		.single();
-
-	if (transactionError) {
-		throw new Error(
-			`取引情報の取得に失敗しました: ${transactionError.message}`,
-		);
+): Promise<{ success?: string; error?: string }> {
+	if (!recurringTransactionId) {
+		return { error: "取引IDが必要です" };
 	}
 
-	// 送金の場合はペアの取引IDも取得
-	let pairTransactionId: string | null = null;
-	if (transaction.is_transfer && transaction.transfer_pair_id) {
-		const { data: pairTransaction, error: pairError } = await supabase
+	if (
+		!year ||
+		!month ||
+		year < 2020 ||
+		year > 2030 ||
+		month < 1 ||
+		month > 12
+	) {
+		return { error: "有効な年月を入力してください" };
+	}
+
+	try {
+		const supabase = await createClient();
+
+		const { data: transaction, error: transactionError } = await supabase
 			.from("recurring_transactions")
-			.select("id")
-			.eq("transfer_pair_id", transaction.transfer_pair_id)
-			.neq("id", recurringTransactionId)
+			.select("is_transfer, transfer_pair_id")
+			.eq("id", recurringTransactionId)
 			.single();
 
-		if (pairError) {
-			console.error("送金ペアの取得に失敗しました:", pairError);
-		} else {
-			pairTransactionId = pairTransaction.id;
-		}
-	}
-
-	// 対象の取引IDリスト（送金の場合は両方）
-	const transactionIds = [recurringTransactionId];
-	if (pairTransactionId) {
-		transactionIds.push(pairTransactionId);
-	}
-
-	// 各取引IDに対して月別金額を設定
-	for (const transactionId of transactionIds) {
-		// すでに設定されているか確認
-		const { data, error } = await supabase
-			.from("recurring_transaction_amounts")
-			.select("id")
-			.eq("recurring_transaction_id", transactionId)
-			.eq("year", year)
-			.eq("month", month)
-			.single();
-
-		if (error && error.code !== "PGRST116") {
-			throw new Error(`月別金額の確認に失敗しました: ${error.message}`);
+		if (transactionError) {
+			throw new Error(
+				`取引情報の取得に失敗しました: ${transactionError.message}`,
+			);
 		}
 
-		if (data) {
-			// 既存のレコードを更新
-			const { error: updateError } = await supabase
+		let pairTransactionId: string | null = null;
+		if (transaction.is_transfer && transaction.transfer_pair_id) {
+			const { data: pairTransaction, error: pairError } = await supabase
+				.from("recurring_transactions")
+				.select("id")
+				.eq("transfer_pair_id", transaction.transfer_pair_id)
+				.neq("id", recurringTransactionId)
+				.single();
+
+			if (pairError) {
+				console.error("送金ペアの取得に失敗しました:", pairError);
+			} else {
+				pairTransactionId = pairTransaction.id;
+			}
+		}
+
+		const transactionIds = [recurringTransactionId];
+		if (pairTransactionId) {
+			transactionIds.push(pairTransactionId);
+		}
+
+		for (const transactionId of transactionIds) {
+			const { data, error } = await supabase
 				.from("recurring_transaction_amounts")
-				.update({ amount, updated_at: new Date().toISOString() })
-				.eq("id", data.id);
+				.select("id")
+				.eq("recurring_transaction_id", transactionId)
+				.eq("year", year)
+				.eq("month", month)
+				.single();
 
-			if (updateError)
-				throw new Error(`月別金額の更新に失敗しました: ${updateError.message}`);
-		} else {
-			// 新しいレコードを作成
-			const { error: insertError } = await supabase
-				.from("recurring_transaction_amounts")
-				.insert({
-					recurring_transaction_id: transactionId,
-					year,
-					month,
-					amount,
-				});
+			if (error && error.code !== "PGRST116") {
+				throw new Error(`月別金額の確認に失敗しました: ${error.message}`);
+			}
 
-			if (insertError)
-				throw new Error(`月別金額の作成に失敗しました: ${insertError.message}`);
+			if (data) {
+				const { error: updateError } = await supabase
+					.from("recurring_transaction_amounts")
+					.update({ amount, updated_at: new Date().toISOString() })
+					.eq("id", data.id);
+
+				if (updateError) {
+					throw new Error(
+						`月別金額の更新に失敗しました: ${updateError.message}`,
+					);
+				}
+			} else {
+				const { error: insertError } = await supabase
+					.from("recurring_transaction_amounts")
+					.insert({
+						recurring_transaction_id: transactionId,
+						year,
+						month,
+						amount,
+					});
+
+				if (insertError) {
+					throw new Error(
+						`月別金額の作成に失敗しました: ${insertError.message}`,
+					);
+				}
+			}
 		}
+
+		revalidatePath("/transactions/recurring");
+		return { success: "月別金額を設定しました" };
+	} catch (error) {
+		console.error("Error setting amount for month:", error);
+		return {
+			error:
+				error instanceof Error ? error.message : "月別金額の設定に失敗しました",
+		};
 	}
 }
 
@@ -195,28 +243,60 @@ export async function setBulkAmounts(
 	endYear: number,
 	endMonth: number,
 	amount: number,
-): Promise<void> {
-	// 指定期間の全ての年月の組み合わせを生成
-	const months: { year: number; month: number }[] = [];
-	let currentYear = startYear;
-	let currentMonth = startMonth;
-
-	while (
-		currentYear < endYear ||
-		(currentYear === endYear && currentMonth <= endMonth)
-	) {
-		months.push({ year: currentYear, month: currentMonth });
-
-		currentMonth++;
-		if (currentMonth > 12) {
-			currentMonth = 1;
-			currentYear++;
-		}
+): Promise<{ success?: string; error?: string }> {
+	if (!recurringTransactionId) {
+		return { error: "取引IDが必要です" };
 	}
 
-	// 各月ごとに金額を設定（setAmountForMonthが送金ペアも処理するようになったため、そのまま利用）
-	for (const { year, month } of months) {
-		await setAmountForMonth(recurringTransactionId, year, month, amount);
+	if (!startYear || !startMonth || !endYear || !endMonth) {
+		return { error: "開始年月と終了年月が必要です" };
+	}
+
+	if (startYear > endYear || (startYear === endYear && startMonth > endMonth)) {
+		return { error: "開始年月は終了年月より前である必要があります" };
+	}
+
+	if (typeof amount !== "number" || Number.isNaN(amount)) {
+		return { error: "有効な金額を入力してください" };
+	}
+
+	try {
+		const months: { year: number; month: number }[] = [];
+		let currentYear = startYear;
+		let currentMonth = startMonth;
+
+		while (
+			currentYear < endYear ||
+			(currentYear === endYear && currentMonth <= endMonth)
+		) {
+			months.push({ year: currentYear, month: currentMonth });
+
+			currentMonth++;
+			if (currentMonth > 12) {
+				currentMonth = 1;
+				currentYear++;
+			}
+		}
+
+		for (const { year, month } of months) {
+			const result = await setAmountForMonth(
+				recurringTransactionId,
+				year,
+				month,
+				amount,
+			);
+			if (result.error) {
+				throw new Error(result.error);
+			}
+		}
+
+		return { success: `${months.length}ヶ月分の金額を設定しました` };
+	} catch (error) {
+		console.error("Error setting bulk amounts:", error);
+		return {
+			error:
+				error instanceof Error ? error.message : "一括金額設定に失敗しました",
+		};
 	}
 }
 
@@ -226,20 +306,42 @@ export async function setBulkAmounts(
 export async function updateDefaultAmount(
 	recurringTransactionId: string,
 	defaultAmount: number,
-): Promise<void> {
-	const supabase = await createClient();
+): Promise<{ success?: string; error?: string }> {
+	if (!recurringTransactionId) {
+		return { error: "取引IDが必要です" };
+	}
 
-	const { error } = await supabase
-		.from("recurring_transactions")
-		.update({
-			default_amount: defaultAmount,
-			amount: defaultAmount, // 互換性のために両方更新
-			updated_at: new Date().toISOString(),
-		})
-		.eq("id", recurringTransactionId);
+	if (typeof defaultAmount !== "number" || Number.isNaN(defaultAmount)) {
+		return { error: "有効な金額を入力してください" };
+	}
 
-	if (error)
-		throw new Error(`デフォルト金額の更新に失敗しました: ${error.message}`);
+	try {
+		const supabase = await createClient();
+
+		const { error } = await supabase
+			.from("recurring_transactions")
+			.update({
+				default_amount: defaultAmount,
+				amount: defaultAmount,
+				updated_at: new Date().toISOString(),
+			})
+			.eq("id", recurringTransactionId);
+
+		if (error) {
+			throw new Error(`デフォルト金額の更新に失敗しました: ${error.message}`);
+		}
+
+		revalidatePath("/transactions/recurring");
+		return { success: "デフォルト金額を更新しました" };
+	} catch (error) {
+		console.error("Error updating default amount:", error);
+		return {
+			error:
+				error instanceof Error
+					? error.message
+					: "デフォルト金額の更新に失敗しました",
+		};
+	}
 }
 
 /**
@@ -255,26 +357,42 @@ export async function updateRecurringTransaction(
 		account_id?: string | null;
 		type?: "income" | "expense";
 	},
-): Promise<RecurringTransaction> {
-	const supabase = await createClient();
+): Promise<{ data?: RecurringTransaction; error?: string }> {
+	if (!transactionId) {
+		return { error: "取引IDが必要です" };
+	}
 
-	// amount フィールドも同時に更新（互換性のため）
-	const updateData = {
-		...updates,
-		amount: updates.default_amount, // 互換性のために両方更新
-		updated_at: new Date().toISOString(),
-	};
+	try {
+		const supabase = await createClient();
 
-	const { data, error } = await supabase
-		.from("recurring_transactions")
-		.update(updateData)
-		.eq("id", transactionId)
-		.select()
-		.single();
+		const updateData = {
+			...updates,
+			amount: updates.default_amount,
+			updated_at: new Date().toISOString(),
+		};
 
-	if (error)
-		throw new Error(`定期的な収支の更新に失敗しました: ${error.message}`);
-	return data as RecurringTransaction;
+		const { data, error } = await supabase
+			.from("recurring_transactions")
+			.update(updateData)
+			.eq("id", transactionId)
+			.select()
+			.single();
+
+		if (error) {
+			throw new Error(`定期的な収支の更新に失敗しました: ${error.message}`);
+		}
+
+		revalidatePath("/transactions/recurring");
+		return { data: data as RecurringTransaction };
+	} catch (error) {
+		console.error("Error updating recurring transaction:", error);
+		return {
+			error:
+				error instanceof Error
+					? error.message
+					: "定期的な収支の更新に失敗しました",
+		};
+	}
 }
 
 /**
@@ -282,20 +400,34 @@ export async function updateRecurringTransaction(
  */
 export async function deleteRecurringTransaction(
 	transactionId: string,
-): Promise<void> {
-	const supabase = await createClient();
-
-	const { error } = await supabase
-		.from("recurring_transactions")
-		.delete()
-		.eq("id", transactionId);
-
-	if (error) {
-		throw new Error(`定期的な収支の削除に失敗しました: ${error.message}`);
+): Promise<{ success?: string; error?: string }> {
+	if (!transactionId) {
+		return { error: "取引IDが必要です" };
 	}
 
-	// キャッシュを再検証
-	revalidatePath("/transactions/recurring");
+	try {
+		const supabase = await createClient();
+
+		const { error } = await supabase
+			.from("recurring_transactions")
+			.delete()
+			.eq("id", transactionId);
+
+		if (error) {
+			throw new Error(`定期的な収支の削除に失敗しました: ${error.message}`);
+		}
+
+		revalidatePath("/transactions/recurring");
+		return { success: "定期的な収支を削除しました" };
+	} catch (error) {
+		console.error("Error deleting recurring transaction:", error);
+		return {
+			error:
+				error instanceof Error
+					? error.message
+					: "定期的な収支の削除に失敗しました",
+		};
+	}
 }
 
 /**

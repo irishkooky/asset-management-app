@@ -360,32 +360,47 @@ export async function updateInitialBalance(
 export async function updateOneTimeTransactionAmount(
 	transactionId: string,
 	amount: number,
-): Promise<void> {
-	const supabase = await createClient();
-
-	// ユーザーIDを取得
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		throw new Error("認証が必要です");
+): Promise<{ success?: string; error?: string }> {
+	if (!transactionId) {
+		return { error: "取引IDが必要です" };
 	}
 
-	// トランザクションを更新
-	const { error } = await supabase
-		.from("one_time_transactions")
-		.update({ amount })
-		.eq("id", transactionId)
-		.eq("user_id", user.id);
-
-	if (error) {
-		console.error("一時的な収支の更新に失敗しました:", error);
-		throw new Error("一時的な収支の更新に失敗しました");
+	if (typeof amount !== "number" || Number.isNaN(amount)) {
+		return { error: "有効な金額を入力してください" };
 	}
 
-	// キャッシュをクリア
-	revalidatePath("/summary");
+	try {
+		const supabase = await createClient();
+
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return { error: "認証が必要です" };
+		}
+
+		const { error } = await supabase
+			.from("one_time_transactions")
+			.update({ amount })
+			.eq("id", transactionId)
+			.eq("user_id", user.id);
+
+		if (error) {
+			throw new Error("一時的な収支の更新に失敗しました");
+		}
+
+		revalidatePath("/summary");
+		return { success: "金額を更新しました" };
+	} catch (error) {
+		console.error("Error updating one time transaction amount:", error);
+		return {
+			error:
+				error instanceof Error
+					? error.message
+					: "一時的な収支の更新に失敗しました",
+		};
+	}
 }
 
 /**

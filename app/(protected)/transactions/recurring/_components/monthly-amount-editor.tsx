@@ -52,11 +52,12 @@ export const MonthlyAmountEditor = ({
 					if (existingAmount) {
 						fullMonths.push(existingAmount);
 					} else {
-						const amount = await getAmountForMonth(
+						const result = await getAmountForMonth(
 							recurringTransaction.id,
 							selectedYear,
 							month,
 						);
+						const amount = result.data || recurringTransaction.default_amount;
 						fullMonths.push({
 							year: selectedYear,
 							month,
@@ -75,7 +76,11 @@ export const MonthlyAmountEditor = ({
 		};
 
 		fetchAmounts();
-	}, [recurringTransaction.id, selectedYear]);
+	}, [
+		recurringTransaction.id,
+		selectedYear,
+		recurringTransaction.default_amount,
+	]);
 
 	// 特定の月の金額を更新
 	const handleMonthAmountChange = async (

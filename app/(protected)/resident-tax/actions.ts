@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ResidentTaxPeriod } from "@/types/database";
 import { createResidentTaxSetting } from "@/utils/supabase/resident-tax";
@@ -27,6 +28,7 @@ export async function createResidentTaxSettingAction(
 			periodAmounts,
 			targetTransactionIds,
 		);
+		revalidatePath("/resident-tax");
 		redirect("/resident-tax");
 	} catch (error) {
 		console.error("Error creating resident tax setting:", error);

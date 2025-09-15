@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
 	createAccount,
 	deleteAccount,
@@ -54,10 +55,14 @@ export async function updateAccountAction(
 
 	try {
 		await updateAccount(accountId, { name, current_balance: currentBalance });
+		revalidatePath("/accounts");
 		return { success: "口座が正常に更新されました" };
 	} catch (error) {
 		console.error("Error updating account:", error);
-		return { error: "口座の更新に失敗しました" };
+		return {
+			error:
+				error instanceof Error ? error.message : "口座の更新に失敗しました",
+		};
 	}
 }
 
@@ -73,10 +78,14 @@ export async function deleteAccountAction(
 
 	try {
 		await deleteAccount(accountId);
+		revalidatePath("/accounts");
 		return { success: "口座が正常に削除されました" };
 	} catch (error) {
 		console.error("Error deleting account:", error);
-		return { error: "口座の削除に失敗しました" };
+		return {
+			error:
+				error instanceof Error ? error.message : "口座の削除に失敗しました",
+		};
 	}
 }
 
@@ -88,11 +97,19 @@ export async function updateAccountOrderAction(
 		return { error: "口座IDが見つかりません" };
 	}
 
+	if (typeof sortOrder !== "number" || Number.isNaN(sortOrder)) {
+		return { error: "有効な並び順を指定してください" };
+	}
+
 	try {
 		await updateAccountOrder(accountId, sortOrder);
+		revalidatePath("/accounts");
 		return { success: "並び順が正常に更新されました" };
 	} catch (error) {
 		console.error("Error updating account order:", error);
-		return { error: "並び順の更新に失敗しました" };
+		return {
+			error:
+				error instanceof Error ? error.message : "並び順の更新に失敗しました",
+		};
 	}
 }
