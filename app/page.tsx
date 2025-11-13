@@ -27,9 +27,9 @@ export default async function Home() {
 					<h1 className="text-4xl md:text-5xl font-bold tracking-tight">
 						あなたの資産を<span className="text-primary">スマートに管理</span>
 					</h1>
-<p className="text-xl text-muted-foreground">
-シンプルで使いやすい資産管理アプリで、毎日の収支から将来の貯蓄までをまるごと見える化。
-</p>
+					<p className="text-xl text-muted-foreground">
+						シンプルで使いやすい資産管理アプリで、毎日の収支から将来の貯蓄までをまるごと見える化。
+					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
 						{user ? (
 							<Link href="/summary">
@@ -90,10 +90,10 @@ export default async function Home() {
 			{/* CTAセクション */}
 			<section className="text-center space-y-6 py-8">
 				<h2 className="text-3xl font-bold">今すぐ始めましょう</h2>
-<p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-資産管理の第一歩は、現状を把握することから。
-シンプルな操作で、これからのマネープランづくりを後押しします。
-</p>
+				<p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+					資産管理の第一歩は、現状を把握することから。
+					シンプルな操作で、これからのマネープランづくりを後押しします。
+				</p>
 				<div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
 					<LoginButton size="lg" variant="default">
 						無料で始める
