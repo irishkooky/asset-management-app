@@ -9,10 +9,11 @@
 		"ignoreUnknown": false,
 		"includes": ["**"]
 	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab"
-	},
+"formatter": {
+"enabled": true,
+"indentStyle": "space",
+"indentWidth": 2
+},
 	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {
 		"enabled": true,
