@@ -124,9 +124,9 @@ export const EditModal = ({
 		}
 	};
 
-	if (!recurringTransaction) return <></>;
+	if (!recurringTransaction) return null;
 
-	if (!isOpen) return <></>;
+	if (!isOpen) return null;
 
 	if (showMonthlyEditor) {
 		return (

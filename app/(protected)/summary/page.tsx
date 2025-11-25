@@ -27,10 +27,10 @@ function getDateParams(searchParams: { year?: string; month?: string }) {
 	const currentMonth = now.getMonth() + 1;
 
 	const year = searchParams.year
-		? Number.parseInt(searchParams.year)
+		? Number.parseInt(searchParams.year, 10)
 		: currentYear;
 	const month = searchParams.month
-		? Number.parseInt(searchParams.month)
+		? Number.parseInt(searchParams.month, 10)
 		: currentMonth;
 
 	return { year, month, currentYear, currentMonth };
