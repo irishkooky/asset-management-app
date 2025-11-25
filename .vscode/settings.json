@@ -7,6 +7,7 @@
 		"source.fixAll.biome": "explicit"
 	},
 	"editor.defaultFormatter": "biomejs.biome",
+	"biome.lsp.bin": "${workspaceFolder}/node_modules/.bin/biome",
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
