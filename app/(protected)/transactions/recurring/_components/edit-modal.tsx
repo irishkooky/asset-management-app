@@ -1,6 +1,7 @@
 "use client";
 
-import { Input } from "@heroui/input";
+import { Button } from "@heroui/button";
+import { Input, Textarea } from "@heroui/input";
 import {
 	Modal,
 	ModalBody,
@@ -8,9 +9,10 @@ import {
 	ModalFooter,
 	ModalHeader,
 } from "@heroui/modal";
+import { Radio, RadioGroup } from "@heroui/radio";
+import { Select, SelectItem } from "@heroui/select";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/button";
 import {
 	deleteRecurringTransaction,
 	getUserAccountsServerAction,
@@ -122,9 +124,9 @@ export const EditModal = ({
 		}
 	};
 
-	if (!recurringTransaction) return <></>;
+	if (!recurringTransaction) return null;
 
-	if (!isOpen) return <></>;
+	if (!isOpen) return null;
 
 	if (showMonthlyEditor) {
 		return (
@@ -163,123 +165,111 @@ export const EditModal = ({
 				</ModalHeader>
 				<ModalBody className="py-6">
 					<div className="space-y-5">
-						<div>
-							<div className="mb-2 text-sm font-medium">名前</div>
-							<Input
-								type="text"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder="名前を入力"
-								className="w-full"
-							/>
-						</div>
+						<Input
+							label="名前"
+							type="text"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="名前を入力"
+							isRequired
+						/>
 
-						<div>
-							<div className="mb-2 text-sm font-medium">説明</div>
-							<Input
-								type="text"
-								value={description || ""}
-								onChange={(e) => setDescription(e.target.value)}
-								placeholder="説明を入力（任意）"
-								className="w-full"
-							/>
-						</div>
+						<Textarea
+							label="説明（任意）"
+							value={description || ""}
+							onChange={(e) => setDescription(e.target.value)}
+							placeholder="説明を入力"
+							minRows={2}
+						/>
 
-						<div>
-							<div className="mb-2 text-sm font-medium">デフォルト金額</div>
-							<Input
-								type="number"
-								value={amount.toString()}
-								onChange={(e) => setAmount(Number(e.target.value))}
-								min="0"
-								step="100"
-								placeholder="金額を入力"
-								className="w-full"
-							/>
-						</div>
+						<Input
+							label="デフォルト金額"
+							type="number"
+							value={amount.toString()}
+							onChange={(e) => setAmount(Number(e.target.value))}
+							placeholder="金額を入力"
+							startContent={
+								<div className="pointer-events-none flex items-center">
+									<span className="text-default-400 text-small">¥</span>
+								</div>
+							}
+						/>
 
-						<div>
-							<div className="mb-2 text-sm font-medium">口座</div>
-							<select
-								value={accountId}
-								onChange={(e) => setAccountId(e.target.value)}
-								className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent"
-							>
-								<option value="">口座を選択</option>
-								{accounts.map((account) => (
-									<option key={account.id} value={account.id}>
-										{account.name}
-									</option>
-								))}
-							</select>
-						</div>
+						<Select
+							label="口座"
+							placeholder="口座を選択"
+							selectedKeys={accountId ? [accountId] : []}
+							onSelectionChange={(keys) => {
+								const selected = Array.from(keys)[0];
+								setAccountId(selected ? String(selected) : "");
+							}}
+						>
+							{accounts.map((account) => (
+								<SelectItem key={account.id}>{account.name}</SelectItem>
+							))}
+						</Select>
 
-						<div>
-							<div className="mb-2 text-sm font-medium">種別</div>
-							<select
-								value={type}
-								onChange={(e) =>
-									setType(e.target.value as "income" | "expense")
-								}
-								className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent"
-							>
-								<option value="income">収入</option>
-								<option value="expense">支出</option>
-							</select>
-						</div>
+						<RadioGroup
+							label="種別"
+							value={type}
+							onValueChange={(value) => setType(value as "income" | "expense")}
+							orientation="horizontal"
+						>
+							<Radio value="income">収入</Radio>
+							<Radio value="expense">支出</Radio>
+						</RadioGroup>
 
-						<div>
-							<div className="mb-2 text-sm font-medium">毎月の日付</div>
-							<Input
-								type="number"
-								min="1"
-								max="31"
-								value={dayOfMonth.toString()}
-								onChange={(e) => setDayOfMonth(Number(e.target.value))}
-								placeholder="日付を入力"
-								className="w-full"
-							/>
-						</div>
+						<Input
+							label="毎月の日付"
+							type="number"
+							min="1"
+							max="31"
+							value={dayOfMonth.toString()}
+							onChange={(e) => setDayOfMonth(Number(e.target.value))}
+							placeholder="日付を入力"
+						/>
 
 						<Button
-							variant="default"
+							color="secondary"
+							variant="flat"
 							onClick={() => setShowMonthlyEditor(true)}
-							className="w-full py-2 mt-2"
+							className="w-full"
 						>
 							月ごとの金額を設定
 						</Button>
 					</div>
 
 					{error && (
-						<div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded text-red-500 flex items-center">
-							<IconAlertCircle size={16} className="mr-2 flex-shrink-0" />
-							<span>{error}</span>
+						<div className="mt-4 p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-800">
+							<div className="flex items-center">
+								<IconAlertCircle size={16} className="mr-2 flex-shrink-0" />
+								<span className="text-sm">{error}</span>
+							</div>
 						</div>
 					)}
 				</ModalBody>
 
 				<ModalFooter className="flex justify-between border-t pt-4">
 					<Button
-						variant="destructive"
+						color="danger"
+						variant="flat"
 						onClick={handleDelete}
-						disabled={loading}
+						isDisabled={loading}
 					>
 						削除
 					</Button>
 
-					<div className="flex space-x-2">
-						<Button variant="outline" onClick={onClose} disabled={loading}>
+					<div className="flex gap-2">
+						<Button variant="bordered" onClick={onClose} isDisabled={loading}>
 							キャンセル
 						</Button>
-						<Button variant="default" onClick={handleSubmit} disabled={loading}>
-							{loading ? (
-								<span className="flex items-center justify-center">
-									<span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-									処理中...
-								</span>
-							) : (
-								"保存"
-							)}
+						<Button
+							color="primary"
+							onClick={handleSubmit}
+							isDisabled={loading}
+							isLoading={loading}
+						>
+							保存
 						</Button>
 					</div>
 				</ModalFooter>
