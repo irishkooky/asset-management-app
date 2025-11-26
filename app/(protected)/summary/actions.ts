@@ -102,7 +102,8 @@ function calculateAccountFinalBalance(
 			new Date(b.transaction_date).getTime(),
 	);
 
-	let finalBalance = initialBalance;
+	const startingBalance = Number(initialBalance);
+	let finalBalance = Number.isNaN(startingBalance) ? 0 : startingBalance;
 	for (const transaction of sortedTransactions) {
 		finalBalance =
 			transaction.type === "income"
@@ -160,7 +161,10 @@ async function handleMonthlyBalances(
 	const monthlyBalanceMap: MonthlyBalanceMap = {};
 	if (monthlyBalances) {
 		for (const balance of monthlyBalances) {
-			monthlyBalanceMap[balance.account_id] = balance.balance;
+			const numericBalance = Number(balance.balance);
+			monthlyBalanceMap[balance.account_id] = Number.isNaN(numericBalance)
+				? 0
+				: numericBalance;
 		}
 	}
 
@@ -246,12 +250,13 @@ function calculateMonthlySummary(
 		// トランザクション配列を初期化
 		accountTransactions.set(account.id, []);
 
+		const numericBalance = Number(account.current_balance);
 		return {
 			id: account.id,
 			name: account.name,
 			income: 0,
 			expense: 0,
-			balance: account.current_balance,
+			balance: Number.isNaN(numericBalance) ? 0 : numericBalance,
 			transactions: [] as Transaction[],
 		};
 	});
@@ -598,13 +603,16 @@ async function calculateEndBalancesFromMonthlyData(
 			(a) => a.id === balance.account_id,
 		);
 
+		const baseBalance = Number(balance.balance);
+		const numericBalance = Number.isNaN(baseBalance) ? 0 : baseBalance;
+
 		if (!account) {
-			endBalances[balance.account_id] = balance.balance;
+			endBalances[balance.account_id] = numericBalance;
 			continue;
 		}
 
 		const monthlyChange = calculateMonthlyBalanceChange(account.transactions);
-		endBalances[balance.account_id] = balance.balance + monthlyChange;
+		endBalances[balance.account_id] = numericBalance + monthlyChange;
 	}
 
 	return endBalances;
