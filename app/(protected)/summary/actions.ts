@@ -204,28 +204,22 @@ export async function getMonthlySummaryData(
 		? await calculatePreviousMonthBalances(supabase, now, year, month)
 		: undefined;
 
-	const totalEndOfMonthBalance = summary.accounts.reduce(
-		(total, account) => {
-			let initialBalance = account.balance;
-			const prevBalance = previousMonthBalances?.[account.id];
+	const totalEndOfMonthBalance = summary.accounts.reduce((total, account) => {
+		let initialBalance = account.balance;
+		const prevBalance = previousMonthBalances?.[account.id];
 
-			if (monthlyBalanceMap[account.id] !== undefined) {
-				initialBalance = monthlyBalanceMap[account.id];
-			} else if (
-				isSelectedDateAfterCurrent &&
-				prevBalance !== undefined
-			) {
-				initialBalance = prevBalance;
-			}
+		if (monthlyBalanceMap[account.id] !== undefined) {
+			initialBalance = monthlyBalanceMap[account.id];
+		} else if (isSelectedDateAfterCurrent && prevBalance !== undefined) {
+			initialBalance = prevBalance;
+		}
 
-			const finalBalance = calculateAccountFinalBalance(
-				account,
-				initialBalance,
-			);
-			return total + finalBalance;
-		},
-		0,
-	);
+		const finalBalance = calculateAccountFinalBalance(
+			account,
+			initialBalance,
+		);
+		return total + finalBalance;
+	}, 0);
 
 	return {
 		summary,
