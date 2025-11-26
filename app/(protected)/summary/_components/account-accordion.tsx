@@ -512,15 +512,7 @@ export const AccountAccordion = ({
 									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
 									let initialBalanceValue: number | undefined;
 
-									// 月初残高テーブルにデータがあればそれを使用
 									if (
-										monthlyBalanceMap &&
-										monthlyBalanceMap[account.id] !== undefined
-									) {
-										initialBalanceValue = monthlyBalanceMap[account.id];
-									}
-									// 月初残高テーブルにデータがなく、選択月が現在より後の場合は前月計算値を使用
-									else if (
 										isSelectedDateAfterCurrent &&
 										previousMonthBalances &&
 										previousMonthBalances[account.id] !== undefined
