@@ -361,6 +361,7 @@ export async function deleteRecurringTransaction(
 
 /**
  * 月間の定期的な収支の合計を計算する
+ * ※注意: 頻度(frequency)を考慮していないため、getRecurringTotalForMonthの使用を推奨
  */
 export async function getMonthlyRecurringTotal(
 	accountId?: string,
@@ -378,4 +379,86 @@ export async function getMonthlyRecurringTotal(
 		},
 		{ income: 0, expense: 0 },
 	);
+}
+
+/**
+ * 特定の月の定期的な収支の合計を計算する
+ * 頻度(monthly/quarterly/yearly)とカスタム金額を考慮
+ */
+export async function getRecurringTotalForMonth(
+	year: number,
+	month: number,
+	accountId?: string,
+): Promise<{ income: number; expense: number }> {
+	const supabase = await createClient();
+	const transactions = await getUserRecurringTransactions(accountId);
+
+	// カスタム金額を取得
+	const { data: recurringAmounts } = await supabase
+		.from("recurring_transaction_amounts")
+		.select("*")
+		.eq("year", year)
+		.eq("month", month);
+
+	const recurringAmountsMap = new Map<string, number>();
+	if (recurringAmounts) {
+		for (const amount of recurringAmounts) {
+			recurringAmountsMap.set(amount.recurring_transaction_id, amount.amount);
+		}
+	}
+
+	return transactions.reduce(
+		(totals, transaction) => {
+			// 頻度に基づいてこの月に該当するかチェック
+			const isApplicable = isTransactionApplicableForMonth(
+				transaction,
+				year,
+				month,
+			);
+
+			if (!isApplicable) {
+				return totals;
+			}
+
+			// カスタム金額があればそれを使用、なければデフォルト金額
+			const amount =
+				recurringAmountsMap.get(transaction.id) ?? transaction.default_amount;
+
+			if (transaction.type === "income") {
+				totals.income += amount;
+			} else {
+				totals.expense += amount;
+			}
+			return totals;
+		},
+		{ income: 0, expense: 0 },
+	);
+}
+
+/**
+ * 定期取引が特定の月に該当するかチェック
+ */
+function isTransactionApplicableForMonth(
+	transaction: RecurringTransaction,
+	_year: number,
+	month: number,
+): boolean {
+	switch (transaction.frequency) {
+		case "monthly":
+			return true;
+		case "quarterly":
+			// 四半期: month_of_yearで設定された月から3ヶ月ごと
+			if (transaction.month_of_year) {
+				const startMonth = transaction.month_of_year;
+				// startMonthから3ヶ月ごとに該当するか
+				const monthDiff = (month - startMonth + 12) % 12;
+				return monthDiff % 3 === 0;
+			}
+			return false;
+		case "yearly":
+			// 年次: month_of_yearで設定された月のみ
+			return transaction.month_of_year === month;
+		default:
+			return true;
+	}
 }
