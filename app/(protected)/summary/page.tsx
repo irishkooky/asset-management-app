@@ -148,7 +148,10 @@ async function handleMonthlyBalances(
 	const monthlyBalanceMap: Record<string, number> = {};
 	if (monthlyBalances) {
 		for (const balance of monthlyBalances) {
-			monthlyBalanceMap[balance.account_id] = balance.balance;
+			const numericBalance = Number(balance.balance);
+			monthlyBalanceMap[balance.account_id] = Number.isNaN(numericBalance)
+				? 0
+				: numericBalance;
 		}
 	}
 
@@ -171,8 +174,8 @@ function calculateAccountFinalBalance(
 			new Date(a.transaction_date).getTime() -
 			new Date(b.transaction_date).getTime(),
 	);
-
-	let finalBalance = initialBalance;
+	const startingBalance = Number(initialBalance);
+	let finalBalance = Number.isNaN(startingBalance) ? 0 : startingBalance;
 	for (const transaction of sortedTransactions) {
 		finalBalance =
 			transaction.type === "income"
