@@ -21,6 +21,12 @@ interface MonthNavigationButtonsProps {
 	monthNames: string[];
 }
 
+interface YearMonthOption {
+	year: number;
+	month: number;
+	label: string;
+}
+
 export function MonthNavigationButtons({
 	currentYear,
 	currentMonth,
@@ -35,16 +41,21 @@ export function MonthNavigationButtons({
 	const [navigatingDirection, setNavigatingDirection] = useState<
 		"prev" | "next" | null
 	>(null);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-	// Generate year options (3 years back, 1 year forward)
+	// Generate options ensuring the currently selected year stays in range
 	const currentActualYear = new Date().getFullYear();
-	const yearOptions = [];
-	for (
-		let year = currentActualYear - 3;
-		year <= currentActualYear + 1;
-		year++
-	) {
-		yearOptions.push(year);
+	const minYear = Math.min(currentActualYear - 3, currentYear - 3);
+	const maxYear = Math.max(currentActualYear + 1, currentYear + 1);
+	const yearMonthOptions: YearMonthOption[] = [];
+	for (let year = minYear; year <= maxYear; year++) {
+		for (let month = 1; month <= 12; month++) {
+			yearMonthOptions.push({
+				year,
+				month,
+				label: `${year}年${monthNames[month - 1]}`,
+			});
+		}
 	}
 
 	// Reset navigation state when year/month changes
@@ -58,23 +69,73 @@ export function MonthNavigationButtons({
 		setIsNavigating(true);
 		setNavigatingDirection(direction);
 
-		// Use router.push for faster navigation
 		router.push(href);
 
-		// Also set a timeout to reset state in case the navigation doesn't update props
 		setTimeout(() => {
 			setIsNavigating(false);
 			setNavigatingDirection(null);
 		}, 3000);
 	};
 
-	const handleYearSelect = (year: number) => {
-		router.push(`/summary?year=${year}&month=${currentMonth}`);
+	const handleYearMonthSelect = (year: number, month: number) => {
+		router.push(`/summary?year=${year}&month=${month}`);
 	};
 
-	const handleMonthSelect = (month: number) => {
-		router.push(`/summary?year=${currentYear}&month=${month}`);
-	};
+	const currentLabel = `${currentYear}年${monthNames[currentMonth - 1]}`;
+	const isCurrentOption = (option: YearMonthOption) =>
+		option.year === currentYear && option.month === currentMonth;
+
+	const currentOptionIndex = yearMonthOptions.findIndex(
+		(option) => option.year === currentYear && option.month === currentMonth,
+	);
+
+	// Scroll to current option when dropdown opens
+	useEffect(() => {
+		if (!isDropdownOpen || currentOptionIndex === -1) return;
+
+		const timer = setTimeout(() => {
+			const currentKey = `${currentYear}-${currentMonth}`;
+
+			// Find the dropdown menu element (HeroUI uses portal, so search document)
+			const menuElement = document.querySelector<HTMLElement>(
+				'[role="listbox"], [data-slot="base"] [class*="overflow"]',
+			);
+
+			if (!menuElement) return;
+
+			// Find the current option by key attribute or text content
+			const currentItem = Array.from(
+				menuElement.querySelectorAll<HTMLElement>(
+					'[role="option"], li, button',
+				),
+			).find((item) => {
+				const key =
+					item.getAttribute("data-key") ||
+					item.getAttribute("data-value") ||
+					item.textContent?.trim();
+				return (
+					key === currentKey ||
+					key?.includes(`${currentYear}年${monthNames[currentMonth - 1]}`)
+				);
+			});
+
+			if (!currentItem) return;
+
+			// Scroll the current item into view, centered if possible
+			currentItem.scrollIntoView({
+				behavior: "instant",
+				block: "center",
+			});
+		}, 150);
+
+		return () => clearTimeout(timer);
+	}, [
+		isDropdownOpen,
+		currentOptionIndex,
+		currentYear,
+		currentMonth,
+		monthNames,
+	]);
 
 	return (
 		<div className="flex justify-between items-center mb-6">
@@ -92,61 +153,33 @@ export function MonthNavigationButtons({
 				{isNavigating && navigatingDirection === "prev" ? "読込中..." : "前月"}
 			</Button>
 
-			<div className="flex items-center">
-				{/* 年選択 */}
-				<Dropdown>
-					<DropdownTrigger>
-						<Button
-							variant="light"
-							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold px-0"
-						>
-							{currentYear}年
-						</Button>
-					</DropdownTrigger>
-					<DropdownMenu
-						aria-label="年の選択"
-						className="max-h-[300px] overflow-y-auto"
+			<Dropdown onOpenChange={setIsDropdownOpen}>
+				<DropdownTrigger>
+					<Button
+						variant="light"
+						endContent={<IconChevronDown size={16} />}
+						className="text-xl font-semibold px-0"
 					>
-						{yearOptions.map((year) => (
-							<DropdownItem
-								key={`year-${year}`}
-								onPress={() => handleYearSelect(year)}
-								className={year === currentYear ? "bg-primary-50" : ""}
-							>
-								{year}年 {year === currentYear && "✓"}
-							</DropdownItem>
-						))}
-					</DropdownMenu>
-				</Dropdown>
-
-				{/* 月選択 */}
-				<Dropdown>
-					<DropdownTrigger>
-						<Button
-							variant="light"
-							endContent={<IconChevronDown size={16} />}
-							className="text-xl font-semibold px-0"
+						{currentLabel}
+					</Button>
+				</DropdownTrigger>
+				<DropdownMenu
+					aria-label="年月の選択"
+					className="max-h-[300px] overflow-y-auto"
+					selectedKeys={[`${currentYear}-${currentMonth}`]}
+				>
+					{yearMonthOptions.map((option) => (
+						<DropdownItem
+							key={`${option.year}-${option.month}`}
+							onPress={() => handleYearMonthSelect(option.year, option.month)}
+							className={isCurrentOption(option) ? "bg-primary-50" : ""}
+							textValue={option.label}
 						>
-							{monthNames[currentMonth - 1]}
-						</Button>
-					</DropdownTrigger>
-					<DropdownMenu
-						aria-label="月の選択"
-						className="max-h-[300px] overflow-y-auto"
-					>
-						{monthNames.map((monthName, index) => (
-							<DropdownItem
-								key={`month-${index + 1}`}
-								onPress={() => handleMonthSelect(index + 1)}
-								className={index + 1 === currentMonth ? "bg-primary-50" : ""}
-							>
-								{monthName} {index + 1 === currentMonth && "✓"}
-							</DropdownItem>
-						))}
-					</DropdownMenu>
-				</Dropdown>
-			</div>
+							{option.label} {isCurrentOption(option) && "✓"}
+						</DropdownItem>
+					))}
+				</DropdownMenu>
+			</Dropdown>
 
 			<Button
 				variant="bordered"
