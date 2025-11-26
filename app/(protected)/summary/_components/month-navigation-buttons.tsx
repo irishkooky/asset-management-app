@@ -43,14 +43,12 @@ export function MonthNavigationButtons({
 	>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-	// Generate year-month options (3 years back, 1 year forward)
+	// Generate options ensuring the currently selected year stays in range
 	const currentActualYear = new Date().getFullYear();
+	const minYear = Math.min(currentActualYear - 3, currentYear - 3);
+	const maxYear = Math.max(currentActualYear + 1, currentYear + 1);
 	const yearMonthOptions: YearMonthOption[] = [];
-	for (
-		let year = currentActualYear - 3;
-		year <= currentActualYear + 1;
-		year++
-	) {
+	for (let year = minYear; year <= maxYear; year++) {
 		for (let month = 1; month <= 12; month++) {
 			yearMonthOptions.push({
 				year,
