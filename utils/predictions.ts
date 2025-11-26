@@ -1,3 +1,5 @@
+import { getMonthlySummaryData } from "@/app/(protected)/summary/actions";
+import { incrementMonth } from "@/app/(protected)/summary/balance-utils";
 import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
@@ -124,57 +126,45 @@ export async function getAllPredictions(): Promise<SavingsPrediction[]> {
 
 /**
  * 1か月ごとの貯蓄額を予測する（翌月から12ヶ月先まで）
- * 各月の1日時点での残高を予測
+ * 各月の月末見込残高を予測（月次収支と同じ計算ロジックを使用）
  */
 export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 	const today = new Date();
-	const currentMonth = today.getMonth();
 	const currentYear = today.getFullYear();
+	const currentMonth = today.getMonth() + 1; // 1-12
 
-	// 現在の総残高を取得
-	const currentBalance = await getTotalBalance();
-
-	// 月間の定期的な収支を取得
-	const monthlyRecurring = await getMonthlyRecurringTotal();
-	const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
+	const predictions: SavingsPrediction[] = [];
 
 	// 翌月から12ヶ月先までの予測を計算
-	const predictions = await Promise.all(
-		Array.from({ length: 12 }, (_, i) => i + 1).map(async (monthOffset) => {
-			// 各月の1日を取得
-			const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
-
-			// 現在から対象月初までの完全な月数を計算
-			const monthsBetween = Math.floor(
-				(targetDate.getTime() - today.getTime()) /
-					(1000 * 60 * 60 * 24 * 30.44),
-			);
-
-			// 予測期間内の臨時収支を取得
-			const oneTimeTransactions = await getOneTimeTransactionsTotal(
-				today,
-				targetDate,
-			);
-			const oneTimeNet =
-				oneTimeTransactions.income - oneTimeTransactions.expense;
-
-			// 将来の貯蓄額を計算
-			const predictedAmount =
-				currentBalance + monthlyNet * monthsBetween + oneTimeNet;
-
-			// 期間を文字列に変換（例: "1month", "2months"）
-			const periodStr =
-				monthOffset === 1
-					? "1month"
-					: (`${monthOffset}months` as PredictionPeriod);
-
-			return {
-				period: periodStr,
-				amount: predictedAmount,
-				date: targetDate.toISOString().split("T")[0],
-			};
-		}),
+	let { year: targetYear, month: targetMonth } = incrementMonth(
+		currentYear,
+		currentMonth,
 	);
+
+	for (let i = 1; i <= 12; i++) {
+		// 対象月の月末見込残高を取得
+		const { totalEndOfMonthBalance } = await getMonthlySummaryData(
+			targetYear,
+			targetMonth,
+		);
+
+		// 対象月の1日を作成（予測日付として使用）
+		const targetDate = new Date(targetYear, targetMonth - 1, 1);
+
+		// 期間を文字列に変換
+		const periodStr = i === 1 ? "1month" : (`${i}months` as PredictionPeriod);
+
+		predictions.push({
+			period: periodStr,
+			amount: totalEndOfMonthBalance,
+			date: targetDate.toISOString().split("T")[0],
+		});
+
+		// 次の月へ
+		const next = incrementMonth(targetYear, targetMonth);
+		targetYear = next.year;
+		targetMonth = next.month;
+	}
 
 	return predictions;
 }
