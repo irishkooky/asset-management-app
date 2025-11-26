@@ -162,8 +162,11 @@ async function handleMonthlyBalances(
 	if (monthlyBalances) {
 		for (const balance of monthlyBalances) {
 			const numericBalance = Number(balance.balance);
-			monthlyBalanceMap[balance.account_id] = Number.isNaN(numericBalance) ? 0 : numericBalance;
-			}
+			monthlyBalanceMap[balance.account_id] = Number.isNaN(numericBalance)
+				? 0
+				: numericBalance;
+		}
+	}
 
 	return monthlyBalanceMap;
 }
