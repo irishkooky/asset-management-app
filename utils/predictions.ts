@@ -1,7 +1,10 @@
 import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
-import { getMonthlyRecurringTotal } from "@/utils/supabase/recurring-transactions";
+import {
+	getMonthlyRecurringTotal,
+	getRecurringTotalForMonth,
+} from "@/utils/supabase/recurring-transactions";
 
 /**
  * 指定した月数後の日付を取得する
@@ -134,47 +137,54 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 	// 現在の総残高を取得
 	const currentBalance = await getTotalBalance();
 
-	// 月間の定期的な収支を取得
-	const monthlyRecurring = await getMonthlyRecurringTotal();
-	const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
-
 	// 翌月から12ヶ月先までの予測を計算
-	const predictions = await Promise.all(
-		Array.from({ length: 12 }, (_, i) => i + 1).map(async (monthOffset) => {
-			// 各月の1日を取得
-			const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
+	const predictions: SavingsPrediction[] = [];
+	let accumulatedRecurringNet = 0;
 
-			// 現在から対象月初までの完全な月数を計算
-			const monthsBetween = Math.floor(
-				(targetDate.getTime() - today.getTime()) /
-					(1000 * 60 * 60 * 24 * 30.44),
-			);
+	for (let monthOffset = 1; monthOffset <= 12; monthOffset++) {
+		// 対象月の1日を取得
+		const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
 
-			// 予測期間内の臨時収支を取得
-			const oneTimeTransactions = await getOneTimeTransactionsTotal(
-				today,
-				targetDate,
-			);
-			const oneTimeNet =
-				oneTimeTransactions.income - oneTimeTransactions.expense;
+		// 前月の定期収支を取得（対象月の1日時点の残高なので、前月までの取引が反映される）
+		// monthOffset=1の場合、今月(currentMonth+1)の定期収支が反映される
+		const recurringMonth =
+			monthOffset === 1
+				? { year: currentYear, month: currentMonth + 1 }
+				: {
+						year: new Date(currentYear, currentMonth + monthOffset - 1, 1).getFullYear(),
+						month: new Date(currentYear, currentMonth + monthOffset - 1, 1).getMonth() + 1,
+					};
 
-			// 将来の貯蓄額を計算
-			const predictedAmount =
-				currentBalance + monthlyNet * monthsBetween + oneTimeNet;
+		// 頻度とカスタム金額を考慮した定期収支を取得
+		const recurringTotal = await getRecurringTotalForMonth(
+			recurringMonth.year,
+			recurringMonth.month,
+		);
+		const recurringNet = recurringTotal.income - recurringTotal.expense;
+		accumulatedRecurringNet += recurringNet;
 
-			// 期間を文字列に変換（例: "1month", "2months"）
-			const periodStr =
-				monthOffset === 1
-					? "1month"
-					: (`${monthOffset}months` as PredictionPeriod);
+		// 予測期間内の臨時収支を取得（今日から対象月の1日まで）
+		const oneTimeTransactions = await getOneTimeTransactionsTotal(
+			today,
+			targetDate,
+		);
+		const oneTimeNet = oneTimeTransactions.income - oneTimeTransactions.expense;
 
-			return {
-				period: periodStr,
-				amount: predictedAmount,
-				date: targetDate.toISOString().split("T")[0],
-			};
-		}),
-	);
+		// 将来の貯蓄額を計算
+		const predictedAmount = currentBalance + accumulatedRecurringNet + oneTimeNet;
+
+		// 期間を文字列に変換（例: "1month", "2months"）
+		const periodStr =
+			monthOffset === 1
+				? "1month"
+				: (`${monthOffset}months` as PredictionPeriod);
+
+		predictions.push({
+			period: periodStr,
+			amount: predictedAmount,
+			date: targetDate.toISOString().split("T")[0],
+		});
+	}
 
 	return predictions;
 }
