@@ -1,6 +1,6 @@
-import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
 import { getMonthlySummaryData } from "@/app/(protected)/summary/actions";
 import { incrementMonth } from "@/app/(protected)/summary/balance-utils";
+import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
 import { getMonthlyRecurringTotal } from "@/utils/supabase/recurring-transactions";
@@ -152,8 +152,7 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 		const targetDate = new Date(targetYear, targetMonth - 1, 1);
 
 		// 期間を文字列に変換
-		const periodStr =
-			i === 1 ? "1month" : (`${i}months` as PredictionPeriod);
+		const periodStr = i === 1 ? "1month" : (`${i}months` as PredictionPeriod);
 
 		predictions.push({
 			period: periodStr,
