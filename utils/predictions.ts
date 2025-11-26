@@ -151,8 +151,17 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 			monthOffset === 1
 				? { year: currentYear, month: currentMonth + 1 }
 				: {
-						year: new Date(currentYear, currentMonth + monthOffset - 1, 1).getFullYear(),
-						month: new Date(currentYear, currentMonth + monthOffset - 1, 1).getMonth() + 1,
+						year: new Date(
+							currentYear,
+							currentMonth + monthOffset - 1,
+							1,
+						).getFullYear(),
+						month:
+							new Date(
+								currentYear,
+								currentMonth + monthOffset - 1,
+								1,
+							).getMonth() + 1,
 					};
 
 		// 頻度とカスタム金額を考慮した定期収支を取得
@@ -171,7 +180,8 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 		const oneTimeNet = oneTimeTransactions.income - oneTimeTransactions.expense;
 
 		// 将来の貯蓄額を計算
-		const predictedAmount = currentBalance + accumulatedRecurringNet + oneTimeNet;
+		const predictedAmount =
+			currentBalance + accumulatedRecurringNet + oneTimeNet;
 
 		// 期間を文字列に変換（例: "1month", "2months"）
 		const periodStr =
