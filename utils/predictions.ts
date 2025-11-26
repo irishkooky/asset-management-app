@@ -1,7 +1,14 @@
-import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
+import type {
+	PredictionPeriod,
+	RecurringTransaction,
+	SavingsPrediction,
+} from "@/types/database";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
-import { getMonthlyRecurringTotal } from "@/utils/supabase/recurring-transactions";
+import {
+	getMonthlyRecurringTotal,
+	getUserRecurringTransactions,
+} from "@/utils/supabase/recurring-transactions";
 
 /**
  * 指定した月数後の日付を取得する
@@ -28,6 +35,92 @@ function getMonthsFromPeriod(period: PredictionPeriod): number {
 		default:
 			return 1;
 	}
+}
+
+/**
+ * 指定した年月に取引が発生するかを判定する
+ */
+function isTransactionInMonth(
+	transaction: RecurringTransaction,
+	_year: number,
+	month: number,
+): boolean {
+	switch (transaction.frequency) {
+		case "monthly":
+			// 毎月発生
+			return true;
+		case "quarterly":
+			// 四半期: month_of_year を基準として3ヶ月ごとに発生
+			// 例: month_of_year=1 なら 1, 4, 7, 10月に発生
+			// 例: month_of_year=3 なら 3, 6, 9, 12月に発生
+			if (transaction.month_of_year === null) return false;
+			return (month - transaction.month_of_year) % 3 === 0;
+		case "yearly":
+			// 年次: month_of_year の月にのみ発生
+			if (transaction.month_of_year === null) return false;
+			return month === transaction.month_of_year;
+		default:
+			return false;
+	}
+}
+
+/**
+ * 指定した期間内に発生する定期取引の収支を計算する
+ * 今日から対象日までの各月を走査して、発生する取引を合計する
+ */
+function calculateRecurringTransactionsForPeriod(
+	transactions: RecurringTransaction[],
+	startDate: Date,
+	endDate: Date,
+): number {
+	let total = 0;
+
+	const startYear = startDate.getFullYear();
+	const startMonth = startDate.getMonth() + 1; // 1-12
+	const startDay = startDate.getDate();
+
+	const endYear = endDate.getFullYear();
+	const endMonth = endDate.getMonth() + 1; // 1-12
+	// 月初1日を対象とするので、その月の取引は含まない（前月末までの計算）
+
+	// 開始月から終了月の前月まで走査
+	let currentYear = startYear;
+	let currentMonth = startMonth;
+
+	while (
+		currentYear < endYear ||
+		(currentYear === endYear && currentMonth < endMonth)
+	) {
+		const isFirstMonth = currentYear === startYear && currentMonth === startMonth;
+
+		for (const tx of transactions) {
+			// この月に取引が発生するか判定
+			if (!isTransactionInMonth(tx, currentYear, currentMonth)) {
+				continue;
+			}
+
+			// 開始月の場合、今日より前の取引日はスキップ
+			if (isFirstMonth && tx.day_of_month < startDay) {
+				continue;
+			}
+
+			// 収支を加算
+			if (tx.type === "income") {
+				total += tx.amount;
+			} else {
+				total -= tx.amount;
+			}
+		}
+
+		// 次の月へ
+		currentMonth++;
+		if (currentMonth > 12) {
+			currentMonth = 1;
+			currentYear++;
+		}
+	}
+
+	return total;
 }
 
 /**
@@ -134,9 +227,8 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 	// 現在の総残高を取得
 	const currentBalance = await getTotalBalance();
 
-	// 月間の定期的な収支を取得
-	const monthlyRecurring = await getMonthlyRecurringTotal();
-	const monthlyNet = monthlyRecurring.income - monthlyRecurring.expense;
+	// 全定期取引を取得
+	const allRecurringTransactions = await getUserRecurringTransactions();
 
 	// 翌月から12ヶ月先までの予測を計算
 	const predictions = await Promise.all(
@@ -144,10 +236,11 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 			// 各月の1日を取得
 			const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
 
-			// 現在から対象月初までの完全な月数を計算
-			const monthsBetween = Math.floor(
-				(targetDate.getTime() - today.getTime()) /
-					(1000 * 60 * 60 * 24 * 30.44),
+			// 今日から対象月初までの定期収支を計算（頻度を考慮）
+			const recurringNet = calculateRecurringTransactionsForPeriod(
+				allRecurringTransactions,
+				today,
+				targetDate,
 			);
 
 			// 予測期間内の臨時収支を取得
@@ -159,8 +252,7 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 				oneTimeTransactions.income - oneTimeTransactions.expense;
 
 			// 将来の貯蓄額を計算
-			const predictedAmount =
-				currentBalance + monthlyNet * monthsBetween + oneTimeNet;
+			const predictedAmount = currentBalance + recurringNet + oneTimeNet;
 
 			// 期間を文字列に変換（例: "1month", "2months"）
 			const periodStr =
