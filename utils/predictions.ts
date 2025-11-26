@@ -1,9 +1,6 @@
 import type { PredictionPeriod, SavingsPrediction } from "@/types/database";
-import { getMonthlySummary } from "@/app/(protected)/summary/actions";
-import {
-	calculateMonthlyBalanceChange,
-	incrementMonth,
-} from "@/app/(protected)/summary/balance-utils";
+import { getMonthlySummaryData } from "@/app/(protected)/summary/actions";
+import { incrementMonth } from "@/app/(protected)/summary/balance-utils";
 import { getTotalBalance, getUserAccounts } from "@/utils/supabase/accounts";
 import { getOneTimeTransactionsTotal } from "@/utils/supabase/one-time-transactions";
 import { getMonthlyRecurringTotal } from "@/utils/supabase/recurring-transactions";
@@ -136,21 +133,6 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 	const currentYear = today.getFullYear();
 	const currentMonth = today.getMonth() + 1; // 1-12
 
-	// 現在の総残高を取得（今月の月初残高として使用）
-	const currentBalance = await getTotalBalance();
-
-	// 今月の月次サマリーを取得して今月末残高を計算
-	const currentMonthSummary = await getMonthlySummary(currentYear, currentMonth);
-	const currentMonthChange = currentMonthSummary.accounts.reduce(
-		(total, account) => {
-			return total + calculateMonthlyBalanceChange(account.transactions);
-		},
-		0,
-	);
-
-	// 今月末残高
-	let runningBalance = currentBalance + currentMonthChange;
-
 	const predictions: SavingsPrediction[] = [];
 
 	// 翌月から12ヶ月先までの予測を計算
@@ -160,16 +142,11 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 	);
 
 	for (let i = 1; i <= 12; i++) {
-		// 対象月の月次サマリーを取得
-		const monthlySummary = await getMonthlySummary(targetYear, targetMonth);
-
-		// 対象月の収支を計算
-		const monthlyChange = monthlySummary.accounts.reduce((total, account) => {
-			return total + calculateMonthlyBalanceChange(account.transactions);
-		}, 0);
-
-		// 月末残高を計算（前月末残高 + 当月収支）
-		runningBalance = runningBalance + monthlyChange;
+		// 対象月の月末見込残高を取得
+		const { totalEndOfMonthBalance } = await getMonthlySummaryData(
+			targetYear,
+			targetMonth,
+		);
 
 		// 対象月の1日を作成（予測日付として使用）
 		const targetDate = new Date(targetYear, targetMonth - 1, 1);
@@ -180,7 +157,7 @@ export async function getMonthlyPredictions(): Promise<SavingsPrediction[]> {
 
 		predictions.push({
 			period: periodStr,
-			amount: runningBalance,
+			amount: totalEndOfMonthBalance,
 			date: targetDate.toISOString().split("T")[0],
 		});
 

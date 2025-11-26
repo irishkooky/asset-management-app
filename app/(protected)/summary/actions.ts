@@ -90,6 +90,152 @@ export async function getMonthlySummary(year: number, month: number) {
 	return summary;
 }
 
+type MonthlyBalanceMap = Record<string, number>;
+
+function calculateAccountFinalBalance(
+	account: AccountSummary,
+	initialBalance: number,
+): number {
+	const sortedTransactions = [...account.transactions].sort(
+		(a, b) =>
+			new Date(a.transaction_date).getTime() -
+			new Date(b.transaction_date).getTime(),
+	);
+
+	let finalBalance = initialBalance;
+	for (const transaction of sortedTransactions) {
+		finalBalance =
+			transaction.type === "income"
+				? finalBalance + transaction.amount
+				: finalBalance - transaction.amount;
+	}
+
+	return finalBalance;
+}
+
+async function handleMonthlyBalances(
+	supabase: SupabaseClient,
+	currentYear: number,
+	currentMonth: number,
+	year: number,
+	month: number,
+): Promise<MonthlyBalanceMap> {
+	const today = new Date();
+
+	if (today.getDate() <= 3) {
+		const { data: existingRecords } = await supabase
+			.from("monthly_account_balances")
+			.select("id")
+			.eq("year", currentYear)
+			.eq("month", currentMonth)
+			.limit(1);
+
+		if (!existingRecords || existingRecords.length === 0) {
+			await recordMonthlyBalances(currentYear, currentMonth);
+		}
+	}
+
+	let { data: monthlyBalances } = await supabase
+		.from("monthly_account_balances")
+		.select("*")
+		.eq("year", year)
+		.eq("month", month);
+
+	if (!monthlyBalances || monthlyBalances.length === 0) {
+		const carryoverResult = await carryoverMonthlyBalances(
+			supabase,
+			year,
+			month,
+		);
+		if (carryoverResult.success) {
+			const { data: newMonthlyBalances } = await supabase
+				.from("monthly_account_balances")
+				.select("*")
+				.eq("year", year)
+				.eq("month", month);
+			monthlyBalances = newMonthlyBalances;
+		}
+	}
+
+	const monthlyBalanceMap: MonthlyBalanceMap = {};
+	if (monthlyBalances) {
+		for (const balance of monthlyBalances) {
+			monthlyBalanceMap[balance.account_id] = balance.balance;
+		}
+	}
+
+	return monthlyBalanceMap;
+}
+
+type MonthlySummaryResult = Awaited<ReturnType<typeof getMonthlySummary>>;
+
+export type MonthlySummaryData = {
+	summary: MonthlySummaryResult;
+	monthlyBalanceMap: MonthlyBalanceMap;
+	previousMonthBalances?: Record<string, number>;
+	totalEndOfMonthBalance: number;
+	generatedAt: Date;
+};
+
+export async function getMonthlySummaryData(
+	year: number,
+	month: number,
+): Promise<MonthlySummaryData> {
+	const now = new Date();
+	const supabase = await createClient();
+	const currentYear = now.getFullYear();
+	const currentMonth = now.getMonth() + 1;
+
+	const monthlyBalanceMap = await handleMonthlyBalances(
+		supabase,
+		currentYear,
+		currentMonth,
+		year,
+		month,
+	);
+
+	const summary = await getMonthlySummary(year, month);
+
+	const selectedDate = new Date(year, month - 1, 1);
+	const currentYearMonth = new Date(currentYear, currentMonth - 1, 1);
+	const isSelectedDateAfterCurrent = selectedDate > currentYearMonth;
+
+	const previousMonthBalances = isSelectedDateAfterCurrent
+		? await calculatePreviousMonthBalances(supabase, now, year, month)
+		: undefined;
+
+	const totalEndOfMonthBalance = summary.accounts.reduce(
+		(total, account) => {
+			let initialBalance = account.balance;
+			const prevBalance = previousMonthBalances?.[account.id];
+
+			if (monthlyBalanceMap[account.id] !== undefined) {
+				initialBalance = monthlyBalanceMap[account.id];
+			} else if (
+				isSelectedDateAfterCurrent &&
+				prevBalance !== undefined
+			) {
+				initialBalance = prevBalance;
+			}
+
+			const finalBalance = calculateAccountFinalBalance(
+				account,
+				initialBalance,
+			);
+			return total + finalBalance;
+		},
+		0,
+	);
+
+	return {
+		summary,
+		monthlyBalanceMap,
+		previousMonthBalances,
+		totalEndOfMonthBalance,
+		generatedAt: now,
+	};
+}
+
 /**
  * 月次収支サマリーデータを計算する
  */
