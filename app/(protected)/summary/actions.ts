@@ -214,10 +214,7 @@ export async function getMonthlySummaryData(
 			initialBalance = prevBalance;
 		}
 
-		const finalBalance = calculateAccountFinalBalance(
-			account,
-			initialBalance,
-		);
+		const finalBalance = calculateAccountFinalBalance(account, initialBalance);
 		return total + finalBalance;
 	}, 0);
 
