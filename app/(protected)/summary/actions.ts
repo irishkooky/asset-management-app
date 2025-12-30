@@ -102,7 +102,8 @@ function calculateAccountFinalBalance(
 			new Date(b.transaction_date).getTime(),
 	);
 
-	let finalBalance = initialBalance;
+	const startingBalance = Number(initialBalance);
+	let finalBalance = Number.isNaN(startingBalance) ? 0 : startingBalance;
 	for (const transaction of sortedTransactions) {
 		finalBalance =
 			transaction.type === "income"
@@ -160,7 +161,10 @@ async function handleMonthlyBalances(
 	const monthlyBalanceMap: MonthlyBalanceMap = {};
 	if (monthlyBalances) {
 		for (const balance of monthlyBalances) {
-			monthlyBalanceMap[balance.account_id] = balance.balance;
+			const numericBalance = Number(balance.balance);
+			monthlyBalanceMap[balance.account_id] = Number.isNaN(numericBalance)
+				? 0
+				: numericBalance;
 		}
 	}
 
@@ -208,10 +212,13 @@ export async function getMonthlySummaryData(
 		let initialBalance = account.balance;
 		const prevBalance = previousMonthBalances?.[account.id];
 
-		if (monthlyBalanceMap[account.id] !== undefined) {
-			initialBalance = monthlyBalanceMap[account.id];
-		} else if (isSelectedDateAfterCurrent && prevBalance !== undefined) {
+		// 将来月で前月計算値がある場合はそれを優先（最新の計算値）
+		if (isSelectedDateAfterCurrent && prevBalance !== undefined) {
 			initialBalance = prevBalance;
+		}
+		// 過去・現在月は月初残高テーブルを優先（記録された値）
+		else if (monthlyBalanceMap[account.id] !== undefined) {
+			initialBalance = monthlyBalanceMap[account.id];
 		}
 
 		const finalBalance = calculateAccountFinalBalance(account, initialBalance);
@@ -246,12 +253,13 @@ function calculateMonthlySummary(
 		// トランザクション配列を初期化
 		accountTransactions.set(account.id, []);
 
+		const numericBalance = Number(account.current_balance);
 		return {
 			id: account.id,
 			name: account.name,
 			income: 0,
 			expense: 0,
-			balance: account.current_balance,
+			balance: Number.isNaN(numericBalance) ? 0 : numericBalance,
 			transactions: [] as Transaction[],
 		};
 	});
@@ -509,6 +517,19 @@ export async function updateOneTimeTransactionAmount(
 		throw new Error("認証が必要です");
 	}
 
+	// トランザクションの日付を取得
+	const { data: transaction, error: transactionError } = await supabase
+		.from("one_time_transactions")
+		.select("transaction_date")
+		.eq("id", transactionId)
+		.eq("user_id", user.id)
+		.single();
+
+	if (transactionError) {
+		console.error("一時的な収支の取得に失敗しました:", transactionError);
+		throw new Error("一時的な収支の取得に失敗しました");
+	}
+
 	// トランザクションを更新
 	const { error } = await supabase
 		.from("one_time_transactions")
@@ -519,6 +540,18 @@ export async function updateOneTimeTransactionAmount(
 	if (error) {
 		console.error("一時的な収支の更新に失敗しました:", error);
 		throw new Error("一時的な収支の更新に失敗しました");
+	}
+
+	// 取引の年月を計算して、その月以降の月初残高キャッシュを無効化
+	if (transaction?.transaction_date) {
+		const transactionDate = new Date(transaction.transaction_date);
+		const transactionYear = transactionDate.getFullYear();
+		const transactionMonth = transactionDate.getMonth() + 1;
+		await invalidateFutureMonthlyBalances(
+			supabase,
+			transactionYear,
+			transactionMonth,
+		);
 	}
 
 	// キャッシュをクリア
@@ -598,13 +631,16 @@ async function calculateEndBalancesFromMonthlyData(
 			(a) => a.id === balance.account_id,
 		);
 
+		const baseBalance = Number(balance.balance);
+		const numericBalance = Number.isNaN(baseBalance) ? 0 : baseBalance;
+
 		if (!account) {
-			endBalances[balance.account_id] = balance.balance;
+			endBalances[balance.account_id] = numericBalance;
 			continue;
 		}
 
 		const monthlyChange = calculateMonthlyBalanceChange(account.transactions);
-		endBalances[balance.account_id] = balance.balance + monthlyChange;
+		endBalances[balance.account_id] = numericBalance + monthlyChange;
 	}
 
 	return endBalances;
@@ -911,4 +947,36 @@ async function recordPreviousMonthBalances(
 		.insert(records);
 
 	if (error) throw error;
+}
+
+/**
+ * 指定した年月より後の月初残高キャッシュを無効化（削除）する
+ * 金額変更時に、その月以降のキャッシュを削除して再計算を促す
+ */
+export async function invalidateFutureMonthlyBalances(
+	supabase: SupabaseClient,
+	year: number,
+	month: number,
+): Promise<void> {
+	// ユーザーIDを取得
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		throw new Error("認証が必要です");
+	}
+
+	// 指定した年月より後のレコードを削除
+	// 条件: year > 指定年 OR (year = 指定年 AND month > 指定月)
+	const { error } = await supabase
+		.from("monthly_account_balances")
+		.delete()
+		.eq("user_id", user.id)
+		.or(`year.gt.${year},and(year.eq.${year},month.gt.${month})`);
+
+	if (error) {
+		console.error("月初残高キャッシュの無効化に失敗しました:", error);
+		throw new Error("月初残高キャッシュの無効化に失敗しました");
+	}
 }

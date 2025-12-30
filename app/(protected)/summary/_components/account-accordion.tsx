@@ -512,15 +512,7 @@ export const AccountAccordion = ({
 									// 優先順位: 1. 月初残高テーブルの値, 2. 前月計算値
 									let initialBalanceValue: number | undefined;
 
-									// 月初残高テーブルにデータがあればそれを使用
 									if (
-										monthlyBalanceMap &&
-										monthlyBalanceMap[account.id] !== undefined
-									) {
-										initialBalanceValue = monthlyBalanceMap[account.id];
-									}
-									// 月初残高テーブルにデータがなく、選択月が現在より後の場合は前月計算値を使用
-									else if (
 										isSelectedDateAfterCurrent &&
 										previousMonthBalances &&
 										previousMonthBalances[account.id] !== undefined
@@ -600,28 +592,39 @@ export const AccountAccordion = ({
 											new Date(b.transaction_date).getTime(),
 									);
 
-									// 初期残高を計算（優先順位: 月初残高テーブル > 前月計算値 > 現在残高）
+									// 選択した年月が現在の年月より後か判定
+									const selectedDate = new Date(
+										selectedYear,
+										selectedMonth - 1,
+										1,
+									);
+									const currentYearMonth = new Date(
+										currentDate.getFullYear(),
+										currentDate.getMonth(),
+										1,
+									);
+									const isSelectedDateAfterCurrent =
+										selectedDate > currentYearMonth;
+
+									// 初期残高を計算
+									// 将来月の場合は前月計算値を優先（最新の計算値）
+									// 過去・現在月は月初残高テーブルを優先（記録された値）
 									let initialBalance = account.balance; // デフォルト値
 
-									// 月初残高テーブルにデータがあればそれを優先的に使用
+									// 将来月で前月計算値がある場合はそれを優先
 									if (
+										isSelectedDateAfterCurrent &&
+										previousMonthBalances &&
+										previousMonthBalances[account.id] !== undefined
+									) {
+										initialBalance = previousMonthBalances[account.id];
+									}
+									// 過去・現在月は月初残高テーブルを優先
+									else if (
 										monthlyBalanceMap &&
 										monthlyBalanceMap[account.id] !== undefined
 									) {
 										initialBalance = monthlyBalanceMap[account.id];
-									}
-									// 月初残高テーブルにデータがなく、将来月の場合は前月計算値を使用
-									else if (
-										previousMonthBalances &&
-										previousMonthBalances[account.id] !== undefined &&
-										new Date(selectedYear, selectedMonth - 1, 1) >
-											new Date(
-												currentDate.getFullYear(),
-												currentDate.getMonth(),
-												1,
-											)
-									) {
-										initialBalance = previousMonthBalances[account.id];
 									}
 
 									// 基本残高から始めて、各トランザクション後の残高を計算

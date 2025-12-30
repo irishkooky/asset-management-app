@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Account } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
+import { invalidateFutureMonthlyBalances } from "../../summary/actions";
 import type {
 	MonthlyAmount,
 	RecurringTransaction,
@@ -183,6 +184,9 @@ export async function setAmountForMonth(
 				throw new Error(`月別金額の作成に失敗しました: ${insertError.message}`);
 		}
 	}
+
+	// 金額更新後、その月以降の月初残高キャッシュを無効化
+	await invalidateFutureMonthlyBalances(supabase, year, month);
 }
 
 /**

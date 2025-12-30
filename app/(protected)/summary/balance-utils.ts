@@ -54,7 +54,8 @@ export async function fetchCurrentAccountBalances(
 
 	const balances: Record<string, number> = {};
 	for (const account of accounts) {
-		balances[account.id] = account.current_balance;
+		const numericBalance = Number(account.current_balance);
+		balances[account.id] = Number.isNaN(numericBalance) ? 0 : numericBalance;
 	}
 	return balances;
 }
