@@ -212,10 +212,13 @@ export async function getMonthlySummaryData(
 		let initialBalance = account.balance;
 		const prevBalance = previousMonthBalances?.[account.id];
 
-		if (monthlyBalanceMap[account.id] !== undefined) {
-			initialBalance = monthlyBalanceMap[account.id];
-		} else if (isSelectedDateAfterCurrent && prevBalance !== undefined) {
+		// 将来月で前月計算値がある場合はそれを優先（最新の計算値）
+		if (isSelectedDateAfterCurrent && prevBalance !== undefined) {
 			initialBalance = prevBalance;
+		}
+		// 過去・現在月は月初残高テーブルを優先（記録された値）
+		else if (monthlyBalanceMap[account.id] !== undefined) {
+			initialBalance = monthlyBalanceMap[account.id];
 		}
 
 		const finalBalance = calculateAccountFinalBalance(account, initialBalance);
