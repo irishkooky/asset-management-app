@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { NavMenu } from "./_components/nav-menu";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProtectedLayout({
 	children,
 }: {
