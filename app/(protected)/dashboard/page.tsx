@@ -5,9 +5,8 @@ import { updateAccountBalancesAction } from "./actions";
 import DashboardLoading from "./loading";
 
 async function DashboardData() {
-	await updateAccountBalancesAction();
-
-	const monthlyPredictions = await getMonthlyPredictions();
+	const updatedAccounts = await updateAccountBalancesAction();
+	const monthlyPredictions = await getMonthlyPredictions(updatedAccounts);
 
 	return <Dashboard monthlyPredictions={monthlyPredictions} />;
 }
