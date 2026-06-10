@@ -107,12 +107,6 @@ export async function createResidentTaxSetting(
 		throw new Error("ユーザーが認証されていません");
 	}
 
-	console.log("Creating resident tax setting with:", {
-		user_id: user.id,
-		fiscal_year: fiscalYear,
-		total_amount: totalAmount,
-	});
-
 	try {
 		const { data: setting, error: settingError } = await supabase
 			.from("resident_tax_settings")
@@ -123,8 +117,6 @@ export async function createResidentTaxSetting(
 			})
 			.select()
 			.single();
-
-		console.log("Insert result:", { data: setting, error: settingError });
 
 		if (settingError || !setting) {
 			console.error("Error creating resident tax setting:", {
@@ -178,8 +170,6 @@ export async function createResidentTaxSetting(
 			}),
 		);
 
-		console.log("Creating resident tax periods with data:", periodsData);
-
 		const { data: periods, error: periodsError } = await supabase
 			.from("resident_tax_periods")
 			.insert(periodsData)
@@ -211,8 +201,6 @@ export async function createResidentTaxSetting(
 				`住民税期間設定の作成に失敗しました: ${periodsError.message || periodsError.code || JSON.stringify(periodsError)}`,
 			);
 		}
-
-		console.log("Periods created successfully:", periods);
 
 		if (periods && periods.length > 0) {
 			await createResidentTaxRecurringTransactions(setting.id, periods);
