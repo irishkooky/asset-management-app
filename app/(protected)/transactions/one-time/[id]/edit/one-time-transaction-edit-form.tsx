@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Card, CardBody } from "@heroui/card";
-import { Input, Textarea } from "@heroui/input";
+import { Button, Card, CardBody, Input, Textarea } from "@heroui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId } from "react";

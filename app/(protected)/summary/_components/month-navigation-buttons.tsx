@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import {
+	Button,
 	Dropdown,
 	DropdownItem,
 	DropdownMenu,
 	DropdownTrigger,
-} from "@heroui/dropdown";
+} from "@heroui/react";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

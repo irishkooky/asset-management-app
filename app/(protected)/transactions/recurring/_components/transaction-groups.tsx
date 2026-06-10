@@ -1,8 +1,12 @@
 "use client";
-import { Accordion, AccordionItem } from "@heroui/accordion";
-import { Button } from "@heroui/button";
-import { Card, CardBody } from "@heroui/card";
-import { Chip } from "@heroui/chip";
+import {
+	Accordion,
+	AccordionItem,
+	Button,
+	Card,
+	CardBody,
+	Chip,
+} from "@heroui/react";
 import Link from "next/link";
 import type { RecurringTransaction } from "@/types/database";
 import { RefreshHandler } from "./refresh-handler";
