@@ -7,7 +7,6 @@ import {
 	optional,
 	parse,
 	pipe,
-	safeParse,
 	string,
 	union,
 } from "valibot";
@@ -172,43 +171,3 @@ export function validateUpdateTransaction(
 }
 
 // 安全なバリデーション（エラーをthrowせず結果を返す）
-export function safeValidateCreateTransaction(input: CreateTransactionInput) {
-	// 日付が文字列の場合は数値に変換
-	const sanitizedInput = {
-		...input,
-		dayOfMonth:
-			typeof input.dayOfMonth === "string"
-				? Number.parseInt(input.dayOfMonth, 10)
-				: input.dayOfMonth,
-		monthOfYear:
-			typeof input.monthOfYear === "string"
-				? Number.parseInt(input.monthOfYear, 10)
-				: input.monthOfYear,
-	};
-
-	return safeParse(createTransactionSchema, sanitizedInput);
-}
-
-export function safeValidateUpdateTransaction(input: UpdateTransactionInput) {
-	// 日付が文字列の場合は数値に変換
-	const sanitizedInput = { ...input };
-	if (
-		typeof input.dayOfMonth !== "undefined" &&
-		typeof input.dayOfMonth === "string"
-	) {
-		sanitizedInput.dayOfMonth = Number.parseInt(input.dayOfMonth, 10);
-	}
-	if (
-		typeof input.monthOfYear !== "undefined" &&
-		typeof input.monthOfYear === "string"
-	) {
-		sanitizedInput.monthOfYear = Number.parseInt(input.monthOfYear, 10);
-	}
-
-	// nullを削除（valibotはnullを許容しないため）
-	if (sanitizedInput.description === null) {
-		sanitizedInput.description = undefined;
-	}
-
-	return safeParse(updateTransactionSchema, sanitizedInput);
-}

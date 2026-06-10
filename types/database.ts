@@ -69,12 +69,6 @@ export type SavingsPrediction = {
 	date: string;
 };
 
-// 送金ペア用の型定義
-export type TransferPair = {
-	sourceTransaction: OneTimeTransaction | RecurringTransaction;
-	destinationTransaction: OneTimeTransaction | RecurringTransaction;
-};
-
 // 住民税期間の型定義
 export type ResidentTaxPeriod = 1 | 2 | 3 | 4;
 export type ResidentTaxPaymentMonth = 1 | 6 | 8 | 10;
@@ -105,13 +99,4 @@ export type ResidentTaxPeriodSetting = {
 // 住民税設定と期間設定の結合型
 export type ResidentTaxSettingWithPeriods = ResidentTaxSetting & {
 	periods: ResidentTaxPeriodSetting[];
-};
-
-// 定期収支の表示用拡張型（住民税上乗せ情報付き）
-export type RecurringTransactionWithResidentTax = RecurringTransaction & {
-	resident_tax_additions?: {
-		period: ResidentTaxPeriod;
-		amount: number;
-		fiscal_year: number;
-	}[];
 };
