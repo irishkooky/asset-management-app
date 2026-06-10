@@ -29,14 +29,10 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-      - name: Run Biome
-        run: biome ci .
       - name: Install dependencies
         run: pnpm install
+      - name: Run Biome
+        run: pnpm exec biome ci .
       - name: Type check
         run: pnpm run typecheck
       - name: Run tests
