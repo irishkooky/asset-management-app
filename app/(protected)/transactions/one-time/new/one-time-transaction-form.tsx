@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useState } from "react";
 import type { Account } from "@/types/database";
-import { createOneTimeTransactionAction } from "./action";
+import { createOneTimeTransactionAction } from "./actions";
 
 interface OneTimeTransactionFormProps {
 	accounts?: Account[];

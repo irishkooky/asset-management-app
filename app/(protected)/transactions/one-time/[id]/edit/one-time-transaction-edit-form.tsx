@@ -8,7 +8,7 @@ import type { Account, OneTimeTransaction } from "@/types/database";
 import {
 	deleteOneTimeTransactionAction,
 	updateOneTimeTransactionAction,
-} from "./action";
+} from "./actions";
 
 interface OneTimeTransactionEditFormProps {
 	transaction: OneTimeTransaction;
