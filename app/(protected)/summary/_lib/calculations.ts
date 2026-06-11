@@ -100,7 +100,9 @@ export function calculateMonthlySummary(
 		const formattedTransactionDate = format(transactionDate, "yyyy-MM-dd");
 
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
-		const accountSummary = accountMap.get(transaction.account_id);
+		const accountSummary = transaction.account_id
+			? accountMap.get(transaction.account_id)
+			: undefined;
 		if (accountSummary) {
 			// 特定の年月のカスタム金額があればそれを使用し、なければデフォルト金額を使用
 			const customAmount = recurringAmountsMap.get(transaction.id);

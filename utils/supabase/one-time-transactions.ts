@@ -168,9 +168,12 @@ export async function createOneTimeTransfer(
 		throw new Error("送金データの作成に失敗しました");
 	}
 
-	const sourceTransaction = data.source_transaction as OneTimeTransaction;
-	const destinationTransaction =
-		data.destination_transaction as OneTimeTransaction;
+	const result = data as {
+		source_transaction: OneTimeTransaction;
+		destination_transaction: OneTimeTransaction;
+	};
+	const sourceTransaction = result.source_transaction;
+	const destinationTransaction = result.destination_transaction;
 
 	return { sourceTransaction, destinationTransaction };
 }
@@ -243,18 +246,15 @@ export async function updateOneTimeTransaction(
 	}
 
 	// 通常の取引の場合は従来通りの処理
-	const updatedData = { ...updates };
+	const { transaction_date, ...restUpdates } = updates;
+	const updatedData: Partial<OneTimeTransaction> = { ...restUpdates };
 
 	// 日付形式を変換
-	if (updates.transaction_date) {
-		if (updates.transaction_date instanceof Date) {
-			updatedData.transaction_date = updates.transaction_date
-				.toISOString()
-				.split("T")[0];
-		} else {
-			// 既に文字列形式の場合はそのまま使用
-			updatedData.transaction_date = updates.transaction_date;
-		}
+	if (transaction_date) {
+		updatedData.transaction_date =
+			transaction_date instanceof Date
+				? transaction_date.toISOString().split("T")[0]
+				: transaction_date;
 	}
 
 	const { data, error } = await supabase

@@ -159,9 +159,12 @@ export async function createRecurringTransfer(
 		throw new Error("定期送金データの作成に失敗しました");
 	}
 
-	const sourceTransaction = data.source_transaction as RecurringTransaction;
-	const destinationTransaction =
-		data.destination_transaction as RecurringTransaction;
+	const result = data as {
+		source_transaction: RecurringTransaction;
+		destination_transaction: RecurringTransaction;
+	};
+	const sourceTransaction = result.source_transaction;
+	const destinationTransaction = result.destination_transaction;
 
 	return { sourceTransaction, destinationTransaction };
 }

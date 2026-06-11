@@ -164,7 +164,9 @@ function calculateMonthlySummary(
 			.split("T")[0];
 
 		// 当月の日付が定期的な収支の日付以上の場合のみ集計
-		const accountSummary = accountMap.get(transaction.account_id);
+		const accountSummary = transaction.account_id
+			? accountMap.get(transaction.account_id)
+			: undefined;
 		if (accountSummary) {
 			if (transaction.type === "income") {
 				accountSummary.income += transaction.amount;

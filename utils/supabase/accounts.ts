@@ -1,4 +1,5 @@
 import type { Account } from "@/types/database";
+import { requireUser } from "@/utils/supabase/helpers";
 import { createClient } from "@/utils/supabase/server";
 
 /**
@@ -17,7 +18,7 @@ export async function getUserAccounts(): Promise<Account[]> {
 		throw new Error("口座情報の取得に失敗しました");
 	}
 
-	return data as Account[];
+	return data;
 }
 
 /**
@@ -43,7 +44,7 @@ export async function getAccountById(
 		throw new Error("口座情報の取得に失敗しました");
 	}
 
-	return data as Account;
+	return data;
 }
 
 /**
@@ -55,13 +56,7 @@ export async function createAccount(
 ): Promise<Account> {
 	const supabase = await createClient();
 
-	// 現在のユーザーIDを取得
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	if (!user) {
-		throw new Error("ユーザーが認証されていません");
-	}
+	const user = await requireUser(supabase);
 
 	const { data, error } = await supabase
 		.from("accounts")
@@ -102,7 +97,7 @@ export async function createAccount(
 		}
 	}
 
-	return data as Account;
+	return data;
 }
 
 /**
@@ -129,7 +124,7 @@ export async function updateAccount(
 		throw new Error("口座情報の更新に失敗しました");
 	}
 
-	return data as Account;
+	return data;
 }
 
 /**
