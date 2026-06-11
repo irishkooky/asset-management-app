@@ -15,7 +15,8 @@ export type FrequencyType = "monthly" | "quarterly" | "yearly";
 export type RecurringTransaction = {
 	id: string;
 	user_id: string;
-	account_id: string;
+	// DB スキーマ上 NULL 許容（口座未紐付けの住民税取引などで null になる）
+	account_id: string | null;
 	amount: number;
 	default_amount: number;
 	type: TransactionType;
