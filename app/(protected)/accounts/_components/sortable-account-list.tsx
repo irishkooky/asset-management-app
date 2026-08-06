@@ -17,10 +17,14 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@heroui/button";
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Chip } from "@heroui/chip";
-import { Divider } from "@heroui/divider";
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	Chip,
+	Divider,
+} from "@heroui/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Account } from "@/types/database";

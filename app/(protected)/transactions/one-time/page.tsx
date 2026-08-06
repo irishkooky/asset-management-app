@@ -1,6 +1,4 @@
-import { Button } from "@heroui/button";
-import { Card, CardBody } from "@heroui/card";
-import { Chip } from "@heroui/chip";
+import { Button, Card, CardBody, Chip } from "@heroui/react";
 import Link from "next/link";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import { getUserOneTimeTransactions } from "@/utils/supabase/one-time-transactions";

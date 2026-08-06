@@ -91,42 +91,6 @@ export async function getUserResidentTaxSettings(): Promise<
 	}));
 }
 
-export async function getResidentTaxSettingByYear(
-	fiscalYear: number,
-): Promise<ResidentTaxSettingWithPeriods | null> {
-	const supabase = await createClient();
-
-	const { data: setting, error: settingError } = await supabase
-		.from("resident_tax_settings")
-		.select("*")
-		.eq("fiscal_year", fiscalYear)
-		.single();
-
-	if (settingError) {
-		if (settingError.code === "PGRST116") {
-			return null;
-		}
-		throw new Error(`住民税設定の取得に失敗しました: ${settingError.message}`);
-	}
-
-	const { data: periods, error: periodsError } = await supabase
-		.from("resident_tax_periods")
-		.select("*")
-		.eq("setting_id", setting.id)
-		.order("period");
-
-	if (periodsError) {
-		throw new Error(
-			`住民税期間設定の取得に失敗しました: ${periodsError.message}`,
-		);
-	}
-
-	return {
-		...setting,
-		periods: periods || [],
-	};
-}
-
 export async function createResidentTaxSetting(
 	fiscalYear: number,
 	totalAmount: number,
@@ -143,12 +107,6 @@ export async function createResidentTaxSetting(
 		throw new Error("ユーザーが認証されていません");
 	}
 
-	console.log("Creating resident tax setting with:", {
-		user_id: user.id,
-		fiscal_year: fiscalYear,
-		total_amount: totalAmount,
-	});
-
 	try {
 		const { data: setting, error: settingError } = await supabase
 			.from("resident_tax_settings")
@@ -159,8 +117,6 @@ export async function createResidentTaxSetting(
 			})
 			.select()
 			.single();
-
-		console.log("Insert result:", { data: setting, error: settingError });
 
 		if (settingError || !setting) {
 			console.error("Error creating resident tax setting:", {
@@ -214,8 +170,6 @@ export async function createResidentTaxSetting(
 			}),
 		);
 
-		console.log("Creating resident tax periods with data:", periodsData);
-
 		const { data: periods, error: periodsError } = await supabase
 			.from("resident_tax_periods")
 			.insert(periodsData)
@@ -247,8 +201,6 @@ export async function createResidentTaxSetting(
 				`住民税期間設定の作成に失敗しました: ${periodsError.message || periodsError.code || JSON.stringify(periodsError)}`,
 			);
 		}
-
-		console.log("Periods created successfully:", periods);
 
 		if (periods && periods.length > 0) {
 			await createResidentTaxRecurringTransactions(setting.id, periods);
@@ -312,106 +264,6 @@ async function createResidentTaxRecurringTransactions(
 			.from("resident_tax_periods")
 			.update({ created_recurring_transaction_id: transaction.id })
 			.eq("id", period.id);
-	}
-}
-
-export async function updateResidentTaxSetting(
-	settingId: string,
-	totalAmount: number,
-	periodAmounts: Record<ResidentTaxPeriod, number>,
-	targetTransactionIds: Record<ResidentTaxPeriod, string | null>,
-): Promise<ResidentTaxSettingWithPeriods> {
-	const supabase = await createClient();
-
-	const { data: setting, error: settingError } = await supabase
-		.from("resident_tax_settings")
-		.update({ total_amount: totalAmount })
-		.eq("id", settingId)
-		.select()
-		.single();
-
-	if (settingError) {
-		throw new Error(`住民税設定の更新に失敗しました: ${settingError.message}`);
-	}
-
-	const { data: existingPeriods } = await supabase
-		.from("resident_tax_periods")
-		.select("*")
-		.eq("setting_id", settingId);
-
-	for (const [periodStr, amount] of Object.entries(periodAmounts)) {
-		const period = Number(periodStr) as ResidentTaxPeriod;
-		const existingPeriod = existingPeriods?.find((p) => p.period === period);
-		const targetTransactionId = targetTransactionIds[period];
-
-		if (existingPeriod) {
-			await supabase
-				.from("resident_tax_periods")
-				.update({
-					amount,
-					target_recurring_transaction_id: targetTransactionId,
-				})
-				.eq("id", existingPeriod.id);
-
-			if (
-				existingPeriod.created_recurring_transaction_id &&
-				!targetTransactionId
-			) {
-				await supabase
-					.from("recurring_transactions")
-					.update({
-						amount,
-						default_amount: amount,
-					})
-					.eq("id", existingPeriod.created_recurring_transaction_id);
-			}
-		}
-	}
-
-	const { data: updatedPeriods, error: periodsError } = await supabase
-		.from("resident_tax_periods")
-		.select("*")
-		.eq("setting_id", settingId)
-		.order("period");
-
-	if (periodsError) {
-		throw new Error(
-			`更新後の住民税期間設定の取得に失敗しました: ${periodsError.message}`,
-		);
-	}
-
-	return {
-		...setting,
-		periods: updatedPeriods || [],
-	};
-}
-
-export async function deleteResidentTaxSetting(
-	settingId: string,
-): Promise<void> {
-	const supabase = await createClient();
-
-	const { data: periods } = await supabase
-		.from("resident_tax_periods")
-		.select("*")
-		.eq("setting_id", settingId);
-
-	for (const period of periods || []) {
-		if (period.created_recurring_transaction_id) {
-			await supabase
-				.from("recurring_transactions")
-				.delete()
-				.eq("id", period.created_recurring_transaction_id);
-		}
-	}
-
-	const { error } = await supabase
-		.from("resident_tax_settings")
-		.delete()
-		.eq("id", settingId);
-
-	if (error) {
-		throw new Error(`住民税設定の削除に失敗しました: ${error.message}`);
 	}
 }
 

@@ -1,16 +1,19 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Input, Textarea } from "@heroui/input";
 import {
+	Button,
+	Input,
 	Modal,
 	ModalBody,
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-} from "@heroui/modal";
-import { Radio, RadioGroup } from "@heroui/radio";
-import { Select, SelectItem } from "@heroui/select";
+	Radio,
+	RadioGroup,
+	Select,
+	SelectItem,
+	Textarea,
+} from "@heroui/react";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import {
@@ -277,5 +280,3 @@ export const EditModal = ({
 		</Modal>
 	);
 };
-
-export default EditModal;

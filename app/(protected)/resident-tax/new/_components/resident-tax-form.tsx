@@ -196,7 +196,6 @@ export function ResidentTaxForm({
 						label="金額入力方式"
 						value={amountInputMode}
 						onValueChange={(value) => {
-							console.log("金額入力方式 changed:", value, typeof value);
 							setAmountInputMode(value as "total" | "individual");
 						}}
 						orientation="vertical"
@@ -285,11 +284,6 @@ export function ResidentTaxForm({
 									label="支払い方法"
 									value={periodSettings[period].paymentMode}
 									onValueChange={(value) => {
-										console.log(
-											`Period ${period} payment mode changed:`,
-											value,
-											typeof value,
-										);
 										handlePaymentModeChange(period, value);
 									}}
 									orientation="vertical"

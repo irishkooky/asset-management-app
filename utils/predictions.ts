@@ -107,24 +107,6 @@ export async function predictTotalSavings(
 }
 
 /**
- * 全ての予測期間に対する貯蓄額を予測する
- */
-export async function getAllPredictions(): Promise<SavingsPrediction[]> {
-	const periods: PredictionPeriod[] = [
-		"1month",
-		"3months",
-		"6months",
-		"12months",
-	];
-
-	const predictions = await Promise.all(
-		periods.map((period) => predictTotalSavings(period)),
-	);
-
-	return predictions;
-}
-
-/**
  * 1か月ごとの貯蓄額を予測する（翌月から12ヶ月先まで）
  * 各月の月末見込残高を予測（月次収支と同じ計算ロジックを使用）
  */

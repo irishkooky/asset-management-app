@@ -1,5 +1,4 @@
-import { Button } from "@heroui/button";
-import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import Link from "next/link";
 import { getUserAccounts } from "@/utils/supabase/accounts";
 import SortableAccountList from "./_components/sortable-account-list";
