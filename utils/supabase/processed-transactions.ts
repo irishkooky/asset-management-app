@@ -5,54 +5,6 @@ import type {
 import { createClient } from "@/utils/supabase/server";
 
 /**
- * 取引が処理済みかどうかを確認する
- */
-export async function isTransactionProcessed(
-	transactionId: string,
-	accountId: string,
-): Promise<boolean> {
-	const supabase = await createClient();
-
-	const { data, error } = await supabase
-		.from("processed_transactions")
-		.select("id")
-		.eq("transaction_id", transactionId)
-		.eq("account_id", accountId)
-		.single();
-
-	if (error && error.code !== "PGRST116") {
-		console.error("Error checking processed transaction:", error);
-		throw new Error("処理済み取引の確認に失敗しました");
-	}
-
-	return !!data;
-}
-
-/**
- * 取引を処理済みとしてマークする
- */
-export async function markTransactionAsProcessed(
-	transactionId: string,
-	transactionType: "one_time" | "recurring",
-	accountId: string,
-): Promise<void> {
-	const supabase = await createClient();
-
-	const { error } = await supabase.from("processed_transactions").insert([
-		{
-			transaction_id: transactionId,
-			transaction_type: transactionType,
-			account_id: accountId,
-		},
-	]);
-
-	if (error) {
-		console.error("Error marking transaction as processed:", error);
-		throw new Error("取引の処理状態の更新に失敗しました");
-	}
-}
-
-/**
  * 複数の取引を処理済みとしてマークする
  */
 export async function markTransactionsAsProcessed(

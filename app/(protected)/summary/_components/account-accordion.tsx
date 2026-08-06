@@ -1,15 +1,16 @@
 "use client";
 
-import { Accordion, AccordionItem } from "@heroui/accordion";
-import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
 import {
+	Accordion,
+	AccordionItem,
+	Button,
+	Input,
 	Modal,
 	ModalBody,
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-} from "@heroui/modal";
+} from "@heroui/react";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
